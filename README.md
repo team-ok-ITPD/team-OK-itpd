@@ -2,7 +2,7 @@
 
 **Team 07**
 
-One-line description of what our project does.
+Debug GYM.
 
 ## Documentation
 
