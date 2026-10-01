@@ -1,6 +1,6 @@
 # Project Name
 
-**Team 07**
+**Team 02**
 
 Debug GYM.
 
