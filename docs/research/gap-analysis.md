@@ -48,4 +48,4 @@ These candidates were identified in the search but not selected for the three-pr
 | Recticode | Overlaps with practice platforms; less contrast than the selected set. |
 | Codritium | Broader software-engineering scope. |
 
-See [`candidate-list.md`](../../reports/week-01/candidate-list.md) for the full searched list and screening notes.
+See [`candidate-list.md`](../../reports/week-01/candidate_list.md) for the full searched list and screening notes.
