@@ -20,28 +20,28 @@ This meeting tests both.
 
 **End users**
 
-3. _(open)_ Think of the last person you saw learn to debug a new kind of problem. Who were they, and what were they trying to learn?
-4. _(closed)_ Is the person who asks for an exercise the same person who solves it?
+3. _(open)_ Who would use this, and who decides whether a fix is correct?
+4. _(closed)_ Which tools did the last person you saw debugging use, and what did they use them for?
 
 **Current workflow**
 
 5. _(open)_  What did you do the last time an exercise you were given turned out to be broken, too easy, or impossible to solve?
-6. _(open)_ Walk me through the last time you practiced, or taught, debugging a specific kind of problem.
-   What happened at each step?
+6. _(open)_ Walk me through the last time you practiced, or taught, debugging a specific kind of problem. What happened at each step?
 
 **Pain points and constraints**
 
-7. _(open)_ What was the most annoying part of the last time you tried to practice debugging?
+7. _(open)_ What cannot change: tools, languages, where code can run, who pays?
 8. _(closed)_ Does a user have to be able to start an exercise with nothing installed beyond VS Code?
 
 **Scope**
 
-9. _(open)_  If we could only ship one of these, which one would you keep: generating exercises, connecting from VS Code, or the public gallery?
-10. _(open)_ What is clearly out of scope for you?
+9. _(open)_  If only one thing shipped first, which would it be?
+10. _(open)_ What is explicitly out of the first version?
+11. _(closed)_ Which language should the prototype use?
 
 ## Roles
 
-@interviewer-username asks, @notetaker-username takes notes, @observer-username observes and records what we did not ask and what was not said.
+@adelazzi asks, @qwxiae takes notes, @UTKANOS-RIBA, @Danashi11 observes and records what we did not ask and what was not said.
 
 ## Key improvements
 
