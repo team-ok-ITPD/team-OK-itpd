@@ -2,59 +2,60 @@
 
 ## Project
 
-**Debug GYM — Team 02**
+Debug GYM, team 02.
 
-## Week 1 Objective
+**Scope:** Week 1 of the course: candidate research, comparison of alternatives, gap analysis, draft value propositions, and the customer kickoff.
 
-The goal of Week 1 was to investigate existing platforms, tools, and research related to interactive debugging practice and software-engineering debugging tasks.
+**License:** [LICENSE](../../LICENSE)
 
-The research focused on identifying existing solutions that could provide useful ideas, references, or comparisons for the development of Debug GYM.
+**Start here:** read this page, then use the coverage table to reach any detail.
 
-## Candidate Research
+**Problem space:** A developer who wants to practice debugging realistic, existing code must choose between small browser snippets and setting up a research environment themselves, and no product offers a ready-made realistic environment with optional guidance.
 
-The following projects and platforms were identified as relevant:
+## What we did
 
-| Candidate | Relevance |
+We screened ten candidates, compared BugHunt, Codewars, and Microsoft debug-gym on seven properties, documented four gaps, and drafted three value propositions. We then held the customer kickoff, where the customer described the system and asked us to start the prototype with Python.
+
+## Findings
+
+Each alternative covers only part of the problem. BugHunt is easy to start and gives progressive hints, but its tasks are small and self-contained. Codewars has a large, ranked task library, but debugging is one category among many and feedback is mostly test output. Debug-gym offers rich repository-level debugging, but it is built for AI-agent research and needs significant setup.
+
+The four gaps are realistic tasks in a learner-facing product, feedback on the investigation process, adjustable guidance, and low setup friction. They are hypotheses, not validated needs. The kickoff left several questions open, such as which features belong in the first version; they are recorded in the meeting report. Next, we will validate the draft value propositions with learners.
+
+## Coverage
+
+| Deliverable | Artifact |
 |---|---|
-| **debug-gym** | Provides a text-based environment for interactive debugging and AI-agent evaluation. |
-| **SWE-bench** | Uses real-world GitHub issues as reproducible software-engineering tasks. |
-| **BuLyst** | Focuses on practicing realistic debugging workflows. |
-| **BugHunt** | Provides debugging tasks centered on finding and fixing bugs in existing code. |
-| **Codewars** | Provides predefined debugging challenges with different difficulty levels. |
-| **SadhanAI** | Demonstrates the use of AI for generating or supporting personalized debugging practice. |
-| **Moss** | Focuses on realistic software-engineering tasks and existing codebases. |
-| **Before You Ask for Help** | Focuses on developing the debugging process and problem-solving workflow. |
-| **Recticode** | Provides software-development and debugging practice scenarios. |
-| **Codritium** | Provides realistic development scenarios and AI-assisted software-engineering tasks. |
+| Candidate list | [candidate-list.md](candidate-list.md) |
+| Alternatives search | [docs/research/alternatives.md](../../docs/research/alternatives.md) |
+| Compare the alternatives | [docs/research/comparison.md](../../docs/research/comparison.md) |
+| Gap analysis | [docs/research/gap-analysis.md](../../docs/research/gap-analysis.md) |
+| Value proposition | [docs/research/value-proposition.md](../../docs/research/value-proposition.md) |
+| Research board | `<EXTERNAL BOARD LINK>` |
+| Meeting script | [meeting-script.md](meeting-script.md) |
+| Customer kickoff | [meeting-report.md](meeting-report.md), [meeting-notes.md](meeting-notes.md) |
+| AI usage | [ai-usage.md](ai-usage.md) |
 
-A detailed candidate list with links, screening decisions, and cut candidates is available in [`candidate-list.md`](candidate-list.md).
+## Contribution
 
-## Initial Findings
+| Member | Commits | Issues | Pull requests | Reviews |
+|---|---|---|---|---|
+| @adelazzi | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=adelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3Aadelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3Aadelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3Aadelazzi) |
+| @UTKANOS-RIBA | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=UTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3AUTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3AUTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3AUTKANOS-RIBA) |
+| @Danashi11 | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=Danashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3ADanashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3ADanashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3ADanashi11) |
+| @qwxiae | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=qwxiae) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3Aqwxiae) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3Aqwxiae) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3Aqwxiae) |
 
-The reviewed solutions show several approaches to debugging education and practice:
+## Repository evidence
 
-- Interactive debugging environments can be used to train and evaluate debugging agents.
-- Real-world issues can provide more realistic debugging tasks than isolated coding exercises.
-- Debugging platforms can focus on either finding bugs, fixing bugs, or developing the overall debugging workflow.
-- Difficulty levels and structured tasks can support progressive learning.
-- AI can be used to generate or personalize debugging exercises.
+1. **Branch protection (main):** [Screenshot of the main branch protection settings](images/branch-protection.png)
+2. **Merged pull request approved by another member:** [PR #13](https://github.com/team-ok-ITPD/team-OK-itpd/pull/13)
+3. **Latest green link check run:** [Link check run](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/37051775458)
 
-These observations will be used as references when defining the functionality and scope of Debug GYM.
 
-## Week 1 Outcome
+## Deviations
 
-A preliminary set of existing solutions and related projects was collected and documented. The candidate list will serve as a basis for further analysis and comparison during the following stages of the project.
+None.
 
-## Key improvements
+## Privacy
 
-### Principle: Replace broad scope with specific evidence
-
-**Before:** "The goal of Week 1 was to investigate existing platforms, tools, and research related to interactive debugging practice and software-engineering debugging tasks."
-
-**After:** "Week 1 screened ten candidates and compared BugHunt, Codewars, and Microsoft debug-gym across seven properties."
-
-### Principle: Turn observations into a testable next step
-
-**Before:** "These observations will be used as references when defining the functionality and scope of Debug GYM."
-
-**After:** "Use the four documented gaps as hypotheses for the kickoff discussion, then validate the draft value propositions with learners."
+No private-only material was committed to this repository.
