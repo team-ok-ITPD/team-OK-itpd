@@ -8,7 +8,6 @@ Debug GYM, team 02.
 
 **License:** [LICENSE](../../LICENSE)
 
-**Start here:** read this page, then use the coverage table to reach any detail.
 
 **Problem space:** A developer who wants to practice debugging realistic, existing code must choose between small browser snippets and setting up a research environment themselves, and no product offers a ready-made realistic environment with optional guidance.
 
@@ -31,7 +30,6 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 | Compare the alternatives | [docs/research/comparison.md](../../docs/research/comparison.md) |
 | Gap analysis | [docs/research/gap-analysis.md](../../docs/research/gap-analysis.md) |
 | Value proposition | [docs/research/value-proposition.md](../../docs/research/value-proposition.md) |
-| Research board | `<EXTERNAL BOARD LINK>` |
 | Meeting script | [meeting-script.md](meeting-script.md) |
 | Customer kickoff | [meeting-report.md](meeting-report.md), [meeting-notes.md](meeting-notes.md) |
 | AI usage | [ai-usage.md](ai-usage.md) |
@@ -54,7 +52,7 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 
 ## Deviations
 
-None.
+We published sanitized interview notes ([meeting-notes.md](meeting-notes.md)) instead of a transcript. The notes record what the customer described, what was decided, and what was left open, in a form a reader can use without going through a verbatim transcript.
 
 ## Privacy
 
