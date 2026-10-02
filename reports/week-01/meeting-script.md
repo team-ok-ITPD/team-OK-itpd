@@ -45,12 +45,10 @@ This meeting tests both.
 
 ## Key improvements
 
-**"Would you use a site that generates debugging exercises?" -> "Walk me through the last time you practiced, or taught, debugging a specific kind of problem." (Question 5)**
+**"Do you think existing debugging exercises are good enough?"** -> **"What made you decide to build this rather than point people to the debugging exercises that already exist?" (Question 1)**
 
-The original asks for an opinion about our idea, and almost anyone says yes.
-The rewrite asks about a past event, so the answer is a real routine and shows whether the pain exists.
+The original invites a polite yes or no. The rewrite asks for the reasoning behind the project, so the answer shows what existing exercises miss.
 
-**"Is the quality of generated exercises important to you?" -> "What did you do the last time an exercise you were given turned out to be broken, too easy, or impossible to solve?" (Question 6)**
+**"If only one thing shipped first, which would it be?"** (Question 9) replaces **"Which features are most important to you?"**
 
-Everyone says quality is important, so the original tells us nothing.
-The rewrite anchors it to a specific past failure, so the answer shows what a bad exercise costs and what the customer did about it.
+Asked about importance, people say everything is. Forcing one choice shows whether the customer cares most about generation, the VS Code connection, or the public gallery.

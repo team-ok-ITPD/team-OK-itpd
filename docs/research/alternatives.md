@@ -147,4 +147,4 @@ The following properties were selected before evaluating the alternatives:
 * Repository and installation: https://github.com/microsoft/debug-gym
 * System design and tools: https://github.com/microsoft/debug-gym#system-design
 * Human mode: https://github.com/microsoft/debug-gym#32-human-mode
-* Responsible AI / intended use: https://github.com/microsoft/debug-gym/blob/main/RESPONSIBLE_AI.md
+* Responsible AI / intended use: https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md
