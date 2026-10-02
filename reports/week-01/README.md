@@ -25,7 +25,7 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 
 | Deliverable | Artifact |
 |---|---|
-| Candidate list | [candidate-list.md](candidate-list.md) |
+| Candidate list | [candidate_list.md](candidate_list.md) |
 | Alternatives search | [docs/research/alternatives.md](../../docs/research/alternatives.md) |
 | Compare the alternatives | [docs/research/comparison.md](../../docs/research/comparison.md) |
 | Gap analysis | [docs/research/gap-analysis.md](../../docs/research/gap-analysis.md) |
@@ -45,7 +45,7 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 
 ## Repository evidence
 
-1. **Branch protection (main):** [Screenshot of the main branch protection settings](images/branch-protection.png)
+1. **Branch protection (main):** [Screenshot of the main branch protection settings](images/branch-protection.jpeg)
 2. **Merged pull request approved by another member:** [PR #13](https://github.com/team-ok-ITPD/team-OK-itpd/pull/13)
 3. **Latest green link check run:** [Link check run](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/37051775458)
 
