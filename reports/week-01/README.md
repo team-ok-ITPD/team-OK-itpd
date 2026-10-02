@@ -27,7 +27,7 @@ The following projects and platforms were identified as relevant:
 | **Recticode** | Provides software-development and debugging practice scenarios. |
 | **Codritium** | Provides realistic development scenarios and AI-assisted software-engineering tasks. |
 
-A detailed candidate list with links, screening decisions, and cut candidates is available in [`candidate-list.md`](candidate-list.md).
+A detailed candidate list with links, screening decisions, and cut candidates is available in [`candidate-list.md`](candidate_list.md).
 
 ## Initial Findings
 
