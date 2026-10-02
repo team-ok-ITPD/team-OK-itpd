@@ -27,7 +27,7 @@ The following projects and platforms were identified as relevant:
 | **Recticode** | Provides software-development and debugging practice scenarios. |
 | **Codritium** | Provides realistic development scenarios and AI-assisted software-engineering tasks. |
 
-A detailed candidate list with links and relevance notes is available in [`candidate_list.md`](candidate_list.md).
+A detailed candidate list with links, screening decisions, and cut candidates is available in [`candidate-list.md`](candidate-list.md).
 
 ## Initial Findings
 
@@ -44,3 +44,17 @@ These observations will be used as references when defining the functionality an
 ## Week 1 Outcome
 
 A preliminary set of existing solutions and related projects was collected and documented. The candidate list will serve as a basis for further analysis and comparison during the following stages of the project.
+
+## Key improvements
+
+### Principle: Replace broad scope with specific evidence
+
+**Before:** "The goal of Week 1 was to investigate existing platforms, tools, and research related to interactive debugging practice and software-engineering debugging tasks."
+
+**After:** "Week 1 screened ten candidates and compared BugHunt, Codewars, and Microsoft debug-gym across seven properties."
+
+### Principle: Turn observations into a testable next step
+
+**Before:** "These observations will be used as references when defining the functionality and scope of Debug GYM."
+
+**After:** "Use the four documented gaps as hypotheses for the kickoff discussion, then validate the draft value propositions with learners."
