@@ -1,0 +1,89 @@
+name: User story
+description: Record a user need and the checks that show it was delivered.
+title: "US-nn: "
+labels:
+  - user-story
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use the next free `US-nn` from the issue list filtered by the `user-story` label.
+
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: State one user need without prescribing the solution.
+      placeholder: |
+        As a <user>,
+        I want to <action>,
+        so that <value>.
+    validations:
+      required: true
+
+  - type: input
+    id: value-proposition
+    attributes:
+      label: Value proposition
+      description: "Link exactly one VP-nn using https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/research/value-proposition.md#vp-nn."
+      placeholder: "https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/research/value-proposition.md#vp-01"
+    validations:
+      required: true
+
+  - type: textarea
+    id: traces-to
+    attributes:
+      label: Traces to
+      description: "Optional origins, one linked GAP-nn, DEC-nnn, or action point per line. Link repository files on main."
+      placeholder: |
+        - https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/research/gap-analysis.md#gap-01
+    validations:
+      required: false
+
+  - type: textarea
+    id: rests-on
+    attributes:
+      label: Rests on
+      description: "Optional assumptions, one linked ASM-nn per line using https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/assumptions.md#asm-nn."
+      placeholder: |
+        - https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/assumptions.md#asm-01
+    validations:
+      required: false
+
+  - type: textarea
+    id: priority-reason
+    attributes:
+      label: Priority reason
+      description: Explain why this story has its MoSCoW priority rather than the priority above or below it.
+      placeholder: "Must Have: without this need, the user cannot complete the core task."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Add observable pass/fail checks. A story other than Won't Have needs at least two.
+      value: |
+        1. AC-01: 
+        2. AC-02: 
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Optional context that helps a contributor understand the story.
+    validations:
+      required: false
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: "Optional task issues, one per bullet, for example `- #12`."
+      placeholder: |
+        - #12
+    validations:
+      required: false
