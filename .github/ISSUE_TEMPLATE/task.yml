@@ -1,6 +1,5 @@
 name: Task
 description: Track one unit of work that one pull request will close.
-title: ""
 labels:
   - task
 body:
