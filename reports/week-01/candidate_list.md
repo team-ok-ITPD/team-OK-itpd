@@ -1,7 +1,7 @@
-## Candidate List
+# Candidate List
 
 | Name | URL | Why relevant |
-|---|---|---|
+| --- | --- | --- |
 | **debug-gym: A Text-Based Environment for Interactive Debugging** | <https://github.com/microsoft/debug-gym> | Shows how interactive debugging environments and tools can be used to train/evaluate AI agents. |
 | **SWE-bench** | <https://www.swebench.com/original.html> | Shows how real-world GitHub issues can be turned into reproducible software-engineering debugging tasks. |
 | **BuLyst** | <https://buglyst.com/> | Directly focuses on practicing realistic debugging workflows rather than writing code from scratch. |

@@ -12,27 +12,27 @@ This meeting tests both.
 
 ## Questions
 
-**Business goals**
+### Business goals
 
 1. _(open)_  What made you decide to build this rather than point people to the debugging exercises that already exist?
 2. _(open)_ When this works, what is different about how people learn to debug?
 
-**End users**
+### End users
 
 3. _(open)_ Who would use this, and who decides whether a fix is correct?
 4. _(closed)_ Which tools did the last person you saw debugging use, and what did they use them for?
 
-**Current workflow**
+### Current workflow
 
 5. _(open)_  What did you do the last time an exercise you were given turned out to be broken, too easy, or impossible to solve?
 6. _(open)_ Walk me through the last time you practiced, or taught, debugging a specific kind of problem. What happened at each step?
 
-**Pain points and constraints**
+### Pain points and constraints
 
 7. _(open)_ What cannot change: tools, languages, where code can run, who pays?
 8. _(closed)_ Does a user have to be able to start an exercise with nothing installed beyond VS Code?
 
-**Scope**
+### Scope
 
 9. _(open)_  If only one thing shipped first, which would it be?
 10. _(open)_ What is explicitly out of the first version?
