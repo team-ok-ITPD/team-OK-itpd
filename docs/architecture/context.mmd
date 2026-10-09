@@ -1,0 +1,10 @@
+flowchart LR
+  learner["Learner"]
+  vscode["VS Code"]
+  agent["AI agent service (API)"]
+  subgraph boundary[" "]
+    product["Debug GYM<br/>(prepared debugging environment)"]
+  end
+  learner <-->|"investigates, runs tests, applies the fix"| vscode
+  vscode <-->|"remote SSH session"| product
+  product <-->|"hint requests and guidance"| agent
