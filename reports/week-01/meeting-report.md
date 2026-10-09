@@ -11,7 +11,7 @@
 ## 2. Attendance and roles
 
 - **Attendees:** @adelazzi, @UTKANOS-RIBA, @Danashi11, @qwxiae, Customer. The whole team attended.
-- **Interviewer:** @adelazzi and @UTKANOS-RIBA 
+- **Interviewer:** @adelazzi and @UTKANOS-RIBA
 - **Note-taker:** @qwxiae
 - **Observer:** @Danashi11
 

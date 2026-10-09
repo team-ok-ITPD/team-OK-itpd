@@ -8,7 +8,6 @@ Debug GYM, team 02.
 
 **License:** [LICENSE](../../LICENSE)
 
-
 **Problem space:** A developer who wants to practice debugging realistic, existing code must choose between small browser snippets and setting up a research environment themselves, and no product offers a ready-made realistic environment with optional guidance.
 
 ## What we did
@@ -48,7 +47,6 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 1. **Branch protection (main):** [Screenshot of the main branch protection settings](images/branch-protection.jpeg)
 2. **Merged pull request approved by another member:** [PR #13](https://github.com/team-ok-ITPD/team-OK-itpd/pull/13)
 3. **Latest green link check run:** [Link check run](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/37051775458)
-
 
 ## Deviations
 

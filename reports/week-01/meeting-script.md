@@ -12,7 +12,6 @@ This meeting tests both.
 
 ## Questions
 
-
 **Business goals**
 
 1. _(open)_  What made you decide to build this rather than point people to the debugging exercises that already exist?
