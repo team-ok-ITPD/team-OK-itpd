@@ -22,7 +22,7 @@ The following properties were selected before evaluating the alternatives:
 
 **Kind:** Direct competitor
 
-**Link:** https://www.trybughunt.com/
+**Link:** <https://www.trybughunt.com/>
 
 **Version looked at:** Website and challenge library, 2026-10-01
 
@@ -55,10 +55,10 @@ The following properties were selected before evaluating the alternatives:
 
 **Evidence:**
 
-* Product flow and learning model: https://www.trybughunt.com/
-* Challenge library: https://www.trybughunt.com/challenges
-* Bug patterns: https://www.trybughunt.com/bugs
-* Visualizer: https://www.trybughunt.com/visualize
+* Product flow and learning model: <https://www.trybughunt.com/>
+* Challenge library: <https://www.trybughunt.com/challenges>
+* Bug patterns: <https://www.trybughunt.com/bugs>
+* Visualizer: <https://www.trybughunt.com/visualize>
 
 ---
 
@@ -66,7 +66,7 @@ The following properties were selected before evaluating the alternatives:
 
 **Kind:** Adjacent substitute
 
-**Link:** https://www.codewars.com/kata?tags=Debugging
+**Link:** <https://www.codewars.com/kata?tags=Debugging>
 
 **Version looked at:** Website and official documentation, 2026-10-01
 
@@ -99,10 +99,10 @@ The following properties were selected before evaluating the alternatives:
 
 **Evidence:**
 
-* Debugging kata: https://www.codewars.com/kata?tags=Debugging
-* Kata trainer: https://docs.codewars.com/references/kata-trainer/
-* Tests: https://docs.codewars.com/concepts/kata/tests/
-* Bug-fixing kata authoring: https://docs.codewars.com/authoring/tutorials/create-first-kata/
+* Debugging kata: <https://www.codewars.com/kata?tags=Debugging>
+* Kata trainer: <https://docs.codewars.com/references/kata-trainer/>
+* Tests: <https://docs.codewars.com/concepts/kata/tests/>
+* Bug-fixing kata authoring: <https://docs.codewars.com/authoring/tutorials/create-first-kata/>
 
 ---
 
@@ -110,7 +110,7 @@ The following properties were selected before evaluating the alternatives:
 
 **Kind:** Open-source / self-hosted
 
-**Link:** https://github.com/microsoft/debug-gym
+**Link:** <https://github.com/microsoft/debug-gym>
 
 **Version looked at:** GitHub repository, main branch, 2026-10-01
 
@@ -144,7 +144,7 @@ The following properties were selected before evaluating the alternatives:
 
 **Evidence:**
 
-* Repository and installation: https://github.com/microsoft/debug-gym
-* System design and tools: https://github.com/microsoft/debug-gym#system-design
-* Human mode: https://github.com/microsoft/debug-gym#32-human-mode
-* Responsible AI / intended use: https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md
+* Repository and installation: <https://github.com/microsoft/debug-gym>
+* System design and tools: <https://github.com/microsoft/debug-gym#system-design>
+* Human mode: <https://github.com/microsoft/debug-gym#32-human-mode>
+* Responsible AI / intended use: <https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md>
