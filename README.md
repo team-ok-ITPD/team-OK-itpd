@@ -8,7 +8,22 @@ Debug GYM is a project focused on designing and developing a practical, interact
 
 Modern software development depends not only on writing code, but also on diagnosing and fixing defects efficiently. Debug GYM aims to provide a structured environment where learners and developers can strengthen their debugging workflows through realistic tasks, feedback, and progressive learning experiences.
 
-This repository currently captures the project’s research, candidate analysis, and early design direction as part of the ITPD course workflow.
+This repository is a work in progress for the ITPD course. It currently
+captures the project's research, requirements, product direction, prototypes,
+and weekly evidence.
+
+## Current Report
+
+- [Week 2: Requirements and Prototyping](reports/week-02/README.md)
+- [Week 1: Research and Kickoff](reports/week-01/README.md)
+
+## Maintained Documentation
+
+- [Product vision](docs/product-vision.md)
+- [Decisions](docs/decisions.md)
+- [Assumptions](docs/assumptions.md)
+- [Research](docs/research/)
+- [System context](docs/architecture/)
 
 ## Project Goals
 
@@ -33,12 +48,18 @@ Software debugging is a critical skill, yet many learning resources focus on cod
 ```text
 .
 ├── docs/                  # Documentation and research materials
-│   ├── README.md
-│   └── research/
+│   ├── architecture/      # System context diagram and source
+│   ├── research/          # Alternatives, comparison, gaps, and value propositions
+│   ├── assumptions.md
+│   ├── decisions.md
+│   └── product-vision.md
 ├── reports/               # Weekly project reports
-│   └── week-01/
+│   ├── week-01/
+│   └── week-02/
+├── .github/               # Issue forms, workflows, and pull request metadata
+├── .markdownlint-cli2.jsonc
 ├── README.md              # Project overview
 ├── LICENSE                # Project license
 ├── .gitignore             # Git ignore configuration
-├── .lycheeignore          # Link-checking ignore rules
-└── .github/               # GitHub automation and metadata
+└── .lycheeignore          # Link-checking ignore rules
+```
