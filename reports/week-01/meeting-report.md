@@ -11,7 +11,7 @@
 ## 2. Attendance and roles
 
 - **Attendees:** @adelazzi, @UTKANOS-RIBA, @Danashi11, @qwxiae, Customer. The whole team attended.
-- **Interviewer:** @adelazzi and @UTKANOS-RIBA 
+- **Interviewer:** @adelazzi and @UTKANOS-RIBA
 - **Note-taker:** @qwxiae
 - **Observer:** @Danashi11
 
@@ -26,7 +26,7 @@
 ## 4. Decisions
 
 | Decision | Rationale | Trace |
-|---|---|---|
+| --- | --- | --- |
 | Start the prototype with Python. | Python is the first prototype language; Go and Java remain later possibilities. | GAP-01, VP-01 |
 | Keep VS Code access central to the first product direction. | Access to debugging tools is important, and VS Code integration with remote SSH is the connection path to the prepared environment. | GAP-04, VP-03 |
 | Treat the system as a prepared debugging harness, not only an exercise gallery. | Dependencies, language tooling, container or VM access, reproduction commands, and verification tests are part of the experience. | GAP-01, GAP-04, VP-01, VP-03 |
@@ -35,7 +35,7 @@
 ## 5. Action points
 
 | Action | Owner | Due |
-|---|---|---|
+| --- | --- | --- |
 | Define the initial Python bug categories and wrМite at least one example for each category. | @adelazzi | Week 2: 2026-10-06 |
 | Clarify the first-version priority of scoring, leaderboard, attempt tracking, gallery, and categories in follow-up. | @qwxiae | Week 2: 2026-10-07 |
 | Specify the allowed agent behavior levels: explain only, hint, or reveal fix. | @UTKANOS-RIBA | Week 2: 2026-10-08 |
@@ -44,7 +44,7 @@
 ## 6. Disagreements
 
 | Topic | What changed or remains unresolved | Resolution |
-|---|---|---|
+| --- | --- | --- |
 | First prototype language | The project description and meeting example included Go, but the prototype should start with Python. | Resolved: prototype starts with Python; Go and Java are later possibilities. |
 | First-version feature set | Scoring, leaderboard, gallery, attempt tracking, and categories were listed but not ranked. | Unresolved: clarify first-version priorities in Week 2. |
 | Agent autonomy | The product needs an agent inside VS Code, but the notes do not define whether it may give hints, show fixes, or only explain. | Unresolved: define allowed assistance levels in Week 2. |

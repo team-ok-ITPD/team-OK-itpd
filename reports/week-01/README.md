@@ -8,7 +8,6 @@ Debug GYM, team 02.
 
 **License:** [LICENSE](../../LICENSE)
 
-
 **Problem space:** A developer who wants to practice debugging realistic, existing code must choose between small browser snippets and setting up a research environment themselves, and no product offers a ready-made realistic environment with optional guidance.
 
 ## What we did
@@ -24,7 +23,7 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 ## Coverage
 
 | Deliverable | Artifact |
-|---|---|
+| --- | --- |
 | Candidate list | [candidate_list.md](candidate_list.md) |
 | Alternatives search | [docs/research/alternatives.md](../../docs/research/alternatives.md) |
 | Compare the alternatives | [docs/research/comparison.md](../../docs/research/comparison.md) |
@@ -37,7 +36,7 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 ## Contribution
 
 | Member | Commits | Issues | Pull requests | Reviews |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | @adelazzi | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=adelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3Aadelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3Aadelazzi) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3Aadelazzi) |
 | @UTKANOS-RIBA | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=UTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3AUTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3AUTKANOS-RIBA) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3AUTKANOS-RIBA) |
 | @Danashi11 | [n](https://github.com/team-ok-ITPD/team-OK-itpd/commits?author=Danashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=is%3Aissue+author%3ADanashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3ADanashi11) | [n](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3ADanashi11) |
@@ -48,7 +47,6 @@ The four gaps are realistic tasks in a learner-facing product, feedback on the i
 1. **Branch protection (main):** [Screenshot of the main branch protection settings](images/branch-protection.jpeg)
 2. **Merged pull request approved by another member:** [PR #13](https://github.com/team-ok-ITPD/team-OK-itpd/pull/13)
 3. **Latest green link check run:** [Link check run](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/37051775458)
-
 
 ## Deviations
 

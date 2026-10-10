@@ -39,7 +39,7 @@ These gaps are hypotheses derived from the three alternatives in [`comparison.md
 These candidates were identified in the search but not selected for the three-product comparison. This is a scope decision, not a claim that they lack value.
 
 | Candidate | Reason not selected |
-|---|---|
+| --- | --- |
 | SWE-bench | Benchmark/task dataset rather than a learner-facing product. |
 | BuLyst | Overlaps with the direct debugging-practice angle represented by BugHunt. |
 | SadhanAI | AI-personalization angle is narrower than the selected comparison set. |
