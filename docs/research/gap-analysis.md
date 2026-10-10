@@ -2,37 +2,88 @@
 
 These gaps are hypotheses derived from the three alternatives in [`comparison.md`](comparison.md). They describe opportunities to investigate, not validated user needs.
 
-## GAP-01: Realistic tasks with a learner-facing experience
+## GAP-01
 
-**Evidence:** BugHunt uses compact bug challenges (ALT-01), while debug-gym supports repository-level tasks but is primarily an agent research framework (ALT-03). Codewars is a broad kata platform with debugging as one category (ALT-02).
+Realistic tasks with a learner-facing experience.
 
-**Gap:** Explore whether a learner-facing product can provide realistic, repository-level debugging without the setup burden of a research environment.
+- **Status:** Active
+- **Who needs it and what they cannot do:** learners who want realistic
+  debugging practice cannot work with repository-level tasks without taking on
+  the setup burden of a research environment.
+- **Evidence:** the `Debugging realism`, `Onboarding`, and
+  `Extensibility / deployment` rows in [the comparison](comparison.md) show
+  compact browser challenges in [ALT-01](alternatives.md#alt-01), a broad kata
+  platform in [ALT-02](alternatives.md#alt-02), and repository-level tasks in a
+  research framework with substantial setup in
+  [ALT-03](alternatives.md#alt-03).
+- **What closing it looks like:** a learner-facing product provides realistic,
+  repository-level debugging without the setup burden of a research
+  environment.
+- **Buildable by us in this course:** yes, if the first version uses a small set
+  of prepared exercises rather than a broad exercise library.
+- **Confidence:** Medium. The alternatives establish the product gap, but the
+  scale of codebase learners consider authentic and the setup they tolerate
+  still require validation.
 
-**Validation needed:** Ask learners what scale of codebase feels authentic and what setup they will tolerate.
+## GAP-02
 
-## GAP-02: Teach the investigation process, not only the final fix
+Teach the investigation process, not only the final fix.
 
-**Evidence:** BugHunt provides progressive hints and bug-pattern explanations (ALT-01). Codewars emphasizes tests and solution access (ALT-02). Debug-gym exposes debugging tools and observations for agent interaction (ALT-03).
+- **Status:** Active
+- **Who needs it and what they cannot do:** learners who want to improve their
+  debugging method cannot tell from final test results alone whether their
+  investigation process is becoming repeatable.
+- **Evidence:** the `Feedback & guidance` and `Investigation support` rows in
+  [the comparison](comparison.md) show progressive hints in
+  [ALT-01](alternatives.md#alt-01), test and solution feedback in
+  [ALT-02](alternatives.md#alt-02), and rich observations intended primarily
+  for agents in [ALT-03](alternatives.md#alt-03).
+- **What closing it looks like:** feedback helps learners reason about their
+  investigation steps as well as whether their final fix passes.
+- **Buildable by us in this course:** yes, if process feedback is limited to the
+  investigation signals and explanations used by the first exercise set.
+- **Confidence:** Medium. The alternatives provide little learner-focused
+  process feedback, but which signals learners find useful without revealing
+  the answer still requires validation.
 
-**Gap:** Explore feedback that helps learners reason about investigation steps as well as whether their final fix passes.
+## GAP-03
 
-**Validation needed:** Determine which process signals or explanations learners find useful without giving away the answer.
+Balance guidance and learner agency.
 
-## GAP-03: Balance guidance and learner agency
+- **Status:** Active
+- **Who needs it and what they cannot do:** learners who become stuck need help
+  without having the investigation or fix completed for them.
+- **Evidence:** the `Feedback & guidance` and `AI assistance` rows in
+  [the comparison](comparison.md) show structured hints in
+  [ALT-01](alternatives.md#alt-01), mostly result-oriented feedback in
+  [ALT-02](alternatives.md#alt-02), and tools designed for agent interaction in
+  [ALT-03](alternatives.md#alt-03).
+- **What closing it looks like:** learners can request adjustable, timely
+  guidance while retaining responsibility for the investigation and fix.
+- **Buildable by us in this course:** yes, if guidance is optional and its
+  initial levels are limited to the first exercise set.
+- **Confidence:** Medium. The evidence shows different guidance models, but the
+  timing and amount of help learners prefer still require validation.
 
-**Evidence:** BugHunt's hints offer structured guidance (ALT-01); Codewars' feedback is mainly test output and solutions (ALT-02); debug-gym's tools are rich but designed for agent interaction (ALT-03).
+## GAP-04
 
-**Gap:** Explore adjustable, timely guidance that supports a learner while leaving the investigation to them.
+Lower setup friction while retaining useful investigation tools.
 
-**Validation needed:** Test when learners want hints, how much detail they want, and whether guidance should be optional.
-
-## GAP-04: Lower setup friction while retaining useful investigation tools
-
-**Evidence:** BugHunt and Codewars are browser-based (ALT-01, ALT-02); debug-gym requires Python, package and environment setup, and often Docker (ALT-03).
-
-**Gap:** Explore an onboarding path that makes it easy to start while still exposing enough tools for meaningful debugging.
-
-**Validation needed:** Observe first-task completion and identify setup steps that block learners.
+- **Status:** Active
+- **Who needs it and what they cannot do:** learners who want to begin a
+  debugging task quickly cannot get both low-friction onboarding and useful
+  investigation tools from the evaluated alternatives.
+- **Evidence:** the `Onboarding` and `Investigation support` rows in
+  [the comparison](comparison.md) show low-friction browser access in
+  [ALT-01](alternatives.md#alt-01) and [ALT-02](alternatives.md#alt-02), while
+  the richer tools in [ALT-03](alternatives.md#alt-03) require Python, package,
+  environment, and often Docker setup.
+- **What closing it looks like:** learners start with little setup while still
+  receiving enough tools for meaningful debugging.
+- **Buildable by us in this course:** yes, if the product prepares one
+  constrained environment and toolchain for the initial exercises.
+- **Confidence:** Medium. The setup contrast is clear, but first-task
+  observation is still needed to identify which steps block learners.
 
 ## Rejected from detailed comparison
 
