@@ -18,19 +18,20 @@ The following properties were selected before evaluating the alternatives:
 
 ---
 
-## ALT-01: BugHunt
+## ALT-01
 
-**Kind:** Direct competitor
+BugHunt
 
-**Link:** <https://www.trybughunt.com/>
+- **Status:** Active
+- **Kind:** Direct competitor, hosted
+- **Link:** <https://www.trybughunt.com/>
+- **Version looked at:** Website and challenge library, 2026-10-01
+- **Depth of evaluation:** Tested the public challenge flow and reviewed the
+  challenge library, bug-pattern pages, visualizer, and product description.
+- **Problem it solves:** Helps developers practice finding and fixing bugs in
+  existing code instead of only writing code from scratch.
 
-**Version looked at:** Website and challenge library, 2026-10-01
-
-**Depth of evaluation:** Tested the public challenge flow and reviewed the challenge library, bug-pattern pages, visualizer, and product description.
-
-**Problem it solves:** Helps developers practice finding and fixing bugs in existing code instead of only writing code from scratch.
-
-### Observations by property
+**Observations by property**
 
 | Property                       | Observation                                                                                                                                                                          |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -42,39 +43,40 @@ The following properties were selected before evaluating the alternatives:
 | **Onboarding**                 | A challenge can be started directly in the browser without an account or installation.                                                                                               |
 | **Extensibility / deployment** | The public product is a hosted browser experience. No public mechanism for users to create or self-host their own challenge environment was observed during this evaluation.         |
 
-### Strengths
+**Strengths**
 
-* The task structure closely matches the core debugging activity: the user receives existing code and a symptom, then has to locate and fix the bug.
-* Progressive hints and explanations turn the result of a debugging attempt into a learning experience rather than simply marking the answer as correct.
+- The task structure closely matches the core debugging activity: the user receives existing code and a symptom, then has to locate and fix the bug.
+- Progressive hints and explanations turn the result of a debugging attempt into a learning experience rather than simply marking the answer as correct.
 
-### Weaknesses
+**Weaknesses**
 
-* The public experience does not appear to use AI to adapt the debugging process or provide conversational assistance.
-* The challenges are relatively small and self-contained; the evaluated flow does not reproduce the complexity of debugging a multi-file repository or production-like codebase.
-* The public product does not expose an obvious self-hosting or custom-environment workflow.
+- The public experience does not appear to use AI to adapt the debugging process or provide conversational assistance.
+- The challenges are relatively small and self-contained; the evaluated flow does not reproduce the complexity of debugging a multi-file repository or production-like codebase.
+- The public product does not expose an obvious self-hosting or custom-environment workflow.
 
 **Evidence:**
 
-* Product flow and learning model: <https://www.trybughunt.com/>
-* Challenge library: <https://www.trybughunt.com/challenges>
-* Bug patterns: <https://www.trybughunt.com/bugs>
-* Visualizer: <https://www.trybughunt.com/visualize>
+- Product flow and learning model: <https://www.trybughunt.com/>
+- Challenge library: <https://www.trybughunt.com/challenges>
+- Bug patterns: <https://www.trybughunt.com/bugs>
+- Visualizer: <https://www.trybughunt.com/visualize>
 
 ---
 
-## ALT-02: Codewars
+## ALT-02
 
-**Kind:** Adjacent substitute
+Codewars
 
-**Link:** <https://www.codewars.com/kata?tags=Debugging>
+- **Status:** Active
+- **Kind:** Adjacent substitute, hosted
+- **Link:** <https://www.codewars.com/kata?tags=Debugging>
+- **Version looked at:** Website and official documentation, 2026-10-01
+- **Depth of evaluation:** Reviewed the Debugging kata collection, kata trainer
+  documentation, testing documentation, and kata authoring documentation.
+- **Problem it solves:** Provides repeated coding practice through short
+  challenges, including a dedicated Bug Fixes / Debugging category.
 
-**Version looked at:** Website and official documentation, 2026-10-01
-
-**Depth of evaluation:** Reviewed the Debugging kata collection, kata trainer documentation, testing documentation, and kata authoring documentation.
-
-**Problem it solves:** Provides repeated coding practice through short challenges, including a dedicated Bug Fixes / Debugging category.
-
-### Observations by property
+**Observations by property**
 
 | Property                       | Observation                                                                                                                                                                                               |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -86,39 +88,41 @@ The following properties were selected before evaluating the alternatives:
 | **Onboarding**                 | The user can select a kata and enter the trainer directly; the trainer provides the task description, editor, tests, and output in one environment.                                                       |
 | **Extensibility / deployment** | Users can author their own kata, including initial code, solutions, sample tests, submission tests, and language-specific configurations, but creating kata requires the appropriate authoring privilege. |
 
-### Strengths
+**Strengths**
 
-* Large and varied practice ecosystem with explicit difficulty/ranking and many programming languages.
-* Strong automated verification: sample tests can be run during development and a full hidden test suite is required for completion.
+- Large and varied practice ecosystem with explicit difficulty/ranking and many programming languages.
+- Strong automated verification: sample tests can be run during development and a full hidden test suite is required for completion.
 
-### Weaknesses
+**Weaknesses**
 
-* The platform is primarily a general coding-practice system; debugging is only one category among many rather than the central learning workflow.
-* The trainer focuses heavily on whether the final solution passes tests; it does not explicitly evaluate or teach the user's investigation process.
-* No AI debugging assistance was observed in the evaluated experience.
+- The platform is primarily a general coding-practice system; debugging is only one category among many rather than the central learning workflow.
+- The trainer focuses heavily on whether the final solution passes tests; it does not explicitly evaluate or teach the user's investigation process.
+- No AI debugging assistance was observed in the evaluated experience.
 
 **Evidence:**
 
-* Debugging kata: <https://www.codewars.com/kata?tags=Debugging>
-* Kata trainer: <https://docs.codewars.com/references/kata-trainer/>
-* Tests: <https://docs.codewars.com/concepts/kata/tests/>
-* Bug-fixing kata authoring: <https://docs.codewars.com/authoring/tutorials/create-first-kata/>
+- Debugging kata: <https://www.codewars.com/kata?tags=Debugging>
+- Kata trainer: <https://docs.codewars.com/references/kata-trainer/>
+- Tests: <https://docs.codewars.com/concepts/kata/tests/>
+- Bug-fixing kata authoring: <https://docs.codewars.com/authoring/tutorials/create-first-kata/>
 
 ---
 
-## ALT-03: Microsoft debug-gym
+## ALT-03
 
-**Kind:** Open-source / self-hosted
+Microsoft debug-gym
 
-**Link:** <https://github.com/microsoft/debug-gym>
+- **Status:** Active
+- **Kind:** Open-source, self-hosted
+- **Link:** <https://github.com/microsoft/debug-gym>
+- **Version looked at:** GitHub repository, main branch, 2026-10-01
+- **Depth of evaluation:** Reviewed the repository README, system design,
+  debugging tools, agent architecture, benchmark support, terminal backends,
+  and human mode.
+- **Problem it solves:** Provides an interactive environment for developing and
+  evaluating AI debugging agents on repository-level Python debugging tasks.
 
-**Version looked at:** GitHub repository, main branch, 2026-10-01
-
-**Depth of evaluation:** Reviewed the repository README, system design, debugging tools, agent architecture, benchmark support, terminal backends, and human mode.
-
-**Problem it solves:** Provides an interactive environment for developing and evaluating AI debugging agents on repository-level Python debugging tasks.
-
-### Observations by property
+**Observations by property**
 
 | Property                       | Observation                                                                                                                                                                                              |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -130,21 +134,21 @@ The following properties were selected before evaluating the alternatives:
 | **Onboarding**                 | Requires Python 3.12, package installation, LLM configuration, and environment setup. Docker is recommended for the terminal environment.                                                                |
 | **Extensibility / deployment** | Highly extensible: users can add custom tools and configure agents, environments, benchmarks, LLM backends, and terminal implementations. It can run locally with Docker or at scale using Kubernetes.   |
 
-### Strengths
+**Strengths**
 
-* Provides a rich interactive debugging environment rather than reducing debugging to repeated code generation and test execution.
-* Highly extensible and self-hostable, allowing researchers to add custom tools, agents, benchmarks, and environments.
-* Supports both LLM-based agents and a human mode for manually interacting with the debugging environment.
+- Provides a rich interactive debugging environment rather than reducing debugging to repeated code generation and test execution.
+- Highly extensible and self-hostable, allowing researchers to add custom tools, agents, benchmarks, and environments.
+- Supports both LLM-based agents and a human mode for manually interacting with the debugging environment.
 
-### Weaknesses
+**Weaknesses**
 
-* The system is designed primarily as a research framework for AI debugging agents rather than as a polished learning product for human developers.
-* Setup is significantly more complex than browser-based alternatives: it requires Python, package installation, LLM configuration, and usually Docker.
-* Current support is focused on Python repositories and Linux environments; the project explicitly describes limitations for other languages/platforms.
+- The system is designed primarily as a research framework for AI debugging agents rather than as a polished learning product for human developers.
+- Setup is significantly more complex than browser-based alternatives: it requires Python, package installation, LLM configuration, and usually Docker.
+- Current support is focused on Python repositories and Linux environments; the project explicitly describes limitations for other languages/platforms.
 
 **Evidence:**
 
-* Repository and installation: <https://github.com/microsoft/debug-gym>
-* System design and tools: <https://github.com/microsoft/debug-gym#system-design>
-* Human mode: <https://github.com/microsoft/debug-gym#32-human-mode>
-* Responsible AI / intended use: <https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md>
+- Repository and installation: <https://github.com/microsoft/debug-gym>
+- System design and tools: <https://github.com/microsoft/debug-gym#system-design>
+- Human mode: <https://github.com/microsoft/debug-gym#32-human-mode>
+- Responsible AI / intended use: <https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md>
