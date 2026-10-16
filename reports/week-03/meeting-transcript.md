@@ -1,6 +1,6 @@
 # Prototype validation meeting transcript
 
-- **Date:** 16.10.2026
+- **Date:** 2026-10-16
 - **Participants:** <names> (Speaker A, Speaker B, Speaker C)
 
 **[00:00:00] Speaker A:** Uh, as we understand the project, it will be wonderful
