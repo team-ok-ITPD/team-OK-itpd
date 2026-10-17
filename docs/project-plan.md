@@ -80,6 +80,6 @@ Provisional: the release candidate meets the agreed threshold measures available
 - **Checked by:** all four team members walk the sprint goal, scheduled issues,
   threshold measures, and risk triggers; each accountable member reports the
   state of their issues.
-- **Visible at:** the organization's
-  [GitHub Projects](https://github.com/orgs/team-ok-ITPD/projects) table and the
-  [sprints' GitHub milestones](https://github.com/team-ok-ITPD/team-OK-itpd/milestones).
+- **Visible at:** the public
+  [GitHub Projects sprint table](https://github.com/orgs/team-ok-ITPD/projects/1)
+  and the [sprints' GitHub milestones](https://github.com/team-ok-ITPD/team-OK-itpd/milestones).

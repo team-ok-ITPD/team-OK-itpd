@@ -7,9 +7,9 @@ is split into task issues, and one pull request closes exactly one task. Assign
 the issue to its sprint milestone and to the same two members named by its
 `Responsible` and `Accountable` fields.
 
-The team uses the public GitHub Projects table linked from the
-[organization's projects page](https://github.com/orgs/team-ok-ITPD/projects) to
-see ownership and status across the repository. The table is grouped by
+The team uses the public
+[GitHub Projects sprint table](https://github.com/orgs/team-ok-ITPD/projects/1)
+to see ownership and status across the repository. The table is grouped by
 milestone so sprint scope and unscheduled work are visible together. Sprint
 backlogs remain visible in the repository's
 [milestones](https://github.com/team-ok-ITPD/team-OK-itpd/milestones).
