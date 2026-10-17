@@ -1,22 +1,9 @@
-## Manual verification results
+# Week 3 MUP Verification
 
-The MUP was started successfully in an isolated Docker Compose project. The catalog and workspace health endpoints responded, and a supported exercise request returned the live workspace URL.
+The detailed Week 3 audit, manual verification evidence, acceptance-criterion matrix, and outstanding requirements are documented in the [Week 3 report](README.md).
 
-The exercise initially showed the expected test failures. After replacing the buggy implementation with the reference solution, all three exercise tests passed. Resetting the isolated workspace restored the original buggy exercise.
+Manual verification confirmed that the isolated Docker Compose environment started successfully, the catalog and workspace health endpoints responded, and a supported exercise returned a working workspace URL.
 
-Browser-based debugging was verified manually in code-server. Breakpoints, stepping through execution, and inspecting variables worked as expected.
+The original exercise reproduced the expected test failures. Applying the reference solution made all three exercise tests pass, and resetting the workspace restored the original buggy exercise. Browser-based debugging was also verified using breakpoints, stepping, and variable inspection in code-server.
 
-### Verified
-
-- Docker Compose startup and workspace health.
-- Supported exercise retrieval.
-- Expected initial test failures.
-- Reference solution passing all three tests.
-- Reset restoring the original buggy exercise.
-- Browser-based breakpoint debugging, stepping, and variable inspection.
-
-### Outstanding
-
-- SSH and workspace access-control requirements remain unresolved. The current workspace uses unauthenticated browser-based code-server. Track this separately and resolve the customer/team decision before claiming US-05 fully satisfies its acceptance criteria.
-
-- Repeat the setup procedure from `docs/setup.md` if this has not already been verified against a clean checkout.
+**Outstanding:** SSH and workspace access-control requirements remain unresolved. The current workspace uses unauthenticated browser-based code-server. See the detailed report before marking US-05 complete.

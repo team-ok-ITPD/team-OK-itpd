@@ -19,7 +19,7 @@ This repository is a work in progress for the ITPD course. It captures the proje
 ## Setup and Documentation
 
 - [Setup and run](docs/setup.md)
-- [Documentation site](https://team-ok-itpd.github.io/)
+- [Documentation site](https://team-ok-itpd.github.io/team-OK-itpd/)
 - [Documentation index](docs/index.md)
 
 ## Maintained Documentation
@@ -61,7 +61,7 @@ Software debugging is a critical skill, yet many learning resources focus on cod
 │   ├── index.md
 │   ├── product-vision.md
 │   └── setup.md
-├── reports/                       # Weekly reports and evidence
+├── reports/                       # Weekly project reports and evidence
 │   ├── week-01/                   # Research and kickoff
 │   ├── week-02/                   # Requirements and prototyping
 │   └── week-03/                   # MUP verification

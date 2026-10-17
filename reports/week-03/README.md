@@ -1,107 +1,111 @@
-# Week 3 report
+# Week 3 MUP Verification
 
-## Project
+## Scope and provenance
 
-- **Project:** Debug GYM
-- **Team:** Team 02
-- **Week:** Week 3, Customer Validation and Initial Implementation
-- **Scope:** Validate the Figma prototype with the customer, record product
-  decisions, and prepare a runnable Python debugging exercise.
+- Task: [#57](https://github.com/team-ok-ITPD/team-OK-itpd/issues/57).
+- Verification date: 2026-10-17.
+- Initial audit baseline: `62da3c55e50d0b8ccaea3b3d430a79bb78ab22a7` on `main`.
+- The initial audit used a separate clone, Python 3.13, pytest 8.4.2, and Docker Desktop.
+- The initial audit and the subsequent manual rehearsal are reported separately so that earlier findings are not confused with later verification.
+- These results document team verification. They do not constitute Customer acceptance or automatically close user stories.
 
-## Summary
+## Initial automated and source-level audit
 
-The customer reviewed the New Challenge and Practice screens and clarified
-several requirements. Learners need to debug and submit through VS Code with a
-real debugger; an exercise should include a correct program, a buggy program,
-and pytest tests; and the interface should make language selection easy to
-find, preview only the problem statement, and show complete test output.
+The initial audit executed:
 
-The repository also contains an initial runnable exercise flow: a catalog
-service, a prepared Python exercise in a browser-based VS Code workspace, and
-tests that confirm the exercise reproduces its bug and that the reference
-solution passes. The delivery approach for VS Code and the environment for
-running learner code are still open technical questions.
-
-## Customer validation outcomes
-
-The meeting recorded five decisions:
-
-- [DEC-006: Include a correct program, a buggy program, and pytest tests](../../docs/decisions.md#dec-006)
-- [DEC-007: Debug and submit in VS Code with a real debugger](../../docs/decisions.md#dec-007)
-- [DEC-008: Show only the problem statement in the exercise preview](../../docs/decisions.md#dec-008)
-- [DEC-009: Make language selection prominent in the request form](../../docs/decisions.md#dec-009)
-- [DEC-010: Show the full test output](../../docs/decisions.md#dec-010)
-
-The customer did not settle how VS Code will be delivered, where learner code
-will execute, whether learners can see and edit all tests, or how to verify
-that a generated exercise contains the intended bug. Follow-up actions and
-meeting details are in the [customer validation meeting report](meeting-report.md).
-
-## Runnable prototype
-
-The prepared exercise, **The surviving negative**, demonstrates a Python list
-mutation bug. The exercise instructions explain how to reproduce the failure,
-debug it, and verify a fix in the VS Code workspace.
-
-From the repository root, run:
-
-```sh
-docker compose up --build
+```powershell
+python -m pip install -r requirements.lock
+python -m pytest -q
+docker compose -p itpd-artem-audit config --quiet
 ```
 
-The catalog is available at `http://localhost:3000`, and the browser-based
-VS Code workspace is at `http://localhost:8080`. Docker Engine must be running.
-A supported exercise request now checks the workspace health endpoint first;
-if the workspace is unavailable, the catalog returns HTTP 503 with an error
-instead of a success response containing a dead workspace link.
+The recorded results were:
 
-## Verification
+- Product tests: **7 passed**.
+- Docker Compose configuration validation passed.
+- The exercise reproduced its intended defect when run with `python -m pytest -q`.
+- The reference solution passed the exercise tests in the product test workflow.
+- The supported catalog request returned the `remove-negatives` exercise and a workspace URL.
+- An unsupported concurrency request returned HTTP 404.
+- `git diff --check` passed.
 
-On the current working tree, the product test suite passed (**11 tests**), and
-`docker compose build` completed. An isolated Compose run on alternate host
-ports served the catalog and workspace health endpoints, returned the live
-workspace URL for a supported request, and exposed Python, pytest, and the
-debugger launch configuration in the code-server process environment.
+The initial audit also found that the documented `pytest -q` command failed collection with `ModuleNotFoundError: remove_negatives` in the audit environment. Confirm that this discrepancy is resolved in the current workspace before claiming that the documented terminal workflow is fully verified.
 
-In that isolated workspace, the exercise tests first reproduced the intended
-two failures. Replacing the exercise with the reference implementation made
-all three tests pass. Removing only the isolated Compose project's volume and
-recreating it restored the original failing exercise. This was a container
-smoke test from the working tree, not an independent clean-clone audit.
+The initial Docker image build was cancelled after approximately five minutes of slow base-image downloads. This was an incomplete build attempt, not a demonstrated build failure.
 
-The breakpoint and step-through workflow was not manually exercised in the
-browser. The VS Code SSH and access-control acceptance criteria also remain
-unresolved; the current implementation still uses browser-based code-server
-with authentication disabled.
+## Manual MUP verification
 
-## Coverage
+The team subsequently started the MUP successfully in an isolated Docker Compose project and performed the following manual checks.
 
-| Deliverable | Artifact |
-| --- | --- |
-| Customer validation | [Meeting report](meeting-report.md), [script](meeting-script.md), and [transcript](meeting-transcript.md) |
-| Product decisions | [DEC-006 through DEC-010](../../docs/decisions.md#dec-006) |
-| Project milestone and sprint goals | [Project plan](../../docs/project-plan.md) |
-| Exercise instructions | [The surviving negative](../../exercise/README.md) |
-| Buggy exercise and reproduction tests | [Exercise source](../../exercise/remove_negatives.py) and [exercise tests](../../exercise/tests/test_remove_negatives.py) |
-| Catalog and web interface | [Catalog service](../../app/server.py) and [static assets](../../app/static/) |
-| Container setup | [Dockerfile](../../Dockerfile), [Compose configuration](../../compose.yaml), and [startup script](../../scripts/start.sh) |
-| Product contract tests | [Catalog tests](../../product_tests/test_catalog.py) and [exercise contract tests](../../product_tests/test_exercise_contract.py) |
+### Catalog and workspace
 
-## Remaining questions
+- [x] Docker Compose started successfully.
+- [x] Catalog health endpoint responded.
+- [x] Workspace health endpoint responded.
+- [x] A supported exercise request returned the live workspace URL.
+- [x] The exercise workspace opened successfully.
 
-- Should learner code run in a sandboxed server-side container or on the
-  learner's computer?
-- Will learners see and edit all tests, or only selected tests?
-- Will VS Code be standalone, browser-based, or supported through a custom
-  extension?
-- How can the team verify that an exercise contains the specific intended bug,
-  beyond confirming that tests fail?
+### Reproduction, fix, and reset
 
-These questions and proposed follow-up actions are recorded in the
-[meeting report](meeting-report.md). The decisions above do not resolve these
-implementation choices.
+- [x] The original exercise reproduced the expected test failures.
+- [x] The buggy implementation was replaced with the reference solution.
+- [x] All three exercise tests passed after applying the reference solution.
+- [x] Resetting the isolated workspace restored the original buggy exercise.
 
-## Privacy
+### Browser-based debugging
 
-The meeting report records that recording was permitted. No private-only
-material is identified as a repository deliverable.
+- [x] Browser-based debugging was verified manually in code-server.
+- [x] Breakpoints worked.
+- [x] Stepping through execution worked.
+- [x] Variable inspection worked.
+
+These results supersede the initial audit's pending status for the checks explicitly listed above. They do not establish that every story acceptance criterion is satisfied.
+
+## Acceptance-criterion matrix
+
+This matrix records the available evidence. Story closure remains subject to the complete acceptance criteria in GitHub.
+
+| Story | Criterion | Current evidence and status |
+|---|---|---|
+| [US-01 / #28](https://github.com/team-ok-ITPD/team-OK-itpd/issues/28) | AC-01 | Supported exercise request returned the exercise and workspace URL. Verified manually. |
+| US-01 / #28 | AC-02 | Unsupported request returned the expected no-match response in the initial audit. Retain the evidence and confirm the criterion is satisfied. |
+| [US-02 / #29](https://github.com/team-ok-ITPD/team-OK-itpd/issues/29) | AC-01 | Docker Compose and workspace startup were verified manually. |
+| US-02 / #29 | AC-02 | Workspace health was verified, but the separate error-handling and access requirements must be checked against the issue's exact wording. |
+| [US-03 / #30](https://github.com/team-ok-ITPD/team-OK-itpd/issues/30) | AC-01 | The exercise reproduced the expected failures manually. Confirm the documented command works in the current container. |
+| US-03 / #30 | AC-02 | Repeatable buggy behavior was checked in the initial product tests; the manual reset restored the original buggy exercise. |
+| [US-04 / #31](https://github.com/team-ok-ITPD/team-OK-itpd/issues/31) | AC-01 | The reference solution passed all three exercise tests after manual application. |
+| US-04 / #31 | AC-02 | The initial bug and successful reference solution were verified. Check the exact story criteria before marking the issue complete. |
+| [US-05 / #32](https://github.com/team-ok-ITPD/team-OK-itpd/issues/32) | AC-01 | Browser-based breakpoint debugging, stepping, and variable inspection were verified. The SSH requirement remains unresolved. |
+| US-05 / #32 | AC-02 | Browser-based debugging works, but the current workspace uses unauthenticated code-server. The access-control requirement remains unresolved. |
+
+**Important:** Update the checkboxes in GitHub issues #28–#32 individually. This report does not replace the required acceptance-criteria review.
+
+## Outstanding issues and follow-up
+
+### SSH and workspace access control
+
+The current workspace uses browser-based code-server with authentication disabled (`--auth none`). The original US-05 criteria require SSH and access control.
+
+Browser debugging working successfully does not resolve this mismatch.
+
+Track the decision and follow-up in the separate SSH/access-control issue. Document whether SSH is mandatory or whether browser-only access is acceptable, implement the agreed requirements, and verify the resulting access controls before claiming US-05 is fully satisfied.
+
+### Python test command
+
+The initial audit recorded an import failure with the documented `pytest -q` command, while `python -m pytest -q` reproduced the intended exercise defect.
+
+Verify both commands in the current container using the documented Python environment. Update the setup instructions if the commands behave differently.
+
+### Configurable catalog port
+
+The initial source audit identified a possible mismatch between `DEBUG_GYM_CATALOG_PORT` and the Compose port mapping. Verify a non-default port against the current implementation before treating this as resolved.
+
+### Setup documentation
+
+The initial audit was conducted before `docs/setup.md` was available. The setup documentation has since been added. A separate clean-checkout run following those instructions is still needed if that procedure has not already been verified.
+
+## AI assistance
+
+Codex assisted with repository inspection, test analysis, and drafting the initial audit. The team subsequently performed the manual MUP verification described in this report.
+
+The reported manual results are distinct from the initial audit and do not constitute Customer acceptance. Review the outstanding criteria and record the Customer/team decision before closing the affected stories.
