@@ -18,6 +18,10 @@ Closes #
 
 <!-- Tell the reviewer what to inspect and which linked requirements apply. -->
 
+## Changelog
+
+- [ ] This change is not user-visible, or `[Unreleased]` includes it.
+
 ## Requirements / acceptance criteria
 
 - [ ] Every acceptance criterion in the linked task issue is satisfied and ticked.

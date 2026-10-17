@@ -43,3 +43,15 @@ Preserve learner agency while using an agent for help.
 - **Source:** [the Week 1 kickoff meeting](../reports/week-01/meeting-report.md#4-decisions)
 - **Why:** the agent assists inside VS Code while the learner investigates and
   performs the fix; the exact assistance levels remain open.
+
+## DEC-005
+
+Build the minimum usable product with Docker, code-server, Python, and pytest.
+
+- **Status:** Active
+- **Date:** 2026-10-17
+- **Made by:** Team
+- **Source:** [the Week 3 planning task](https://github.com/team-ok-ITPD/team-OK-itpd/issues/52)
+- **Why:** the Week 2 spike already demonstrated a browser-accessible VS Code
+  environment with Python tooling and breakpoint debugging, while pytest gives
+  each exercise executable reproduction and verification checks.
