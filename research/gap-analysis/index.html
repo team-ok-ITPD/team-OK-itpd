@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://team-ok-itpd.github.io/team-OK-itpd/research/gap-analysis/">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Gap analysis - Debug GYM</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Debug GYM</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../setup/" class="nav-link">Setup and run</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../product-vision/" class="nav-link">Product vision</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Planning</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../threshold-of-success/" class="dropdown-item">Threshold of success</a>
+</li>
+                                    
+<li>
+    <a href="../../project-plan/" class="dropdown-item">Project plan</a>
+</li>
+                                    
+<li>
+    <a href="../../risks/" class="dropdown-item">Risks</a>
+</li>
+                                    
+<li>
+    <a href="../../definition-of-done/" class="dropdown-item">Definition of Done</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../decisions/" class="nav-link">Decisions</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../assumptions/" class="nav-link">Assumptions</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Research</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../value-proposition/" class="dropdown-item">Value proposition</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Gap analysis</a>
+</li>
+                                    
+<li>
+    <a href="../comparison/" class="dropdown-item">Comparison</a>
+</li>
+                                    
+<li>
+    <a href="../alternatives/" class="dropdown-item">Alternatives</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../value-proposition/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../comparison/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/research/gap-analysis.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#gap-analysis" class="nav-link">Gap Analysis</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#gap-01" class="nav-link">GAP-01</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#gap-02" class="nav-link">GAP-02</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#gap-03" class="nav-link">GAP-03</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#gap-04" class="nav-link">GAP-04</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#rejected-from-detailed-comparison" class="nav-link">Rejected from detailed comparison</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="gap-analysis">Gap Analysis</h1>
+<p>These gaps are hypotheses derived from the three alternatives in <a href="../comparison/"><code>comparison.md</code></a>. They describe opportunities to investigate, not validated user needs.</p>
+<h2 id="gap-01">GAP-01</h2>
+<p>Realistic tasks with a learner-facing experience.</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Who needs it and what they cannot do:</strong> learners who want realistic
+  debugging practice cannot work with repository-level tasks without taking on
+  the setup burden of a research environment.</li>
+<li><strong>Evidence:</strong> the <code>Debugging realism</code>, <code>Onboarding</code>, and
+  <code>Extensibility / deployment</code> rows in <a href="../comparison/">the comparison</a> show
+  compact browser challenges in <a href="../alternatives/#alt-01">ALT-01</a>, a broad kata
+  platform in <a href="../alternatives/#alt-02">ALT-02</a>, and repository-level tasks in a
+  research framework with substantial setup in
+  <a href="../alternatives/#alt-03">ALT-03</a>.</li>
+<li><strong>What closing it looks like:</strong> a learner-facing product provides realistic,
+  repository-level debugging without the setup burden of a research
+  environment.</li>
+<li><strong>Buildable by us in this course:</strong> yes, if the first version uses a small set
+  of prepared exercises rather than a broad exercise library.</li>
+<li><strong>Confidence:</strong> Medium. The alternatives establish the product gap, but the
+  scale of codebase learners consider authentic and the setup they tolerate
+  still require validation.</li>
+</ul>
+<h2 id="gap-02">GAP-02</h2>
+<p>Teach the investigation process, not only the final fix.</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Who needs it and what they cannot do:</strong> learners who want to improve their
+  debugging method cannot tell from final test results alone whether their
+  investigation process is becoming repeatable.</li>
+<li><strong>Evidence:</strong> the <code>Feedback &amp; guidance</code> and <code>Investigation support</code> rows in
+  <a href="../comparison/">the comparison</a> show progressive hints in
+  <a href="../alternatives/#alt-01">ALT-01</a>, test and solution feedback in
+  <a href="../alternatives/#alt-02">ALT-02</a>, and rich observations intended primarily
+  for agents in <a href="../alternatives/#alt-03">ALT-03</a>.</li>
+<li><strong>What closing it looks like:</strong> feedback helps learners reason about their
+  investigation steps as well as whether their final fix passes.</li>
+<li><strong>Buildable by us in this course:</strong> yes, if process feedback is limited to the
+  investigation signals and explanations used by the first exercise set.</li>
+<li><strong>Confidence:</strong> Medium. The alternatives provide little learner-focused
+  process feedback, but which signals learners find useful without revealing
+  the answer still requires validation.</li>
+</ul>
+<h2 id="gap-03">GAP-03</h2>
+<p>Balance guidance and learner agency.</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Who needs it and what they cannot do:</strong> learners who become stuck need help
+  without having the investigation or fix completed for them.</li>
+<li><strong>Evidence:</strong> the <code>Feedback &amp; guidance</code> and <code>AI assistance</code> rows in
+  <a href="../comparison/">the comparison</a> show structured hints in
+  <a href="../alternatives/#alt-01">ALT-01</a>, mostly result-oriented feedback in
+  <a href="../alternatives/#alt-02">ALT-02</a>, and tools designed for agent interaction in
+  <a href="../alternatives/#alt-03">ALT-03</a>.</li>
+<li><strong>What closing it looks like:</strong> learners can request adjustable, timely
+  guidance while retaining responsibility for the investigation and fix.</li>
+<li><strong>Buildable by us in this course:</strong> yes, if guidance is optional and its
+  initial levels are limited to the first exercise set.</li>
+<li><strong>Confidence:</strong> Medium. The evidence shows different guidance models, but the
+  timing and amount of help learners prefer still require validation.</li>
+</ul>
+<h2 id="gap-04">GAP-04</h2>
+<p>Lower setup friction while retaining useful investigation tools.</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Who needs it and what they cannot do:</strong> learners who want to begin a
+  debugging task quickly cannot get both low-friction onboarding and useful
+  investigation tools from the evaluated alternatives.</li>
+<li><strong>Evidence:</strong> the <code>Onboarding</code> and <code>Investigation support</code> rows in
+  <a href="../comparison/">the comparison</a> show low-friction browser access in
+  <a href="../alternatives/#alt-01">ALT-01</a> and <a href="../alternatives/#alt-02">ALT-02</a>, while
+  the richer tools in <a href="../alternatives/#alt-03">ALT-03</a> require Python, package,
+  environment, and often Docker setup.</li>
+<li><strong>What closing it looks like:</strong> learners start with little setup while still
+  receiving enough tools for meaningful debugging.</li>
+<li><strong>Buildable by us in this course:</strong> yes, if the product prepares one
+  constrained environment and toolchain for the initial exercises.</li>
+<li><strong>Confidence:</strong> Medium. The setup contrast is clear, but first-task
+  observation is still needed to identify which steps block learners.</li>
+</ul>
+<h2 id="rejected-from-detailed-comparison">Rejected from detailed comparison</h2>
+<p>These candidates were identified in the search but not selected for the three-product comparison. This is a scope decision, not a claim that they lack value.</p>
+<table>
+<thead>
+<tr>
+<th>Candidate</th>
+<th>Reason not selected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SWE-bench</td>
+<td>Benchmark/task dataset rather than a learner-facing product.</td>
+</tr>
+<tr>
+<td>BuLyst</td>
+<td>Overlaps with the direct debugging-practice angle represented by BugHunt.</td>
+</tr>
+<tr>
+<td>SadhanAI</td>
+<td>AI-personalization angle is narrower than the selected comparison set.</td>
+</tr>
+<tr>
+<td>Moss</td>
+<td>Broader software-engineering task focus.</td>
+</tr>
+<tr>
+<td>Before You Ask for Help</td>
+<td>Process guidance rather than an interactive task platform.</td>
+</tr>
+<tr>
+<td>Recticode</td>
+<td>Overlaps with practice platforms; less contrast than the selected set.</td>
+</tr>
+<tr>
+<td>Codritium</td>
+<td>Broader software-engineering scope.</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/reports/week-01/candidate_list.md"><code>candidate-list.md</code></a> for the full searched list and screening notes.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

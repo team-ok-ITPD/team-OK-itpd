@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://team-ok-itpd.github.io/team-OK-itpd/research/alternatives/">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Alternatives - Debug GYM</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Debug GYM</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../setup/" class="nav-link">Setup and run</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../product-vision/" class="nav-link">Product vision</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Planning</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../threshold-of-success/" class="dropdown-item">Threshold of success</a>
+</li>
+                                    
+<li>
+    <a href="../../project-plan/" class="dropdown-item">Project plan</a>
+</li>
+                                    
+<li>
+    <a href="../../risks/" class="dropdown-item">Risks</a>
+</li>
+                                    
+<li>
+    <a href="../../definition-of-done/" class="dropdown-item">Definition of Done</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../decisions/" class="nav-link">Decisions</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../assumptions/" class="nav-link">Assumptions</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Research</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../value-proposition/" class="dropdown-item">Value proposition</a>
+</li>
+                                    
+<li>
+    <a href="../gap-analysis/" class="dropdown-item">Gap analysis</a>
+</li>
+                                    
+<li>
+    <a href="../comparison/" class="dropdown-item">Comparison</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Alternatives</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../comparison/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" class="nav-link disabled">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/research/alternatives.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#alternative-research" class="nav-link">Alternative Research</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#problem-space" class="nav-link">Problem space</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#properties" class="nav-link">Properties</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#alt-01" class="nav-link">ALT-01</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#alt-02" class="nav-link">ALT-02</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#alt-03" class="nav-link">ALT-03</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="alternative-research">Alternative Research</h1>
+<h2 id="problem-space">Problem space</h2>
+<p>Developers need to improve their ability to investigate and fix bugs in existing code, rather than only practice writing code from scratch.</p>
+<h2 id="properties">Properties</h2>
+<p>The following properties were selected before evaluating the alternatives:</p>
+<ol>
+<li><strong>Debugging realism</strong> — how closely the tasks resemble real debugging work rather than greenfield coding or algorithmic exercises.</li>
+<li><strong>Investigation support</strong> — tools available to investigate the root cause, such as tests, debuggers, tracing, visualizers, or logs.</li>
+<li><strong>Feedback &amp; guidance</strong> — hints, explanations, reference solutions, or other feedback provided during or after a task.</li>
+<li><strong>AI assistance</strong> — whether AI is involved and what role it plays in the debugging process.</li>
+<li><strong>Task variety &amp; difficulty</strong> — variety of bug types and ability to practice at different difficulty levels.</li>
+<li><strong>Onboarding</strong> — effort required to start and complete the first real debugging task.</li>
+<li><strong>Extensibility / deployment</strong> — ability to add custom tasks/tools and run or modify the system independently.</li>
+</ol>
+<hr />
+<h2 id="alt-01">ALT-01</h2>
+<p>BugHunt</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Kind:</strong> Direct competitor, hosted</li>
+<li><strong>Link:</strong> <a href="https://www.trybughunt.com/">https://www.trybughunt.com/</a></li>
+<li><strong>Version looked at:</strong> Website and challenge library, 2026-10-01</li>
+<li><strong>Depth of evaluation:</strong> Tested the public challenge flow and reviewed the
+  challenge library, bug-pattern pages, visualizer, and product description.</li>
+<li><strong>Problem it solves:</strong> Helps developers practice finding and fixing bugs in
+  existing code instead of only writing code from scratch.</li>
+</ul>
+<p><strong>Observations by property</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Debugging realism</strong></td>
+<td>Challenges provide working code containing a specific bug and describe the symptom rather than directly identifying the cause. The user must investigate and fix the code.</td>
+</tr>
+<tr>
+<td><strong>Investigation support</strong></td>
+<td>Users can edit code, run it against tests, and use a step-through visualizer that shows execution and variable values.</td>
+</tr>
+<tr>
+<td><strong>Feedback &amp; guidance</strong></td>
+<td>Challenges provide three progressive hints and an explanation of the bug pattern after a successful fix.</td>
+</tr>
+<tr>
+<td><strong>AI assistance</strong></td>
+<td>No AI-based debugging assistant was observed in the public challenge flow.</td>
+</tr>
+<tr>
+<td><strong>Task variety &amp; difficulty</strong></td>
+<td>Challenges cover Python and JavaScript and include patterns such as off-by-one errors, infinite loops, scope errors, null/undefined errors, logic errors, and async/race conditions.</td>
+</tr>
+<tr>
+<td><strong>Onboarding</strong></td>
+<td>A challenge can be started directly in the browser without an account or installation.</td>
+</tr>
+<tr>
+<td><strong>Extensibility / deployment</strong></td>
+<td>The public product is a hosted browser experience. No public mechanism for users to create or self-host their own challenge environment was observed during this evaluation.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strengths</strong></p>
+<ul>
+<li>The task structure closely matches the core debugging activity: the user receives existing code and a symptom, then has to locate and fix the bug.</li>
+<li>Progressive hints and explanations turn the result of a debugging attempt into a learning experience rather than simply marking the answer as correct.</li>
+</ul>
+<p><strong>Weaknesses</strong></p>
+<ul>
+<li>The public experience does not appear to use AI to adapt the debugging process or provide conversational assistance.</li>
+<li>The challenges are relatively small and self-contained; the evaluated flow does not reproduce the complexity of debugging a multi-file repository or production-like codebase.</li>
+<li>The public product does not expose an obvious self-hosting or custom-environment workflow.</li>
+</ul>
+<p><strong>Evidence:</strong></p>
+<ul>
+<li>Product flow and learning model: <a href="https://www.trybughunt.com/">https://www.trybughunt.com/</a></li>
+<li>Challenge library: <a href="https://www.trybughunt.com/challenges">https://www.trybughunt.com/challenges</a></li>
+<li>Bug patterns: <a href="https://www.trybughunt.com/bugs">https://www.trybughunt.com/bugs</a></li>
+<li>Visualizer: <a href="https://www.trybughunt.com/visualize">https://www.trybughunt.com/visualize</a></li>
+</ul>
+<hr />
+<h2 id="alt-02">ALT-02</h2>
+<p>Codewars</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Kind:</strong> Adjacent substitute, hosted</li>
+<li><strong>Link:</strong> <a href="https://www.codewars.com/kata?tags=Debugging">https://www.codewars.com/kata?tags=Debugging</a></li>
+<li><strong>Version looked at:</strong> Website and official documentation, 2026-10-01</li>
+<li><strong>Depth of evaluation:</strong> Reviewed the Debugging kata collection, kata trainer
+  documentation, testing documentation, and kata authoring documentation.</li>
+<li><strong>Problem it solves:</strong> Provides repeated coding practice through short
+  challenges, including a dedicated Bug Fixes / Debugging category.</li>
+</ul>
+<p><strong>Observations by property</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Debugging realism</strong></td>
+<td>Codewars includes dedicated Bug Fixes kata where users analyze existing code, identify the issue, and fix it, but the overall platform also contains many greenfield algorithm and programming exercises.</td>
+</tr>
+<tr>
+<td><strong>Investigation support</strong></td>
+<td>The trainer provides a code editor, sample tests, test output, and hidden full tests. Users can also add their own sample tests.</td>
+</tr>
+<tr>
+<td><strong>Feedback &amp; guidance</strong></td>
+<td>Failed tests provide output; after completing or forfeiting a kata, users can access other users' solutions.</td>
+</tr>
+<tr>
+<td><strong>AI assistance</strong></td>
+<td>No AI debugging assistant was observed in the evaluated trainer/documentation.</td>
+</tr>
+<tr>
+<td><strong>Task variety &amp; difficulty</strong></td>
+<td>The platform has many kata across languages and difficulty levels, with Debugging currently represented by a large collection of kata.</td>
+</tr>
+<tr>
+<td><strong>Onboarding</strong></td>
+<td>The user can select a kata and enter the trainer directly; the trainer provides the task description, editor, tests, and output in one environment.</td>
+</tr>
+<tr>
+<td><strong>Extensibility / deployment</strong></td>
+<td>Users can author their own kata, including initial code, solutions, sample tests, submission tests, and language-specific configurations, but creating kata requires the appropriate authoring privilege.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strengths</strong></p>
+<ul>
+<li>Large and varied practice ecosystem with explicit difficulty/ranking and many programming languages.</li>
+<li>Strong automated verification: sample tests can be run during development and a full hidden test suite is required for completion.</li>
+</ul>
+<p><strong>Weaknesses</strong></p>
+<ul>
+<li>The platform is primarily a general coding-practice system; debugging is only one category among many rather than the central learning workflow.</li>
+<li>The trainer focuses heavily on whether the final solution passes tests; it does not explicitly evaluate or teach the user's investigation process.</li>
+<li>No AI debugging assistance was observed in the evaluated experience.</li>
+</ul>
+<p><strong>Evidence:</strong></p>
+<ul>
+<li>Debugging kata: <a href="https://www.codewars.com/kata?tags=Debugging">https://www.codewars.com/kata?tags=Debugging</a></li>
+<li>Kata trainer: <a href="https://docs.codewars.com/references/kata-trainer/">https://docs.codewars.com/references/kata-trainer/</a></li>
+<li>Tests: <a href="https://docs.codewars.com/concepts/kata/tests/">https://docs.codewars.com/concepts/kata/tests/</a></li>
+<li>Bug-fixing kata authoring: <a href="https://docs.codewars.com/authoring/tutorials/create-first-kata/">https://docs.codewars.com/authoring/tutorials/create-first-kata/</a></li>
+</ul>
+<hr />
+<h2 id="alt-03">ALT-03</h2>
+<p>Microsoft debug-gym</p>
+<ul>
+<li><strong>Status:</strong> Active</li>
+<li><strong>Kind:</strong> Open-source, self-hosted</li>
+<li><strong>Link:</strong> <a href="https://github.com/microsoft/debug-gym">https://github.com/microsoft/debug-gym</a></li>
+<li><strong>Version looked at:</strong> GitHub repository, main branch, 2026-10-01</li>
+<li><strong>Depth of evaluation:</strong> Reviewed the repository README, system design,
+  debugging tools, agent architecture, benchmark support, terminal backends,
+  and human mode.</li>
+<li><strong>Problem it solves:</strong> Provides an interactive environment for developing and
+  evaluating AI debugging agents on repository-level Python debugging tasks.</li>
+</ul>
+<p><strong>Observations by property</strong></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Debugging realism</strong></td>
+<td>The environment works with code repositories and supports repository-level debugging tasks, including a customized SWE-bench setup where tests fail before the debugging process and pass after the fix.</td>
+</tr>
+<tr>
+<td><strong>Investigation support</strong></td>
+<td>Provides interactive tools including <code>bash</code>, <code>view</code>, <code>eval</code>, <code>pdb</code>, <code>grep</code>, <code>listdir</code>, <code>edit</code>, and <code>submit</code>.</td>
+</tr>
+<tr>
+<td><strong>Feedback &amp; guidance</strong></td>
+<td>The environment returns observations such as error messages, debugger output, and state changes after tool calls; evaluation can run tests after submission.</td>
+</tr>
+<tr>
+<td><strong>AI assistance</strong></td>
+<td>AI is central to the system: LLM-based agents interact with the debugging environment and use its tools to investigate and fix bugs.</td>
+</tr>
+<tr>
+<td><strong>Task variety &amp; difficulty</strong></td>
+<td>Supports multiple benchmarks including SWE-bench, SWE-smith, R2E-Gym, Aider, and custom buggy snippets.</td>
+</tr>
+<tr>
+<td><strong>Onboarding</strong></td>
+<td>Requires Python 3.12, package installation, LLM configuration, and environment setup. Docker is recommended for the terminal environment.</td>
+</tr>
+<tr>
+<td><strong>Extensibility / deployment</strong></td>
+<td>Highly extensible: users can add custom tools and configure agents, environments, benchmarks, LLM backends, and terminal implementations. It can run locally with Docker or at scale using Kubernetes.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strengths</strong></p>
+<ul>
+<li>Provides a rich interactive debugging environment rather than reducing debugging to repeated code generation and test execution.</li>
+<li>Highly extensible and self-hostable, allowing researchers to add custom tools, agents, benchmarks, and environments.</li>
+<li>Supports both LLM-based agents and a human mode for manually interacting with the debugging environment.</li>
+</ul>
+<p><strong>Weaknesses</strong></p>
+<ul>
+<li>The system is designed primarily as a research framework for AI debugging agents rather than as a polished learning product for human developers.</li>
+<li>Setup is significantly more complex than browser-based alternatives: it requires Python, package installation, LLM configuration, and usually Docker.</li>
+<li>Current support is focused on Python repositories and Linux environments; the project explicitly describes limitations for other languages/platforms.</li>
+</ul>
+<p><strong>Evidence:</strong></p>
+<ul>
+<li>Repository and installation: <a href="https://github.com/microsoft/debug-gym">https://github.com/microsoft/debug-gym</a></li>
+<li>System design and tools: <a href="https://github.com/microsoft/debug-gym#system-design">https://github.com/microsoft/debug-gym#system-design</a></li>
+<li>Human mode: <a href="https://github.com/microsoft/debug-gym#32-human-mode">https://github.com/microsoft/debug-gym#32-human-mode</a></li>
+<li>Responsible AI / intended use: <a href="https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md">https://raw.githubusercontent.com/microsoft/debug-gym/main/RESPONSIBLE_AI.md</a></li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
