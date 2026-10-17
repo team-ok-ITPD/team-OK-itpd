@@ -17,6 +17,12 @@ and weekly evidence.
 - [Week 2: Requirements and Prototyping](reports/week-02/README.md)
 - [Week 1: Research and Kickoff](reports/week-01/README.md)
 
+## Setup and documentation
+
+- [Setup and run](docs/setup.md)
+- [Documentation site](https://team-ok-itpd.github.io/team-OK-itpd/)
+- [Documentation index](docs/index.md)
+
 ## Maintained Documentation
 
 - [Product vision](docs/product-vision.md)
