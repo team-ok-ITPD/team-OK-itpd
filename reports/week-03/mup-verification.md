@@ -37,6 +37,8 @@ The documented `pytest -q` entry point, using the same virtual environment,
 instead failed collection with `ModuleNotFoundError: remove_negatives`.
 This local result needs a corresponding check inside the container.
 
+The catalog was also opened in the in-app browser on a separate local port. The supported request displayed the exercise card; the unsupported concurrency request displayed the expected no-match message. These checks did not open a working debugger workspace.
+
 An actual HTTP server using `CatalogHandler` was started on a temporary local
 port and queried with JSON requests:
 
@@ -55,8 +57,8 @@ The complete learner journey still requires the browser rehearsal below.
 
 | Story | AC | Result | Evidence and remaining work |
 | --- | --- | --- | --- |
-| [US-01 / #28](https://github.com/team-ok-ITPD/team-OK-itpd/issues/28) | AC-01 | Pass at API level | Supported Python list request returns the curated exercise; browser interaction remains unverified. |
-| US-01 | AC-02 | Pass at API level | Unsupported request returns HTTP 404. The handler has no environment-creation operation. |
+| [US-01 / #28](https://github.com/team-ok-ITPD/team-OK-itpd/issues/28) | AC-01 | Pass at API level | Supported Python list request returns the curated exercise; the browser form also displayed its card and workspace link. |
+| US-01 | AC-02 | Pass at API level | Unsupported request returns HTTP 404 and a visible browser error. The handler has no environment-creation operation. |
 | [US-02 / #29](https://github.com/team-ok-ITPD/team-OK-itpd/issues/29) | AC-01 | Unverified | Docker is required on the host; clarify the operator/learner boundary and verify the prepared browser environment. |
 | US-02 | AC-02 | Gap found | API returns a workspace link even when the workspace is unavailable. It does not check readiness or implement creation-failure cleanup. |
 | [US-03 / #30](https://github.com/team-ok-ITPD/team-OK-itpd/issues/30) | AC-01 | Command gap | `python -m pytest -q` shows the intended defect; documented `pytest -q` fails import locally. Container reproduction is unverified. |
@@ -110,6 +112,10 @@ The browser environment and unauthenticated local access differ from US-05's
 SSH and access-control criteria. Implement the existing criteria or obtain a
 Customer decision before editing them. Do not mark the story accepted based
 on the Week 3 Figma feedback.
+
+## Container build attempt
+
+Docker Desktop was started and the baseline image build was attempted. The build was cancelled after approximately five minutes while still downloading base-image layers slowly. No image build or running-container result is claimed from this machine; this was not a demonstrated build failure. The missing debugger configuration and setup page already prevent signing off the documented end-to-end workflow. The existing remote CI build is supporting evidence, not a substitute for the pending browser rehearsal.
 
 ## Remaining manual rehearsal
 
