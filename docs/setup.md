@@ -74,55 +74,55 @@ Open `http://localhost:3000` once both are ready.
 ## Complete the learner task
 
 1. Submit `A Python list mutation bug with negative numbers`. The catalog shows
-   **The surviving negative**. An unsupported request such as
-   `A Python concurrency race condition` should show a no-match message.
+    **The surviving negative**. An unsupported request such as
+    `A Python concurrency race condition` should show a no-match message.
 2. Choose **Open prepared workspace**. Browser VS Code opens the exercise at
-   `/home/coder/project`. Open `README.md` and `remove_negatives.py`.
+    `/home/coder/project`. Open `README.md` and `remove_negatives.py`.
 3. Open **Terminal > New Terminal** and reproduce the bug twice:
 
-   ```sh
-   cd /home/coder/project
-   /opt/debug-gym/bin/python -m pytest -q
-   /opt/debug-gym/bin/python -m pytest -q
-   ```
+    ```sh
+    cd /home/coder/project
+    /opt/debug-gym/bin/python -m pytest -q
+    /opt/debug-gym/bin/python -m pytest -q
+    ```
 
-   Both runs should report `test_mixed_numbers` and
-   `test_consecutive_negatives` failing, with one test passing. The absolute
-   interpreter path uses the installed pytest environment; do not rely on a
-   bare `pytest` command being available in the terminal.
+    Both runs should report `test_mixed_numbers` and
+    `test_consecutive_negatives` failing, with one test passing. The absolute
+    interpreter path uses the installed pytest environment; do not rely on a
+    bare `pytest` command being available in the terminal.
 4. Prepare the debugger manually. The baseline does not track the named launch
-   configuration mentioned in the exercise README. In VS Code's Explorer,
-   create `.vscode/launch.json` inside `/home/coder/project` with:
+    configuration mentioned in the exercise README. In VS Code's Explorer,
+    create `.vscode/launch.json` inside `/home/coder/project` with:
 
-   ```json
-   {
-     "version": "0.2.0",
-     "configurations": [
-       {
-         "name": "Debug reproduction tests",
-         "type": "debugpy",
-         "request": "launch",
-         "python": "/opt/debug-gym/bin/python",
-         "module": "pytest",
-         "args": ["-q", "-s", "tests/test_remove_negatives.py"],
-         "cwd": "${workspaceFolder}",
-         "console": "integratedTerminal",
-         "justMyCode": true
-       }
-     ]
-   }
-   ```
+    ```json
+    {
+      "version": "0.2.0",
+      "configurations": [
+        {
+          "name": "Debug reproduction tests",
+          "type": "debugpy",
+          "request": "launch",
+          "python": "/opt/debug-gym/bin/python",
+          "module": "pytest",
+          "args": ["-q", "-s", "tests/test_remove_negatives.py"],
+          "cwd": "${workspaceFolder}",
+          "console": "integratedTerminal",
+          "justMyCode": true
+        }
+      ]
+    }
+    ```
 
 5. Set a breakpoint inside the loop in `remove_negatives.py`. Open **Run and
-   Debug**, select **Debug reproduction tests**, and press F5. Inspect the
-   list and step through iterations to see why adjacent negative values survive.
-   If a workspace-trust prompt appears, review the checked-out code before
-   choosing whether to trust this local exercise.
+    Debug**, select **Debug reproduction tests**, and press F5. Inspect the
+    list and step through iterations to see why adjacent negative values survive.
+    If a workspace-trust prompt appears, review the checked-out code before
+    choosing whether to trust this local exercise.
 6. Edit and save `remove_negatives.py` so the function removes every negative
-   number, including consecutive negative numbers. The learner performs the
-   investigation and fix; the product does not apply it automatically.
+    number, including consecutive negative numbers. The learner performs the
+    investigation and fix; the product does not apply it automatically.
 7. Run `/opt/debug-gym/bin/python -m pytest -q` again. Completion means
-   **3 passed**. Inspect the full terminal output if a test still fails.
+    **3 passed**. Inspect the full terminal output if a test still fails.
 
 This manual debugger setup is a workaround, not evidence that all user-story
 acceptance criteria are met. This version offers browser VS Code, not SSH;
@@ -209,3 +209,20 @@ the first deployment. The workflow uses the `github-pages` environment.
 | `pytest` is missing or imports fail | Use `/opt/debug-gym/bin/python -m pytest -q` from `/home/coder/project` in the container. |
 | No debugger launch configuration exists | Follow the manual `.vscode/launch.json` step above. |
 | Old edited exercise survives a rebuild | Reset the named volume only after saving the learner's work. |
+
+## Verification record
+
+On 2026-10-17, the setup rehearsal on Windows with Docker Desktop confirmed:
+
+- The image built and both catalog and workspace health endpoints responded.
+- The container's exercise tests failed twice with the same two named failures.
+- The installed debugpy adapter stopped at a breakpoint, exposed `number` and
+  `numbers`, and completed a step-over through the Debug Adapter Protocol.
+- Copying the reference solution into the disposable workspace produced
+  `3 passed`; removing only that project's volume restored the original
+  `2 failed, 1 passed` state.
+- Browser VS Code loaded. The complete manual F5 interaction remains a reviewer
+  check; adapter verification is not a claim of Customer acceptance.
+
+Shell scripts use LF through `.gitattributes` so a Windows checkout does not
+break the Linux container entry point.
