@@ -27,3 +27,35 @@ jobs:
 
       - name: Run product tests
         run: python -m pytest
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build product image
+        run: docker build --tag debug-gym:test .
+
+      - name: Start product image
+        run: |
+          docker run --detach --name debug-gym \
+            --publish 127.0.0.1:3000:3000 \
+            --publish 127.0.0.1:8080:8080 \
+            debug-gym:test
+
+      - name: Check catalog and workspace
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/health \
+              && curl --fail --silent http://127.0.0.1:8080/healthz; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs debug-gym
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs debug-gym
