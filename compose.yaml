@@ -1,0 +1,21 @@
+services:
+  debug-gym:
+    build:
+      context: .
+    environment:
+      DEBUG_GYM_CATALOG_PORT: ${DEBUG_GYM_CATALOG_PORT:-3000}
+      DEBUG_GYM_WORKSPACE_URL: ${DEBUG_GYM_WORKSPACE_URL:-http://localhost:8080}
+    init: true
+    ports:
+      - "127.0.0.1:${DEBUG_GYM_CATALOG_PORT:-3000}:3000"
+      - "127.0.0.1:${DEBUG_GYM_WORKSPACE_PORT:-8080}:8080"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /home/coder/.cache
+    volumes:
+      - exercise-workspace:/home/coder/project
+
+volumes:
+  exercise-workspace:
