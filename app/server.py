@@ -8,6 +8,8 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 
 STATIC_DIR = Path(__file__).with_name("static")
@@ -43,6 +45,20 @@ def find_exercise(query: str) -> dict[str, Any] | None:
         ),
         "workspaceUrl": os.getenv("DEBUG_GYM_WORKSPACE_URL", "http://localhost:8080"),
     }
+
+
+def workspace_health_error(workspace_url: str) -> str | None:
+    """Return an explanation when the configured workspace is not ready."""
+    try:
+        with urlopen(f"{workspace_url.rstrip('/')}/healthz", timeout=2) as response:
+            if response.status != HTTPStatus.OK:
+                return f"The exercise workspace returned HTTP {response.status}."
+    except HTTPError as error:
+        return f"The exercise workspace returned HTTP {error.code}."
+    except (URLError, TimeoutError, ValueError):
+        return "The exercise workspace is unavailable. Please try again shortly."
+
+    return None
 
 
 class CatalogHandler(BaseHTTPRequestHandler):
@@ -85,6 +101,16 @@ class CatalogHandler(BaseHTTPRequestHandler):
                         "list, loop, mutation, or negative-number bug."
                     )
                 },
+            )
+            return
+
+        workspace_url = exercise["workspaceUrl"]
+        health_url = os.getenv("DEBUG_GYM_WORKSPACE_HEALTH_URL", workspace_url)
+        health_error = workspace_health_error(health_url)
+        if health_error is not None:
+            self._send_json(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                {"error": health_error},
             )
             return
 

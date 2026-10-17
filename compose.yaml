@@ -3,7 +3,8 @@ services:
     build:
       context: .
     environment:
-      DEBUG_GYM_CATALOG_PORT: ${DEBUG_GYM_CATALOG_PORT:-3000}
+      DEBUG_GYM_CATALOG_PORT: "3000"
+      DEBUG_GYM_WORKSPACE_HEALTH_URL: http://127.0.0.1:8080
       DEBUG_GYM_WORKSPACE_URL: ${DEBUG_GYM_WORKSPACE_URL:-http://localhost:8080}
     init: true
     ports:

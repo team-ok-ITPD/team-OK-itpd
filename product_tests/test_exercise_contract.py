@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import shutil
 import subprocess
 import sys
@@ -21,6 +22,17 @@ def load_module(name: str, path: Path) -> ModuleType:
 
 
 class ExerciseContractTests(unittest.TestCase):
+    def test_debug_configuration_launches_reproduction_tests(self) -> None:
+        configuration = json.loads(
+            (ROOT / "exercise" / ".vscode" / "launch.json").read_text()
+        )
+
+        self.assertEqual(
+            configuration["configurations"][0]["name"],
+            "Debug reproduction tests",
+        )
+        self.assertEqual(configuration["configurations"][0]["module"], "pytest")
+
     def test_bug_is_repeatable_and_reference_solution_passes(self) -> None:
         buggy = load_module("buggy", ROOT / "exercise" / "remove_negatives.py")
         correct = load_module(

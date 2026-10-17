@@ -51,6 +51,28 @@ docker compose up --build
 
 The catalog is available at `http://localhost:3000`, and the browser-based
 VS Code workspace is at `http://localhost:8080`. Docker Engine must be running.
+A supported exercise request now checks the workspace health endpoint first;
+if the workspace is unavailable, the catalog returns HTTP 503 with an error
+instead of a success response containing a dead workspace link.
+
+## Verification
+
+On the current working tree, the product test suite passed (**11 tests**), and
+`docker compose build` completed. An isolated Compose run on alternate host
+ports served the catalog and workspace health endpoints, returned the live
+workspace URL for a supported request, and exposed Python, pytest, and the
+debugger launch configuration in the code-server process environment.
+
+In that isolated workspace, the exercise tests first reproduced the intended
+two failures. Replacing the exercise with the reference implementation made
+all three tests pass. Removing only the isolated Compose project's volume and
+recreating it restored the original failing exercise. This was a container
+smoke test from the working tree, not an independent clean-clone audit.
+
+The breakpoint and step-through workflow was not manually exercised in the
+browser. The VS Code SSH and access-control acceptance criteria also remain
+unresolved; the current implementation still uses browser-based code-server
+with authentication disabled.
 
 ## Coverage
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
-PYTHONPATH=/opt/debug-gym /opt/debug-gym/bin/python -m app.server &
+export PATH="/opt/debug-gym/bin:$PATH"
+export PYTHONPATH=/opt/debug-gym
+
+python -m app.server &
 
 exec code-server \
   --auth none \
