@@ -14,6 +14,7 @@ and weekly evidence.
 
 ## Current Report
 
+- [Week 3: Customer Validation and Initial Implementation](reports/week-03/README.md)
 - [Week 2: Requirements and Prototyping](reports/week-02/README.md)
 - [Week 1: Research and Kickoff](reports/week-01/README.md)
 
