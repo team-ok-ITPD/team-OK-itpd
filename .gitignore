@@ -20,3 +20,5 @@ htmlcov/
 .venv/
 
 *.log
+
+site/

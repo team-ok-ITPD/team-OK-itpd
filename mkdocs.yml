@@ -1,0 +1,34 @@
+site_name: Debug GYM
+site_description: Prepared Python debugging exercises and project documentation
+site_url: https://team-ok-itpd.github.io/team-OK-itpd/
+repo_url: https://github.com/team-ok-ITPD/team-OK-itpd
+edit_uri: blob/main/docs/
+docs_dir: docs
+site_dir: site
+theme:
+  name: mkdocs
+hooks:
+  - scripts/docs_links.py
+nav:
+  - Home: index.md
+  - Setup and run: setup.md
+  - Product vision: product-vision.md
+  - Planning:
+      - Threshold of success: threshold-of-success.md
+      - Project plan: project-plan.md
+      - Risks: risks.md
+      - Definition of Done: definition-of-done.md
+  - Decisions: decisions.md
+  - Assumptions: assumptions.md
+  - Research:
+      - Value proposition: research/value-proposition.md
+      - Gap analysis: research/gap-analysis.md
+      - Comparison: research/comparison.md
+      - Alternatives: research/alternatives.md
+
+markdown_extensions:
+  - attr_list
+validation:
+  links:
+    anchors: warn
+    unrecognized_links: warn
