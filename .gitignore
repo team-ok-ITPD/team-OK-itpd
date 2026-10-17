@@ -10,3 +10,8 @@ Thumbs.db
 
 build/
 dist/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
