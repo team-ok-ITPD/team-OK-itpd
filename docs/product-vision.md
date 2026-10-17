@@ -12,6 +12,8 @@ investigation and the fix to them.
 [VP-02](research/value-proposition.md#vp-02),
 [VP-03](research/value-proposition.md#vp-03).
 
+**Threshold:** [the threshold of success](threshold-of-success.md).
+
 ## Stakeholders
 
 - **Learner**: practices debugging with the product, the primary user.
