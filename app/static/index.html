@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Debug GYM | New challenge</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Debug GYM home">
+        <span class="brand-mark">DG</span>
+        <span>Debug GYM</span>
+      </a>
+      <span class="language">Python 3</span>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Practice / New challenge</p>
+        <h1 id="page-title">Choose the bug you want to understand.</h1>
+        <p class="lede">
+          Describe a Python bug in plain language. Debug GYM matches it to a
+          prepared exercise with reproducible tests and a real debugger.
+        </p>
+
+        <form id="request-form">
+          <label for="query">What do you want to practise?</label>
+          <div class="request-row">
+            <input
+              id="query"
+              name="query"
+              value="A Python list mutation bug with negative numbers"
+              autocomplete="off"
+              required
+            >
+            <button type="submit">Find exercise</button>
+          </div>
+          <p class="hint">Available now: Python lists, loops, and mutation.</p>
+        </form>
+      </section>
+
+      <section id="result" class="result" aria-live="polite" hidden></section>
+    </main>
+
+    <footer>
+      <span>One focused exercise. Full test output. Your reasoning comes first.</span>
+    </footer>
+    <script src="/app.js"></script>
+  </body>
+</html>

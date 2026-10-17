@@ -1,0 +1,1 @@
+"""Debug GYM exercise catalog."""
