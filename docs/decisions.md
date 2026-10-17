@@ -60,6 +60,7 @@ Build the minimum usable product with Docker, code-server, Python, and pytest.
 - **Why:** the Week 2 spike already demonstrated a browser-accessible VS Code
   environment with Python tooling and breakpoint debugging, while pytest gives
   each exercise executable reproduction and verification checks.
+  
 ## DEC-006
 
 Generate each exercise as a correct program, a buggy program, and pytest tests.
