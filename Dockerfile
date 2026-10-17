@@ -13,6 +13,8 @@ RUN /opt/debug-gym/bin/pip install --no-cache-dir --requirement /tmp/requirement
     && code-server --extensions-dir /opt/debug-gym/extensions --install-extension ms-python.python \
     && code-server --extensions-dir /opt/debug-gym/extensions --install-extension ms-python.debugpy
 
+ENV PATH="/opt/debug-gym/bin:${PATH}"
+
 COPY --chown=coder:coder app /opt/debug-gym/app
 COPY --chown=coder:coder exercise /home/coder/project
 COPY --chown=coder:coder scripts/start.sh /usr/local/bin/debug-gym-start
