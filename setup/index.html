@@ -164,6 +164,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#verification-record" class="nav-link">Verification record</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -247,51 +251,53 @@ does not prove that VS Code is ready. Open both health URLs in the browser:</p>
 <h2 id="complete-the-learner-task">Complete the learner task</h2>
 <ol>
 <li>Submit <code>A Python list mutation bug with negative numbers</code>. The catalog shows
-   <strong>The surviving negative</strong>. An unsupported request such as
-   <code>A Python concurrency race condition</code> should show a no-match message.</li>
+    <strong>The surviving negative</strong>. An unsupported request such as
+    <code>A Python concurrency race condition</code> should show a no-match message.</li>
 <li>Choose <strong>Open prepared workspace</strong>. Browser VS Code opens the exercise at
-   <code>/home/coder/project</code>. Open <code>README.md</code> and <code>remove_negatives.py</code>.</li>
-<li>Open <strong>Terminal &gt; New Terminal</strong> and reproduce the bug twice:</li>
-</ol>
+    <code>/home/coder/project</code>. Open <code>README.md</code> and <code>remove_negatives.py</code>.</li>
+<li>
+<p>Open <strong>Terminal &gt; New Terminal</strong> and reproduce the bug twice:</p>
 <p><code>sh
-   cd /home/coder/project
-   /opt/debug-gym/bin/python -m pytest -q
-   /opt/debug-gym/bin/python -m pytest -q</code></p>
+cd /home/coder/project
+/opt/debug-gym/bin/python -m pytest -q
+/opt/debug-gym/bin/python -m pytest -q</code></p>
 <p>Both runs should report <code>test_mixed_numbers</code> and
-   <code>test_consecutive_negatives</code> failing, with one test passing. The absolute
-   interpreter path uses the installed pytest environment; do not rely on a
-   bare <code>pytest</code> command being available in the terminal.
+<code>test_consecutive_negatives</code> failing, with one test passing. The absolute
+interpreter path uses the installed pytest environment; do not rely on a
+bare <code>pytest</code> command being available in the terminal.
 4. Prepare the debugger manually. The baseline does not track the named launch
-   configuration mentioned in the exercise README. In VS Code's Explorer,
-   create <code>.vscode/launch.json</code> inside <code>/home/coder/project</code> with:</p>
+configuration mentioned in the exercise README. In VS Code's Explorer,
+create <code>.vscode/launch.json</code> inside <code>/home/coder/project</code> with:</p>
 <p><code>json
-   {
-     "version": "0.2.0",
-     "configurations": [
-       {
-         "name": "Debug reproduction tests",
-         "type": "debugpy",
-         "request": "launch",
-         "python": "/opt/debug-gym/bin/python",
-         "module": "pytest",
-         "args": ["-q", "-s", "tests/test_remove_negatives.py"],
-         "cwd": "${workspaceFolder}",
-         "console": "integratedTerminal",
-         "justMyCode": true
-       }
-     ]
-   }</code></p>
-<ol>
-<li>Set a breakpoint inside the loop in <code>remove_negatives.py</code>. Open <strong>Run and
-   Debug</strong>, select <strong>Debug reproduction tests</strong>, and press F5. Inspect the
-   list and step through iterations to see why adjacent negative values survive.
-   If a workspace-trust prompt appears, review the checked-out code before
-   choosing whether to trust this local exercise.</li>
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug reproduction tests",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "/opt/debug-gym/bin/python",
+      "module": "pytest",
+      "args": ["-q", "-s", "tests/test_remove_negatives.py"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}</code></p>
+</li>
+<li>
+<p>Set a breakpoint inside the loop in <code>remove_negatives.py</code>. Open <strong>Run and
+    Debug</strong>, select <strong>Debug reproduction tests</strong>, and press F5. Inspect the
+    list and step through iterations to see why adjacent negative values survive.
+    If a workspace-trust prompt appears, review the checked-out code before
+    choosing whether to trust this local exercise.</p>
+</li>
 <li>Edit and save <code>remove_negatives.py</code> so the function removes every negative
-   number, including consecutive negative numbers. The learner performs the
-   investigation and fix; the product does not apply it automatically.</li>
+    number, including consecutive negative numbers. The learner performs the
+    investigation and fix; the product does not apply it automatically.</li>
 <li>Run <code>/opt/debug-gym/bin/python -m pytest -q</code> again. Completion means
-   <strong>3 passed</strong>. Inspect the full terminal output if a test still fails.</li>
+    <strong>3 passed</strong>. Inspect the full terminal output if a test still fails.</li>
 </ol>
 <p>This manual debugger setup is a workaround, not evidence that all user-story
 acceptance criteria are met. This version offers browser VS Code, not SSH;
@@ -378,7 +384,22 @@ the first deployment. The workflow uses the <code>github-pages</code> environmen
 <td>Reset the named volume only after saving the learner's work.</td>
 </tr>
 </tbody>
-</table></div>
+</table>
+<h2 id="verification-record">Verification record</h2>
+<p>On 2026-10-17, the setup rehearsal on Windows with Docker Desktop confirmed:</p>
+<ul>
+<li>The image built and both catalog and workspace health endpoints responded.</li>
+<li>The container's exercise tests failed twice with the same two named failures.</li>
+<li>The installed debugpy adapter stopped at a breakpoint, exposed <code>number</code> and
+  <code>numbers</code>, and completed a step-over through the Debug Adapter Protocol.</li>
+<li>Copying the reference solution into the disposable workspace produced
+  <code>3 passed</code>; removing only that project's volume restored the original
+  <code>2 failed, 1 passed</code> state.</li>
+<li>Browser VS Code loaded. The complete manual F5 interaction remains a reviewer
+  check; adapter verification is not a claim of Customer acceptance.</li>
+</ul>
+<p>Shell scripts use LF through <code>.gitattributes</code> so a Windows checkout does not
+break the Linux container entry point.</p></div>
             </div>
         </div>
 
