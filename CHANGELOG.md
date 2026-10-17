@@ -8,6 +8,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Setup and reset instructions and a published documentation site for the
+  prepared Python debugging exercise.
+
 - A prepared Python list-mutation exercise that learners can find in plain
   language, open in browser-based VS Code, reproduce, debug, and verify with
   pytest.

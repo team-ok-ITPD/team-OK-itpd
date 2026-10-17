@@ -21,3 +21,5 @@ __pycache__/
 htmlcov/
 
 *.log
+
+site/
