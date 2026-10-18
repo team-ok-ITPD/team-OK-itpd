@@ -24,6 +24,8 @@ A clean checkout provides one complete prepared Python debugging exercise throug
 
 #### REL-03
 
+Released as [v0.1.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.1.0) on 2026-10-18.
+
 ### SPRINT-04
 
 The team has validated and selected a safe execution architecture for multi-file learner submissions.
