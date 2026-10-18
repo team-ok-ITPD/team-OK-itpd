@@ -1,13 +1,110 @@
-# Week 3 MUP Verification
+# Week 03 report
 
-## Scope and provenance
+## Project
+
+- **Project:** Debug GYM
+- **Team:** Team 02
+- **Week:** Week 3, Planning and the Minimum Usable Product
+- **Release:** `REL-03`, published as
+  [v0.1.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.1.0)
+  on 2026-10-18.
+
+## Summary
+
+The team planned seven sprints, defined a draft threshold of success and risk
+register, established the contribution workflow, selected the Docker,
+code-server, Python, and pytest stack, and delivered one runnable debugging
+exercise. A clean environment can open the catalog and browser-based VS Code,
+reproduce the Python list-mutation defect, inspect it with the debugger, apply a
+fix, and pass the tests.
+
+No story moved out of the Week 2 candidate. The Week 3 Customer meeting was
+intentionally used to validate the Figma prototype and product direction. The
+running application was completed and verified by the team afterwards; its
+Customer demonstration and story verdicts carry into the next assignment.
+
+## Customer Meeting Outcome
+
+The team showed the Figma prototype rather than running software. The Customer
+settled the exercise structure, VS Code workflow, preview content, language
+selector, and test-output direction in
+[`DEC-006` through `DEC-010`](../../docs/decisions.md#dec-006).
+
+`US-01` through `US-05` received no accepted or rejected verdict because the
+running application was not shown. They remain open, and this report does not
+claim Customer acceptance from team verification.
+
+## Coverage
+
+| Deliverable | Artifact |
+| --- | --- |
+| Threshold of success | [docs/threshold-of-success.md](../../docs/threshold-of-success.md) |
+| Project plan | [docs/project-plan.md](../../docs/project-plan.md) |
+| Risk register | [docs/risks.md](../../docs/risks.md) |
+| Stack decision | [`DEC-005`](../../docs/decisions.md#dec-005) |
+| Definition of Done | [docs/definition-of-done.md](../../docs/definition-of-done.md) |
+| Contributing guide | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
+| Sprint milestones and issue fields | [`SPRINT-03`](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/2) and its scheduled issues in the [sprint table](https://github.com/orgs/team-ok-ITPD/projects/1) |
+| GitHub project | [Debug GYM delivery](https://github.com/orgs/team-ok-ITPD/projects/1) |
+| Minimum usable product | Candidate stories [`US-01` through `US-05`](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=milestone%3A%22SPRINT-03%3A+MUP+and+planning%22+label%3Auser-story), implementation [PR #55](https://github.com/team-ok-ITPD/team-OK-itpd/pull/55), and [verification evidence](mup-verification.md) |
+| Changelog and first release | [CHANGELOG.md](../../CHANGELOG.md) and [v0.1.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.1.0) |
+| Documentation site | [published documentation](https://team-ok-itpd.github.io/team-OK-itpd/) |
+| Setup and run instructions | [docs/setup.md](../../docs/setup.md) |
+| Week 2 action points | [previous meeting reports and action points](meeting-report.md#2-previous-meeting-reports-and-action-points) |
+| Week 2 open questions | [open questions carried by the Week 3 meeting](meeting-report.md#6-open-questions) |
+| Meeting script | [meeting-script.md](meeting-script.md) |
+| Customer validation | [meeting-report.md](meeting-report.md) and [meeting-transcript.md](meeting-transcript.md) |
+| AI usage | [ai-usage.md](ai-usage.md) |
+
+## Contribution
+
+| Member | Evidence |
+| --- | --- |
+| [@Danashi11](https://github.com/Danashi11) | Planning and workflow [PR #53](https://github.com/team-ok-ITPD/team-OK-itpd/pull/53), MUP implementation [PR #55](https://github.com/team-ok-ITPD/team-OK-itpd/pull/55), GitHub milestones, project, issue fields, and release. |
+| [@qwxiae](https://github.com/qwxiae) | Week 3 meeting artifacts and decisions in [PR #51](https://github.com/team-ok-ITPD/team-OK-itpd/pull/51). |
+| [@UTKANOS-RIBA](https://github.com/UTKANOS-RIBA) | Clean-checkout and acceptance-criteria audit in [PR #58](https://github.com/team-ok-ITPD/team-OK-itpd/pull/58). |
+| [@adelazzi](https://github.com/adelazzi) | Setup and documentation review, MUP follow-up implementation, manual verification, and Week 3 evidence in [PR #60](https://github.com/team-ok-ITPD/team-OK-itpd/pull/60). |
+
+## Repository Evidence
+
+- [PR #55](https://github.com/team-ok-ITPD/team-OK-itpd/pull/55) implemented
+  the working slice and closed task issue
+  [#54](https://github.com/team-ok-ITPD/team-OK-itpd/issues/54).
+- The latest `main` [link check](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/39145619745),
+  [Markdown check](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/39145619851),
+  [product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/39145619770),
+  and [documentation workflow](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/39145619832)
+  are green.
+
+## Deviations
+
+- The Week 3 meeting validated the Figma prototype and product direction, not
+  the running MUP. Customer demonstration and story verdicts are carried into
+  the next assignment; no acceptance is inferred from team verification.
+- The threshold is a measurable team draft pending Customer review.
+- The delivered environment uses browser-based code-server. The original SSH
+  and invalid-access criteria remain open rather than being silently rewritten.
+- Task acceptance criteria were not consistently ticked before earlier Week 3
+  pull requests merged. This report preserves that history instead of editing
+  completed reviews retroactively.
+
+## Privacy
+
+No private-only material was committed. The Customer permitted recording and
+publication of the sanitized transcript.
+
+## MUP Verification Detail
 
 - Task: [#57](https://github.com/team-ok-ITPD/team-OK-itpd/issues/57).
 - Verification date: 2026-10-17.
-- Initial audit baseline: `62da3c55e50d0b8ccaea3b3d430a79bb78ab22a7` on `main`.
-- The initial audit used a separate clone, Python 3.13, pytest 8.4.2, and Docker Desktop.
-- The initial audit and the subsequent manual rehearsal are reported separately so that earlier findings are not confused with later verification.
-- These results document team verification. They do not constitute Customer acceptance or automatically close user stories.
+- Initial audit baseline: `62da3c55e50d0b8ccaea3b3d430a79bb78ab22a7`
+  on `main`.
+- The initial audit used a separate clone, Python 3.13, pytest 8.4.2, and Docker
+  Desktop.
+- The initial audit and the subsequent manual rehearsal are reported separately
+  so that earlier findings are not confused with later verification.
+- These results document team verification. They do not constitute Customer
+  acceptance or automatically close user stories.
 
 ## Initial automated and source-level audit
 

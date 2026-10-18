@@ -12,7 +12,7 @@ This repository is a work in progress for the ITPD course. It captures the proje
 
 ## Current Report
 
-- [Week 3: MUP Verification](reports/week-03/mup-verification.md)
+- [Week 3: Planning and the Minimum Usable Product](reports/week-03/README.md)
 - [Week 2: Requirements and Prototyping](reports/week-02/README.md)
 - [Week 1: Research and Kickoff](reports/week-01/README.md)
 
