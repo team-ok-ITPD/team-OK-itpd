@@ -28,9 +28,11 @@ Released as [v0.1.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v
 
 ### SPRINT-04
 
-The team has validated and selected a safe execution architecture for multi-file learner submissions.
+The product has documented quality requirements and architecture, and the team has validated and selected a safe execution architecture for multi-file learner submissions.
 
-- **Due:** 2026-10-23
+- **Due:** 2026-10-24
+- **Sprint Backlog:** [the issues scheduled into SPRINT-04](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/5)
+- **Planned Velocity:** 22
 
 #### REL-04
 
@@ -38,7 +40,7 @@ The team has validated and selected a safe execution architecture for multi-file
 
 Provisional: pilot learners can complete the validated end-to-end MVP workflow.
 
-- **Due:** 2026-10-30
+- **Due:** 2026-10-31
 
 #### REL-05
 
@@ -46,7 +48,7 @@ Provisional: pilot learners can complete the validated end-to-end MVP workflow.
 
 Provisional: learners can request bounded assistance without the product applying the fix for them.
 
-- **Due:** 2026-11-06
+- **Due:** 2026-11-07
 
 #### REL-06
 
@@ -54,7 +56,7 @@ Provisional: learners can request bounded assistance without the product applyin
 
 Provisional: learners can choose from a small verified library of Python bug categories.
 
-- **Due:** 2026-11-13
+- **Due:** 2026-11-14
 
 #### REL-07
 
@@ -62,7 +64,7 @@ Provisional: learners can choose from a small verified library of Python bug cat
 
 Provisional: the core workflow is reliable, safe, and supported by pilot evidence.
 
-- **Due:** 2026-11-20
+- **Due:** 2026-11-21
 
 #### REL-08
 
@@ -70,7 +72,7 @@ Provisional: the core workflow is reliable, safe, and supported by pilot evidenc
 
 Provisional: the release candidate meets the agreed threshold measures available by code freeze.
 
-- **Due:** 2026-11-27
+- **Due:** 2026-11-28
 
 #### REL-09
 
