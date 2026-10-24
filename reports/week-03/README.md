@@ -113,7 +113,7 @@ The initial audit executed:
 ```powershell
 python -m pip install -r requirements.lock
 python -m pytest -q
-docker compose -p itpd-artem-audit config --quiet
+docker compose -p itpd-debug-gym-audit config --quiet
 ```
 
 The recorded results were:
