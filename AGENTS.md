@@ -9,7 +9,8 @@ Read the applicable rule through [the course SKILL.md](https://github.com/inno-i
 - `product_tests/` checks the product and the buggy/reference contract.
 - `docs/` holds maintained requirements, architecture, plans and terminology.
 - `reports/week-NN/` holds that week's evidence and AI disclosure.
-- `scripts/` holds startup and documentation helpers; `.github/` holds CI and issue forms. `site/` is generated and ignored.
+- `runners/` holds optional host launchers; `scripts/` holds container and documentation helpers.
+- `.github/` holds CI and issue forms. `site/` is generated and ignored.
 
 ## Checks
 

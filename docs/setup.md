@@ -12,10 +12,14 @@ The documentation site describes the product; it does not host the exercise.
 - A modern browser, an internet connection for the first image build, and free
   host ports 3000 and 8080.
 
-The Docker host needs these tools. The learner uses the prepared browser
-workspace and does not install Python or VS Code locally. This is a local,
-single-learner prototype: the workspace has no login and its published ports
-are bound to loopback. Keep it on your own machine.
+The manual Docker Compose path needs only those tools. The optional launchers
+under `runners/` also need host Python 3 and `curl` on `PATH`. The learner does
+not install Python or VS Code for use inside the prepared workspace.
+
+This is a local, single-learner prototype: the workspace has no login and its
+published ports are bound to loopback. Keep it on your own machine. It does not
+provide the remote SSH or invalid-access rejection required by
+[FR-005](functional-requirements/fr/FR-005.md).
 
 ## Install and configure
 
@@ -51,6 +55,30 @@ No API key is required for the prepared exercise. Keep `.env` local; it is
 ignored by Git. If port 3000 is occupied, stop the conflicting service before
 starting this version rather than changing its catalog port.
 
+## Optional launchers
+
+The launchers create `.env` from `.env.example` when it is absent, run Docker
+Compose with project name `debug-gym-local`, wait for both health endpoints and
+open the catalog.
+
+On Windows, from the repository root:
+
+```bat
+runners\run_debug_gym.bat
+```
+
+On macOS or Linux, from the repository root:
+
+```sh
+bash runners/run_debug_gym.command
+```
+
+The tracked macOS file is not currently executable, so invoking it directly as
+`./runners/run_debug_gym.command` fails. The launchers also check fixed URLs on
+ports 3000 and 8080. Use the manual Compose path below when using a different
+workspace host port. These are known launcher limitations, not evidence that
+Docker or the product failed to start.
+
 ## Start and check readiness
 
 From the repository root:
@@ -63,8 +91,9 @@ docker compose -p debug-gym-local logs --tail 100
 ```
 
 The initial build downloads a code-server image, Python dependencies, and
-debugger extensions; it can take several minutes. A successful catalog request
-does not prove that VS Code is ready. Open both health URLs in the browser:
+debugger extensions; it can take several minutes. The catalog checks workspace
+health before returning a supported exercise, but the two endpoints can also be
+checked independently:
 
 - Catalog: `http://localhost:3000/health`, expected `{"status": "ok"}`.
 - Workspace: `http://localhost:8080/healthz`, expected an HTTP success response.
@@ -90,28 +119,13 @@ Open `http://localhost:3000` once both are ready.
     `test_consecutive_negatives` failing, with one test passing. The absolute
     interpreter path uses the installed pytest environment; do not rely on a
     bare `pytest` command being available in the terminal.
-4. Prepare the debugger manually. The baseline does not track the named launch
-    configuration mentioned in the exercise README. In VS Code's Explorer,
-    create `.vscode/launch.json` inside `/home/coder/project` with:
-
-    ```json
-    {
-      "version": "0.2.0",
-      "configurations": [
-        {
-          "name": "Debug reproduction tests",
-          "type": "debugpy",
-          "request": "launch",
-          "python": "/opt/debug-gym/bin/python",
-          "module": "pytest",
-          "args": ["-q", "-s", "tests/test_remove_negatives.py"],
-          "cwd": "${workspaceFolder}",
-          "console": "integratedTerminal",
-          "justMyCode": true
-        }
-      ]
-    }
-    ```
+4. Open **Run and Debug**. A fresh workspace contains the tracked
+    [`Debug reproduction tests`](../exercise/.vscode/launch.json)
+    configuration. Docker preserves an existing named volume across image
+    rebuilds, so a workspace created by an older version may not receive this
+    file. Do not reset the volume merely to repair the configuration: save the
+    learner's edits first, then copy the tracked configuration into the
+    workspace or recreate it through VS Code.
 
 5. Set a breakpoint inside the loop in `remove_negatives.py`. Open **Run and
     Debug**, select **Debug reproduction tests**, and press F5. Inspect the
@@ -124,9 +138,11 @@ Open `http://localhost:3000` once both are ready.
 7. Run `/opt/debug-gym/bin/python -m pytest -q` again. Completion means
     **3 passed**. Inspect the full terminal output if a test still fails.
 
-This manual debugger setup is a workaround, not evidence that all user-story
-acceptance criteria are met. This version offers browser VS Code, not SSH;
-invalid-access rejection and automatic workspace provisioning are not provided.
+The debugger demonstration is not evidence that all user-story acceptance
+criteria are met. This version offers browser VS Code, not SSH; invalid-access
+rejection and automatic per-learner workspace provisioning are not provided.
+Agent assistance and category browsing are specified by FR-006 and FR-007 but
+are not implemented by this MUP.
 
 ## Stop and reset
 
@@ -203,11 +219,14 @@ the first deployment. The workflow uses the `github-pages` environment.
 | Symptom | Action |
 | --- | --- |
 | Docker daemon is unavailable | Start Docker Desktop and select its Linux engine, then retry `docker version`. |
+| A launcher reports that Docker is unavailable | Run `docker info` and `docker compose version` directly; the current launcher groups several Docker and dependency failures under the same troubleshooting text. |
+| `run_debug_gym.command` is not executable | Run `bash runners/run_debug_gym.command`; direct execution is a known limitation of the tracked file mode. |
+| A launcher times out after changing ports | Use the manual Compose path and open the URLs configured in `.env`; launcher health checks currently use ports 3000 and 8080. |
 | Image or extension download fails | Check network access and inspect build output; retry `docker compose -p debug-gym-local build`. |
 | A port is already allocated | Stop the conflicting process. For workspace port changes, update both workspace variables in `.env`. |
-| Catalog works but VS Code does not | Check workspace health and Compose logs. The catalog currently does not detect workspace readiness. |
+| A supported catalog request reports an unavailable workspace | Open the workspace health URL and inspect Compose logs; the catalog checks readiness before returning the exercise. |
 | `pytest` is missing or imports fail | Use `/opt/debug-gym/bin/python -m pytest -q` from `/home/coder/project` in the container. |
-| No debugger launch configuration exists | Follow the manual `.vscode/launch.json` step above. |
+| No debugger launch configuration exists | Preserve learner edits and copy the tracked `exercise/.vscode/launch.json` into the workspace; an older named volume can hide files added to a newer image. |
 | Old edited exercise survives a rebuild | Reset the named volume only after saving the learner's work. |
 
 ## Verification record
@@ -223,6 +242,14 @@ On 2026-10-17, the setup rehearsal on Windows with Docker Desktop confirmed:
   `2 failed, 1 passed` state.
 - Browser VS Code loaded. The complete manual F5 interaction remains a reviewer
   check; adapter verification is not a claim of Customer acceptance.
+
+On 2026-10-24, a clean macOS 26.6.2 ARM checkout built and opened the catalog
+and workspace through `bash runners/run_debug_gym.command`; both health
+endpoints, the catalog match and the expected `2 failed, 1 passed` exercise
+result were verified. Direct macOS execution remained blocked by the tracked
+non-executable file mode. The team marked Windows and Linux as verified in
+issue #82, but the repository does not contain their command-level platform
+logs. These checks are not Customer acceptance.
 
 Shell scripts use LF through `.gitattributes` so a Windows checkout does not
 break the Linux container entry point.
