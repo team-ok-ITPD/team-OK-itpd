@@ -13,6 +13,11 @@ nav:
   - Home: index.md
   - Setup and run: setup.md
   - Product vision: product-vision.md
+  - Requirements:
+      - Functional requirements: functional-requirements/README.md
+      - Quality requirements: quality-requirements/README.md
+  - Architecture: architecture/README.md
+  - Glossary: glossary.md
   - Planning:
       - Threshold of success: threshold-of-success.md
       - Project plan: project-plan.md

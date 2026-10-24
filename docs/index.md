@@ -21,6 +21,13 @@ The current minimum usable product contains one curated list-mutation exercise.
 - [Decisions](decisions.md)
 - [Assumptions](assumptions.md)
 
+## Requirements and architecture
+
+- [Functional requirements](functional-requirements/README.md)
+- [Quality requirements and priorities](quality-requirements/README.md)
+- [Architecture and decisions](architecture/README.md)
+- [Glossary](glossary.md)
+
 ## Research
 
 - [Value proposition](research/value-proposition.md)

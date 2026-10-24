@@ -1,7 +1,6 @@
 name: Task
 description: Track one unit of work that one pull request will close.
-labels:
-  - task
+type: Task
 body:
   - type: textarea
     id: description
@@ -20,6 +19,15 @@ body:
         - #42 (AC-01, AC-02)
     validations:
       required: false
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: "One FR or ADR link on main per line, or None with the repository-upkeep reason."
+      placeholder: "None: repository upkeep."
+    validations:
+      required: true
 
   - type: textarea
     id: acceptance-criteria
