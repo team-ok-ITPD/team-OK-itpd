@@ -20,7 +20,7 @@ from urllib.request import Request, urlopen
 
 REPO = "team-ok-ITPD/team-OK-itpd"
 BASE = f"https://github.com/{REPO}/blob/main/docs/"
-RETIRED = {"user-story", "task", "moscow:must", "moscow:should", "moscow:could", "moscow:wont"}
+RETIRED = {"user-story", "task", "moscow:must", "moscow:should", "moscow:could", "moscow:won't", "moscow:wont"}
 STORIES = {
     28: ([1], [1]), 29: ([2], [1, 3]), 30: ([3], [1, 2]),
     31: ([4], [1, 2]), 32: ([5], [1, 3]), 33: ([6], [1]), 34: ([7], [1]),
