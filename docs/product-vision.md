@@ -109,5 +109,7 @@ the fix because `BND-01` leaves that to the learner.
 
 ## Where The Detail Lives
 
+- [Architecture](architecture/README.md)
+
 - [User stories](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=label%3Auser-story)
 - [Week 2 report](../reports/week-02/README.md)

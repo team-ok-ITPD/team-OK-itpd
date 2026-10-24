@@ -1,13 +1,12 @@
 name: User story
 description: Record a user need and the checks that show it was delivered.
 title: "US-nn: "
-labels:
-  - user-story
+type: User Story
 body:
   - type: markdown
     attributes:
       value: |
-        Use the next free `US-nn` from the issue list filtered by the `user-story` label.
+        Use the next free `US-nn` from the issue list filtered by the `User Story` issue type.
 
   - type: textarea
     id: story
@@ -65,10 +64,20 @@ body:
       label: Acceptance criteria
       description: Add observable pass/fail checks. A story other than Won't Have needs at least two.
       value: |
-        1. AC-01: 
-        2. AC-02: 
+        - [ ] AC-01:
+        - [ ] AC-02:
     validations:
       required: false
+
+  - type: textarea
+    id: specified-by
+    attributes:
+      label: Specified by
+      description: "Link the FRs and ADRs on main that specify this story; use None only for a Won't Have story."
+      placeholder: |
+        - https://github.com/team-ok-ITPD/team-OK-itpd/blob/main/docs/functional-requirements/fr/FR-001.md
+    validations:
+      required: true
 
   - type: textarea
     id: notes

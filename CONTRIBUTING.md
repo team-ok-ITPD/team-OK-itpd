@@ -14,6 +14,34 @@ milestone so sprint scope and unscheduled work are visible together. Sprint
 backlogs remain visible in the repository's
 [milestones](https://github.com/team-ok-ITPD/team-OK-itpd/milestones).
 
+## Week 4 issue conversion
+
+The issue forms use native `User Story` and `Task` types. Stories link their
+specifications under `Specified by`; open tasks link the FRs or ADRs they serve
+under `Requirements`, or explain `None` for repository upkeep. Links point to
+files already available on `main`.
+
+Preview the existing-card conversion from the repository root:
+
+```sh
+python scripts/migrate_week4_issues.py --output-dir ../w4-preview
+```
+
+Use Git credential manager or a token in `GH_TOKEN` with repository issue access.
+Inspect `issue-conversion.json`: it saves each original card and proposed patch.
+After the specifications merge into `main`, run the same command with `--apply`
+and a new output directory. Review the fresh snapshot too; each run reads current
+cards rather than applying an older preview. Keep backups outside this repository.
+
+The tool preserves story criteria and historical verification ticks, does not
+close issues or post comments, and leaves milestones and priority fields intact.
+It refuses missing specification links or unmapped stories, converts old type
+labels to issue types, and retires MoSCoW labels only after checking that each
+story has its MoSCoW field. It aligns assignees only where two distinct ownership
+fields already exist. An interrupted application can be previewed and rerun; it
+is not a transaction, so inspect the saved originals before undoing a change.
+The preview is preparation, not evidence of a completed live conversion.
+
 ## Branches and commits
 
 Name a branch `<issue-number>-<short-lowercase-description>`, for example
