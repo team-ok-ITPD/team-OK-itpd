@@ -32,7 +32,6 @@ This repository is a work in progress for the ITPD course. It captures the proje
 - [Decisions](docs/decisions.md)
 - [Assumptions](docs/assumptions.md)
 - [Research](docs/research/)
-- [System context](docs/architecture/)
 
 ## Project Goals
 
@@ -57,23 +56,36 @@ Software debugging is a critical skill, yet many learning resources focus on cod
 ```text
 .
 ├── .github/                       # Issue forms and GitHub workflows
+├── app/                           # Exercise catalog server and browser UI
 ├── docs/                          # Maintained documentation
-│   ├── architecture/              # Architecture and system context
+│   ├── architecture/              # Context, containers and ADRs
+│   ├── functional-requirements/   # Product behavior specifications
+│   ├── quality-requirements/      # Quality scenarios and priorities
 │   ├── research/                  # Research and product comparisons
 │   ├── assumptions.md
 │   ├── decisions.md
+│   ├── glossary.md
 │   ├── index.md
 │   ├── product-vision.md
 │   └── setup.md
+├── exercise/                      # Learner-facing buggy exercise and tests
+├── exercise_author/               # Reference implementation for validation
+├── product_tests/                 # Product and exercise-contract checks
 ├── reports/                       # Weekly project reports and evidence
 │   ├── week-01/                   # Research and kickoff
 │   ├── week-02/                   # Requirements and prototyping
-│   └── week-03/                   # MUP verification
+│   ├── week-03/                   # MUP verification
+│   └── week-04/                   # Current meeting evidence
+├── runners/                       # Optional cross-platform launch entry points
+├── scripts/                       # Container and documentation helpers
 ├── .gitignore
 ├── .lycheeignore
 ├── .markdownlint-cli2.jsonc
+├── AGENTS.md
 ├── CHANGELOG.md
+├── compose.yaml
 ├── CONTRIBUTING.md
+├── Dockerfile
 ├── LICENSE
 ├── README.md
 └── mkdocs.yml
