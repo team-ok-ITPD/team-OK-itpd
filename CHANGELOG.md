@@ -6,6 +6,11 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Architecture drivers and accepted decision records for the product stack,
+  exercise representation, and learner-workspace isolation.
+
 ## [0.1.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.1.0) - 2026-10-18
 
 ### Added

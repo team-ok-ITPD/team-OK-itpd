@@ -13,6 +13,14 @@ nav:
   - Home: index.md
   - Setup and run: setup.md
   - Product vision: product-vision.md
+  - Requirements:
+      - Functional requirements: functional-requirements/README.md
+      - Quality requirements: quality-requirements/README.md
+  - Architecture:
+      - Overview: architecture/README.md
+      - ADR-001 - Stack and responsibilities: architecture/adr/ADR-001.md
+      - ADR-002 - Exercise representation: architecture/adr/ADR-002.md
+      - ADR-003 - Workspace isolation: architecture/adr/ADR-003.md
   - Planning:
       - Threshold of success: threshold-of-success.md
       - Project plan: project-plan.md

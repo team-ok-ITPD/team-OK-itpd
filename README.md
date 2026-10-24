@@ -25,10 +25,12 @@ This repository is a work in progress for the ITPD course. It captures the proje
 ## Maintained Documentation
 
 - [Product vision](docs/product-vision.md)
+- [Functional requirements](docs/functional-requirements/README.md)
+- [Quality requirements](docs/quality-requirements/README.md)
+- [Architecture](docs/architecture/README.md)
 - [Decisions](docs/decisions.md)
 - [Assumptions](docs/assumptions.md)
 - [Research](docs/research/)
-- [System context](docs/architecture/)
 
 ## Project Goals
 

@@ -110,4 +110,7 @@ the fix because `BND-01` leaves that to the learner.
 ## Where The Detail Lives
 
 - [User stories](https://github.com/team-ok-ITPD/team-OK-itpd/issues?q=label%3Auser-story)
+- [Functional requirements](functional-requirements/README.md)
+- [Quality requirements](quality-requirements/README.md)
+- [Architecture](architecture/README.md)
 - [Week 2 report](../reports/week-02/README.md)
