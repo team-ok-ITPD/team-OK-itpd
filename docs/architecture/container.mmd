@@ -1,0 +1,19 @@
+flowchart LR
+  browser["Learner browser<br/>(current web browser)"]
+  subgraph product["Debug GYM"]
+    catalog["exercise catalog<br/>(Python 3 HTTP application)"]
+    workspace["debug workspace<br/>(code-server, Python 3, pytest)"]
+    store[("workspace store<br/>(Docker named volume)")]
+  end
+
+  browser -->|"HTTP: request text and exercise response"| catalog
+  catalog -->|"HTTP: health request and workspace URL"| workspace
+  browser -->|"HTTP/WebSocket: VS Code UI and commands"| workspace
+  workspace <-->|"filesystem: exercise files and editor configuration"| store
+
+  classDef application fill:#dbeafe,stroke:#1d4ed8,color:#172554
+  classDef datastore fill:#dcfce7,stroke:#15803d,color:#052e16
+  classDef external fill:#f8fafc,stroke:#64748b,stroke-dasharray:5 5,color:#0f172a
+  class catalog,workspace application
+  class store datastore
+  class browser external
