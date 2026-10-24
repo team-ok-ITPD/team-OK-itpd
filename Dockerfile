@@ -17,6 +17,9 @@ COPY --chown=coder:coder app /opt/debug-gym/app
 COPY --chown=coder:coder exercise /home/coder/project
 COPY --chown=coder:coder scripts/start.sh /usr/local/bin/debug-gym-start
 
+RUN printf '\nexport PATH="/opt/debug-gym/bin:$PATH"\n' | tee -a /home/coder/.bashrc /home/coder/.profile > /dev/null \
+    && chown coder:coder /home/coder/.bashrc /home/coder/.profile
+    
 USER coder
 WORKDIR /home/coder/project
 
