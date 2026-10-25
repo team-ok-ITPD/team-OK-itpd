@@ -36,8 +36,8 @@ The product has documented quality requirements and architecture, and the team h
 
 #### REL-04
 
-Released as [v0.2.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.2.0)
-on 2026-10-25 as a pre-meeting validation candidate. It adds the documented
+Released as `v0.2.0` on 2026-10-25 as a pre-meeting validation candidate. It
+adds the documented
 requirements and architecture package, improves local setup and terminal use,
 and prevents known false-positive exercise matches. It remains a learner-local,
 browser-based flow with one prepared exercise; Customer acceptance,
