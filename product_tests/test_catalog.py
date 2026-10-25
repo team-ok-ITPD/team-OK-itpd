@@ -28,7 +28,12 @@ class FindExerciseTests(unittest.TestCase):
         self.assertEqual(exercise["id"], "remove-negatives")
 
     def test_rejects_unsupported_bug_type(self) -> None:
-        self.assertIsNone(find_exercise("A Python concurrency race condition"))
+        for query in (
+            "A Python loop off-by-one bug",
+            "A Python list concurrency bug",
+        ):
+            with self.subTest(query=query):
+                self.assertIsNone(find_exercise(query))
 
     def test_requires_python(self) -> None:
         self.assertIsNone(find_exercise("A Java list mutation bug"))
@@ -93,9 +98,10 @@ class CatalogApiTests(unittest.TestCase):
 
     @patch("app.server.workspace_health_error", return_value=None)
     def test_supported_request_returns_workspace(self, _health_check: object) -> None:
-        status, payload = self.request("A Python loop bug")
+        status, payload = self.request("I want a Python list mutation bug")
 
         self.assertEqual(status, 200)
+        self.assertEqual(payload["exercise"]["id"], "remove-negatives")
         self.assertIn("workspaceUrl", payload["exercise"])
 
     @patch(
@@ -110,11 +116,23 @@ class CatalogApiTests(unittest.TestCase):
         self.assertEqual(status, 503)
         self.assertIn("workspace is unavailable", payload["error"])
 
-    def test_unsupported_request_does_not_create_workspace(self) -> None:
-        status, payload = self.request("A Python concurrency bug")
+    @patch("app.server.workspace_health_error")
+    def test_false_positive_requests_do_not_create_workspace(
+        self, health_check: object
+    ) -> None:
+        for query in (
+            "A Python loop off-by-one bug",
+            "A Python list concurrency bug",
+        ):
+            with self.subTest(query=query):
+                status, payload = self.request(query)
 
-        self.assertEqual(status, 404)
-        self.assertIn("No prepared exercise", payload["error"])
+                self.assertEqual(status, 404)
+                self.assertIn("No prepared exercise", payload["error"])
+                self.assertNotIn("exercise", payload)
+                self.assertNotIn("workspace", json.dumps(payload).lower())
+
+        health_check.assert_not_called()
 
 
 if __name__ == "__main__":
