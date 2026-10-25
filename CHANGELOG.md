@@ -6,6 +6,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## 0.2.0 - 2026-10-25
+
 ### Added
 
 - A linked functional-requirements index, architecture decision records and
@@ -17,6 +19,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   debugger configuration, workspace readiness and current MUP limitations.
 
 ### Fixed
+
+- Exercise lookup rejects known unsupported bug categories instead of returning
+  the list-mutation exercise because another keyword overlaps.
 
 - The terminal in the browser workspace finds Python and pytest, so
   `python -m pytest -q` runs the exercise's tests.

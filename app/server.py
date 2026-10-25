@@ -24,12 +24,17 @@ SUPPORTED_TERMS = {
     "negative",
     "negatives",
 }
+UNSUPPORTED_TERMS = {"concurrency", "off-by-one"}
 
 
 def find_exercise(query: str) -> dict[str, Any] | None:
     """Return the curated exercise when a query describes its bug category."""
     words = {word.strip(".,!?;:").lower() for word in query.split()}
-    if "python" not in words or not words.intersection(SUPPORTED_TERMS):
+    if (
+        "python" not in words
+        or words.intersection(UNSUPPORTED_TERMS)
+        or not words.intersection(SUPPORTED_TERMS)
+    ):
         return None
 
     return {
