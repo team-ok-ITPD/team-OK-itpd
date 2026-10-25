@@ -29,6 +29,7 @@ class FindExerciseTests(unittest.TestCase):
 
     def test_rejects_unsupported_bug_type(self) -> None:
         for query in (
+            "A Python concurrency bug",
             "A Python loop off-by-one bug",
             "A Python list concurrency bug",
         ):
@@ -121,6 +122,7 @@ class CatalogApiTests(unittest.TestCase):
         self, health_check: object
     ) -> None:
         for query in (
+            "A Python concurrency bug",
             "A Python loop off-by-one bug",
             "A Python list concurrency bug",
         ):
