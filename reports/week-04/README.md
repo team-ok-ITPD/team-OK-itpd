@@ -91,17 +91,15 @@ The specification package is [PR #84](https://github.com/team-ok-ITPD/team-OK-it
 ## Deviations
 
 - The Customer meeting was held on 2026-10-26, after the sprint's due date of
-  2026-10-24, and `REL-04` was cut on 2026-10-25, before it, and GitHub marks
-  `v0.2.0` as a pre-release. The release does not carry the meeting's decisions,
-  which are recorded for `SPRINT-05`.
+  2026-10-24. `REL-04` was cut on 2026-10-25, before the meeting, and GitHub
+  marks `v0.2.0` as a pre-release. The release does not carry the meeting's
+  decisions, which are recorded for `SPRINT-05`.
 - The Customer was shown the web prototype and not the containerized workspace,
   so no story has a verdict and no `DEC-nnn` records one. The action to show the
   workspace against `US-01` through `US-05` is in
   [the meeting report](meeting-report.md#action-points).
 - `Actual Velocity` is `0SP` because no story closed; the team's verification of
   the five stories is not Customer acceptance.
-- [PR #87](https://github.com/team-ok-ITPD/team-OK-itpd/pull/87) was still
-  awaiting review when this report was written.
 
 ## Privacy
 
