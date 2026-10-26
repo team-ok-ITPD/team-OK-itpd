@@ -224,6 +224,7 @@ the first deployment. The workflow uses the `github-pages` environment.
 | A launcher times out after changing ports | Use the manual Compose path and open the URLs configured in `.env`; launcher health checks currently use ports 3000 and 8080. |
 | Image or extension download fails | Check network access and inspect build output; retry `docker compose -p debug-gym-local build`. |
 | A port is already allocated | Stop the conflicting process. For workspace port changes, update both workspace variables in `.env`. |
+| Compose fails with `all predefined address pools have been fully subnetted` | Docker has run out of networks. Run `docker network prune`, which removes every unused Docker network on the machine, then repeat `docker compose -p debug-gym-local up --build -d`. |
 | A supported catalog request reports an unavailable workspace | Open the workspace health URL and inspect Compose logs; the catalog checks readiness before returning the exercise. |
 | `pytest` is missing or imports fail | Use `/opt/debug-gym/bin/python -m pytest -q` from `/home/coder/project` in the container. |
 | No debugger launch configuration exists | Preserve learner edits and copy the tracked `exercise/.vscode/launch.json` into the workspace; an older named volume can hide files added to a newer image. |
