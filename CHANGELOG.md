@@ -6,7 +6,7 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## 0.2.0 - 2026-10-25
+## [0.2.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.2.0) - 2026-10-25
 
 ### Added
 
