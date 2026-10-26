@@ -33,10 +33,11 @@ The product has documented quality requirements and architecture, and the team h
 - **Due:** 2026-10-24
 - **Sprint Backlog:** [the issues scheduled into SPRINT-04](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/5)
 - **Planned Velocity:** 22
+- **Actual Velocity:** 0; `US-01` through `US-05` received no Customer verdict at the 2026-10-26 review and moved to `SPRINT-05`.
 
 #### REL-04
 
-Released as `v0.2.0` on 2026-10-25 as a pre-meeting validation candidate. It
+Released as [v0.2.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.2.0) on 2026-10-25 as a pre-meeting validation candidate. It
 adds the documented
 requirements and architecture package, improves local setup and terminal use,
 and prevents known false-positive exercise matches. It remains a learner-local,
