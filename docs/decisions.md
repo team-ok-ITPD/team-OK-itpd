@@ -128,3 +128,69 @@ Show the full output of the tests, not one row.
 - **Why:** Test output can contain much more than a single value, potentially
   including thousands of values. Learners need access to the full test output to
   understand failures and investigate bugs.
+
+## DEC-011
+
+Keep the default tests read-only and let learners add tests of their own.
+
+- **Status:** Active
+- **Date:** 2026-10-26
+- **Made by:** Customer
+- **Source:**
+  [the Week 4 customer meeting](../reports/week-04/meeting-report.md#decisions)
+- **Why:** The default tests are the source of truth: they fail when the program
+  is buggy and pass when it is correct. Letting a learner edit them would remove
+  that guarantee, while new tests of their own leave it intact.
+
+## DEC-012
+
+Design for desktop users and do not build for mobile.
+
+- **Status:** Active
+- **Date:** 2026-10-26
+- **Made by:** Customer
+- **Source:**
+  [the Week 4 customer meeting](../reports/week-04/meeting-report.md#decisions)
+- **Why:** The target learners are students who use their own computers in
+  university labs and work with real code editors, so mobile support would cost
+  effort for users the product does not serve.
+
+## DEC-013
+
+Make opening an exercise in VS Code a Must Have.
+
+- **Status:** Active
+- **Date:** 2026-10-26
+- **Made by:** Customer
+- **Source:**
+  [the Week 4 customer meeting](../reports/week-04/meeting-report.md#decisions)
+- **Why:** Desktop users who work with real tools need to open and solve an
+  exercise in VS Code, so it is a must-have and not the delighter the team had
+  proposed. This confirmed [DEC-007](#dec-007) and raised its priority.
+
+## DEC-014
+
+Submit the solution from VS Code, not from a button on the site.
+
+- **Status:** Active
+- **Date:** 2026-10-26
+- **Made by:** Customer
+- **Source:**
+  [the Week 4 customer meeting](../reports/week-04/meeting-report.md#decisions)
+- **Why:** If VS Code fills the screen, a learner should not have to switch back
+  to the site to run tests or submit, so the command lives in VS Code and not on
+  the site.
+
+## DEC-015
+
+Search only the prepared exercises and list every match below the filters.
+
+- **Status:** Active
+- **Date:** 2026-10-26
+- **Made by:** Customer
+- **Source:**
+  [the Week 4 customer meeting](../reports/week-04/meeting-report.md#decisions)
+- **Why:** A learner who does not remember an exercise's exact title needs to
+  see several matches, and an AI-generated exercise is created fresh, so there
+  is nothing to search. The first match is selected and nothing is previewed
+  when there are no results.
