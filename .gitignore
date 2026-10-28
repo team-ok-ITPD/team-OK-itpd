@@ -19,7 +19,9 @@ __pycache__/
 .venv/
 .coverage
 htmlcov/
-
+.claude/
 *.log
 
 site/
+
+*.sqlite3
