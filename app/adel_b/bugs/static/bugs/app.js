@@ -87,6 +87,8 @@ const PY_BUILTINS = new Set([
 
 const state = {
   selectedId: "remove-negatives",
+  // The last "Describe the bug" search: { query, ids } with the best match first, or null.
+  matches: null,
   source: "prepared",
   search: "",
   instructions: "",
@@ -386,13 +388,40 @@ function visibleExercises() {
   const difficulty = $("#filter-difficulty").value;
   const language = $("#filter-language").value;
   const query = state.search.trim().toLowerCase();
-  return EXERCISES.filter(
+  // After a search, list only its matches, best match first.
+  const pool = state.matches ? state.matches.ids.map(findExercise).filter(Boolean) : EXERCISES;
+  return pool.filter(
     (exercise) =>
       (topic === "all" || exercise.topic === topic) &&
       (difficulty === "all" || exercise.difficulty === difficulty) &&
       exercise.language === language &&
       (!query || exercise.title.toLowerCase().includes(query)),
   );
+}
+
+function matchBar() {
+  if (!state.matches) {
+    return "";
+  }
+  const count = state.matches.ids.length;
+  if (count === 0) {
+    return `
+    <div class="match-bar">
+      <span>No exercises match “${escapeHtml(state.matches.query)}”.</span>
+      <button class="button ghost small" type="button" data-action="clear-matches">Show all exercises</button>
+    </div>`;
+  }
+  return `
+    <div class="match-bar">
+      <span>${count === 1 ? "1 exercise matches" : `${count} exercises match`} “${escapeHtml(state.matches.query)}”${count === 1 ? "." : ", best match first."}</span>
+      <button class="button ghost small" type="button" data-action="clear-matches">Show all exercises</button>
+    </div>`;
+}
+
+function clearMatches() {
+  state.matches = null;
+  $("#ask-result").hidden = true;
+  renderNewChallenge();
 }
 
 function renderExerciseList() {
@@ -402,17 +431,19 @@ function renderExerciseList() {
     list.innerHTML = `
       <div class="empty">
         <strong>AI-generated challenges are not available yet.</strong>
-        <span>Describe the bug you want above, and Debug GYM will match it to a prepared exercise.</span>
+        <span>Describe the bug you want below, and Debug GYM will match it to prepared exercises.</span>
       </div>`;
     return;
   }
 
   const exercises = visibleExercises();
   if (exercises.length === 0) {
+    const searched = state.matches && state.matches.ids.length === 0;
     list.innerHTML = `
+      ${matchBar()}
       <div class="empty">
-        <strong>No exercises match these filters.</strong>
-        <span>Try another topic or difficulty.</span>
+        <strong>${searched ? "No exercises match your search." : "No exercises match these filters."}</strong>
+        <span>${searched ? "Try other words, or show all exercises." : "Try another topic or difficulty."}</span>
       </div>`;
     return;
   }
@@ -421,10 +452,11 @@ function renderExerciseList() {
     state.selectedId = exercises[0].id;
   }
 
-  list.innerHTML = exercises
-    .map((exercise) => {
+  list.innerHTML = matchBar() + exercises
+    .map((exercise, index) => {
       const checked = exercise.id === state.selectedId ? " checked" : "";
       const status = STATUS_ICONS[historyStatus(exercise.id)];
+      const best = state.matches && index === 0 ? '<span class="badge accent small">Best match</span>' : "";
       return `
         <label class="exercise-card">
           <input type="radio" name="exercise" value="${exercise.id}"${checked}>
@@ -433,6 +465,7 @@ function renderExerciseList() {
             <small>${escapeHtml(exercise.summary)}</small>
           </span>
           <span class="exercise-meta">
+            ${best}
             ${status ? `<span class="badge ${status.badge} small">${status.label}</span>` : ""}
             <span class="badge">${escapeHtml(exercise.difficulty)}</span>
             <span class="badge">${escapeHtml(exercise.duration)}</span>
@@ -512,10 +545,13 @@ async function askForExercise(query) {
   } catch {
     throw new Error(`The catalog answered with HTTP ${response.status}.`);
   }
+  if (response.status === 404) {
+    return { exercises: [], matchedBy: null };
+  }
   if (!response.ok) {
     throw new Error(payload.error || `The catalog answered with HTTP ${response.status}.`);
   }
-  return payload.exercise;
+  return { exercises: payload.exercises || [payload.exercise], matchedBy: payload.matchedBy || "title" };
 }
 
 function showAskResult(kind, message) {
@@ -527,26 +563,37 @@ function showAskResult(kind, message) {
 
 async function handleAsk(event) {
   event.preventDefault();
-  const query = String(new FormData(event.target).get("query") || "");
-  showAskResult("pending", "Matching your request...");
+  const query = String(new FormData(event.target).get("query") || "").trim();
+  showAskResult("pending", "Finding related exercises...");
 
   try {
-    const match = await askForExercise(query);
-    state.workspaceUrl = match.workspaceUrl;
-    const exercise = findExercise(match.id);
-    if (!exercise) {
-      showAskResult("success", `Matched “${match.title}”, but this page doesn't know that exercise yet.`);
+    const found = await askForExercise(query);
+    const matches = found.exercises.filter((match) => findExercise(match.id));
+    if (matches.length === 0) {
+      // An empty result empties the list too, instead of keeping the previous search.
+      state.matches = { query, ids: [] };
+      renderNewChallenge();
+      showAskResult("error", `No exercise matches “${query}”. Try words from a title, like “negative” or “duplicate”.`);
       return;
     }
 
+    // Show every related exercise: clear the filters that could hide some of them.
+    state.matches = { query, ids: matches.map((match) => match.id) };
     state.source = "prepared";
-    state.selectedId = exercise.id;
+    state.selectedId = matches[0].id;
     document.querySelector('input[name="source"][value="prepared"]').checked = true;
-    $("#filter-topic").value = exercise.topic;
-    $("#filter-difficulty").value = exercise.difficulty;
+    $("#filter-topic").value = "all";
+    $("#filter-difficulty").value = "all";
     renderNewChallenge();
-    showAskResult("success", `Matched “${exercise.title}”. Its workspace is ready. Review it, then start practice.`);
-    $("#preview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const count = matches.length;
+    const where = found.matchedBy === "title" ? "" : " No titles matched, so these come from the descriptions.";
+    showAskResult(
+      "success",
+      (count === 1
+        ? `Found 1 exercise: “${matches[0].title}”.`
+        : `Found ${count} exercises. The best match, “${matches[0].title}”, is selected.`) + where,
+    );
+    $("#exercise-list").scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
     const message = error instanceof TypeError ? `The catalog could not be reached: ${error.message}` : error.message;
     showAskResult("error", message);
@@ -878,7 +925,7 @@ async function resetCode() {
 
 /* Python runner (Pyodide in a web worker) */
 
-const WORKER_URL = new URL("python-worker.js", document.currentScript.src);
+const WORKER_URL = new URL(`python-worker.js${new URL(document.currentScript.src).search}`, document.currentScript.src);
 const RUN_TIMEOUT_MS = 5000;
 const python = { worker: null, ready: false, loading: null, nextId: 1 };
 
@@ -1388,6 +1435,12 @@ document.querySelectorAll('input[name="source"]').forEach((input) => {
 
 ["#filter-topic", "#filter-difficulty", "#filter-language"].forEach((selector) => {
   $(selector).addEventListener("change", renderNewChallenge);
+});
+
+$("#exercise-list").addEventListener("click", (event) => {
+  if (event.target.closest('[data-action="clear-matches"]')) {
+    clearMatches();
+  }
 });
 
 $("#exercise-list").addEventListener("change", (event) => {

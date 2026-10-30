@@ -3,6 +3,7 @@ import json
 import math
 import re
 from functools import wraps
+from pathlib import Path
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -326,16 +327,61 @@ def _stem(word):
     return word[:-1] if word.endswith("s") else word
 
 
+MIN_PREFIX = 3
+
+
+def _title_hits(wanted, title):
+    """Count query words that start a title word (or the reverse), so "dup" finds "Duplicate"."""
+    title_words = {_stem(word) for word in _words(title)}
+    return sum(
+        1
+        for word in wanted
+        if len(word) >= MIN_PREFIX
+        and any(
+            title_word.startswith(word) or (len(title_word) >= MIN_PREFIX and word.startswith(title_word))
+            for title_word in title_words
+        )
+    )
+
+
+def rank_bugs(query):
+    """Return (bugs, "title" | "description"): title matches first, else description matches.
+
+    Bugs whose title matches are ranked by matched words, an exact phrase from the title
+    ranking highest. Only when no title matches do summaries and descriptions count.
+    """
+    wanted = {_stem(word) for word in _words(query)}
+    phrase = " ".join(query.lower().split())
+    bugs = list(Bug.objects.all())
+
+    def order(item):
+        score, bug = item
+        # Ties keep catalog order, with bugs that have a prepared workspace first.
+        return (-score, not bug.has_workspace, bug.id)
+
+    by_title = []
+    for bug in bugs:
+        score = _title_hits(wanted, bug.title) * 10
+        if len(phrase) >= MIN_PREFIX and phrase in bug.title.lower():
+            score += 100
+        if score:
+            by_title.append((score, bug))
+    if by_title:
+        return [bug for _, bug in sorted(by_title, key=order)], "title"
+
+    by_text = []
+    for bug in bugs:
+        text = " ".join([bug.summary, bug.description, bug.topic, bug.category])
+        score = len(wanted & {_stem(word) for word in _words(text)})
+        if score:
+            by_text.append((score, bug))
+    return [bug for _, bug in sorted(by_text, key=order)], "description"
+
+
 def match_bug(query):
     """Return the stored bug whose text shares the most words with the query."""
-    wanted = {_stem(word) for word in _words(query)}
-    best, best_score = None, 0
-    for bug in Bug.objects.all():
-        text = " ".join([bug.title, bug.summary, bug.description, bug.topic, bug.category])
-        score = len(wanted & {_stem(word) for word in _words(text)})
-        if score > best_score or (score == best_score and score and bug.has_workspace):
-            best, best_score = bug, score
-    return best
+    ranked, _ = rank_bugs(query)
+    return ranked[0] if ranked else None
 
 
 @require_http_methods(["POST"])
@@ -348,15 +394,26 @@ def exercise_match(request):
     except (json.JSONDecodeError, AttributeError, ValueError):
         return JsonResponse({"error": "Send a text query."}, status=400)
 
-    bug = match_bug(query)
-    if bug is None:
+    ranked, matched_by = rank_bugs(query)
+    if not ranked:
         return JsonResponse(
             {"error": "No prepared exercise matches that request. Try a Python list, loop, or dictionary bug."},
             status=404,
         )
-    return JsonResponse({"exercise": bug.to_dict()})
+    # "exercise" is the best match; "exercises" lists every related one, best first.
+    return JsonResponse({
+        "exercise": ranked[0].to_dict(),
+        "exercises": [bug.to_dict() for bug in ranked],
+        "matchedBy": matched_by,
+    })
+
+
+def _asset_version():
+    """Changes whenever a page asset changes, so browsers never run an old app.js."""
+    folder = Path(__file__).resolve().parent / "static" / "bugs"
+    return str(max(int(path.stat().st_mtime) for path in folder.iterdir() if path.is_file()))
 
 
 @ensure_csrf_cookie
 def index(request):
-    return render(request, "bugs/index.html")
+    return render(request, "bugs/index.html", {"asset_version": _asset_version()})

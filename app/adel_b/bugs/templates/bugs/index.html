@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Debug GYM | Practice</title>
-    <link rel="stylesheet" href="{% static 'bugs/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'bugs/styles.css' %}?v={{ asset_version }}">
   </head>
   <body class="signed-out">
     <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -163,24 +163,6 @@
                 code. Investigate the problem, write your fix, and test it yourself.
               </p>
 
-              <form class="ask" id="request-form">
-                <label for="query">Describe the bug you want to practise</label>
-                <div class="ask-row">
-                  <input
-                    id="query"
-                    name="query"
-                    value="A Python list mutation bug with negative numbers"
-                    autocomplete="off"
-                    required
-                  >
-                  <button class="button primary" type="submit">
-                    <svg class="icon"><use href="#i-search"/></svg>
-                    Find exercise
-                  </button>
-                </div>
-                <p class="ask-result" id="ask-result" aria-live="polite" hidden></p>
-              </form>
-
               <fieldset class="group">
                 <legend>Challenge source</legend>
                 <div class="source-grid">
@@ -202,6 +184,24 @@
                   </label>
                 </div>
               </fieldset>
+
+              <form class="ask" id="request-form">
+                <label for="query">Describe the bug you want to practise</label>
+                <div class="ask-row">
+                  <input
+                    id="query"
+                    name="query"
+                    value="A Python list mutation bug with negative numbers"
+                    autocomplete="off"
+                    required
+                  >
+                  <button class="button primary" type="submit">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    Find exercise
+                  </button>
+                </div>
+                <p class="ask-result" id="ask-result" aria-live="polite" hidden></p>
+              </form>
 
               <div class="filters">
                 <label class="select">
@@ -364,6 +364,6 @@
 
     <div class="toast" id="toast" role="status" hidden></div>
 
-    <script src="{% static 'bugs/app.js' %}"></script>
+    <script src="{% static 'bugs/app.js' %}?v={{ asset_version }}"></script>
   </body>
 </html>

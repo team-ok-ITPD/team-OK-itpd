@@ -134,6 +134,39 @@ class PageAndMatchTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["exercise"]["id"], "remove-negatives")
 
+    def search(self, query):
+        response = self.client.post(
+            "/api/exercises", data=json.dumps({"query": query}), content_type="application/json"
+        )
+        body = response.json()
+        return [exercise["id"] for exercise in body.get("exercises", [])], body.get("matchedBy")
+
+    def test_match_by_title_lists_every_matching_title(self):
+        self.assertEqual(self.search("duplicate"), (["duplicated-result", "count-words"], "title"))
+
+    def test_match_title_by_word_start(self):
+        self.assertEqual(self.search("dict"), (["count-words"], "title"))
+        self.assertEqual(self.search("missing element"), (["missing-last-element"], "title"))
+
+    def test_more_matching_title_words_rank_higher(self):
+        ids, matched_by = self.search("duplicate dictionary")
+        self.assertEqual((ids[0], matched_by), ("count-words", "title"))
+
+    def test_best_match_is_also_returned_alone(self):
+        response = self.client.post(
+            "/api/exercises", data=json.dumps({"query": "surviving negative"}), content_type="application/json"
+        )
+        self.assertEqual(response.json()["exercise"]["id"], "remove-negatives")
+
+    def test_falls_back_to_descriptions_when_no_title_matches(self):
+        self.assertEqual(
+            self.search("sum of scores"), (["total-starts-late", "missing-last-element"], "description")
+        )
+
+    def test_asset_links_change_with_the_files(self):
+        response = self.client.get("/")
+        self.assertRegex(response.content.decode(), r"bugs/app\.js\?v=\d+")
+
     def test_match_dictionary_query(self):
         response = self.client.post(
             "/api/exercises",
