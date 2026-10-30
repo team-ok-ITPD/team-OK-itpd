@@ -656,17 +656,14 @@ function renderReproduce(exercise, test) {
     `>>> ${call}\n${actualText(test)}`;
 }
 
-function renderWorkspace(exercise) {
-  const workspace = $("#workspace");
-  if (exercise.workspace) {
-    workspace.innerHTML = `
-      <button class="button secondary" type="button" id="open-workspace">
-        ${icon("i-external")}
-        Open in VS Code workspace
-      </button>`;
-  } else {
-    workspace.innerHTML = `<p>Preview only. This exercise is not in the VS Code workspace yet, so you can explore it here but not edit and run it.</p>`;
-  }
+function renderWorkspace() {
+  $("#workspace").innerHTML = `
+    <button class="button secondary" type="button" id="open-workspace">
+      ${icon("i-external")}
+      Open in VS Code online
+    </button>
+    <p>Your code and the tests open in VS Code. Press F5 to debug the tests with breakpoints.</p>
+    <p class="workspace-error" id="workspace-error" role="alert" hidden></p>`;
 }
 
 function consolePrint(html) {
@@ -1157,22 +1154,45 @@ async function handleSubmit() {
 
 async function openWorkspace() {
   const exercise = findExercise(state.practiceId);
+  const button = $("#open-workspace");
+  const error = $("#workspace-error");
+  if (button.disabled) {
+    return;
+  }
+  // Open the tab now, while the click still counts, so the browser does not block it.
   const tab = window.open("", "_blank");
+  if (tab) {
+    tab.document.title = "Starting VS Code...";
+    tab.document.body.textContent = "Starting VS Code for this exercise...";
+  }
+  button.disabled = true;
+  button.innerHTML = `${icon("i-loader", "spin")} Starting VS Code...`;
+  error.hidden = true;
   try {
-    if (!state.workspaceUrl) {
-      state.workspaceUrl = exercise.workspaceUrl;
+    // VS Code gets the saved code, so save the latest edits first.
+    const code = $("#code-input").value;
+    if (code !== (state.drafts[exercise.id] ?? exercise.code)) {
+      clearTimeout(saveTimer);
+      await saveDraft(exercise, code);
+    }
+    const response = await apiFetch(`/api/bugs/${encodeURIComponent(exercise.id)}/vscode/`, { method: "POST" });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || `The server answered with HTTP ${response.status}.`);
     }
     if (tab) {
       tab.opener = null;
-      tab.location = state.workspaceUrl;
+      tab.location = payload.url;
     } else {
-      window.location.href = state.workspaceUrl;
+      window.location.href = payload.url;
     }
-  } catch (error) {
-    if (tab) {
-      tab.close();
-    }
-    toast(error instanceof TypeError ? "The catalog could not be reached." : error.message);
+  } catch (failure) {
+    tab?.close();
+    error.textContent = failure instanceof TypeError ? "The server could not be reached." : failure.message;
+    error.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.innerHTML = `${icon("i-external")} Open in VS Code online`;
   }
 }
 

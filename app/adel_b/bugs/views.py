@@ -6,10 +6,10 @@ from functools import wraps
 
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
-from .models import Attempt, Bug, Draft
+from .models import Attempt, Bug, Draft, IdeToken
 
 REQUIRED_FIELDS = ("slug", "title", "description")
 EDITABLE_FIELDS = {
@@ -133,20 +133,52 @@ def bug_attempts(request, slug):
 
     try:
         payload = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        payload = None
+    return _save_attempt(request.user, bug, payload)
+
+
+def _save_attempt(user, bug, payload):
+    try:
         code, passed, total = payload.get("code"), payload.get("passed"), payload.get("total")
         if not isinstance(code, str) or type(passed) is not int or type(total) is not int:
             raise ValueError
-    except (json.JSONDecodeError, AttributeError, ValueError):
+    except (AttributeError, ValueError):
         return JsonResponse({"error": "Send the code and the passed and total test counts."}, status=400)
     if len(code) > MAX_DRAFT_LENGTH:
         return JsonResponse({"error": "The code is too long to save."}, status=400)
     if total != len(bug.tests) or not 0 <= passed <= total:
         return JsonResponse({"error": f"This bug has {len(bug.tests)} tests."}, status=400)
 
-    attempt = Attempt.objects.create(
-        user=request.user, bug=bug, code=code, passed_count=passed, total_count=total
-    )
+    attempt = Attempt.objects.create(user=user, bug=bug, code=code, passed_count=passed, total_count=total)
     return JsonResponse({"attempt": attempt.to_dict()}, status=201)
+
+
+# The extension authenticates with its token, not a session cookie, so CSRF does not apply.
+@csrf_exempt
+@require_http_methods(["POST"])
+def ide_submit(request):
+    """Save an attempt sent by the Debug GYM VS Code extension."""
+    scheme, _, key = request.headers.get("Authorization", "").partition(" ")
+    token = IdeToken.find(key.strip()) if scheme.lower() == "bearer" and key.strip() else None
+    if token is None:
+        return JsonResponse(
+            {"error": "This VS Code folder is no longer connected. Open it again from the website."},
+            status=401,
+        )
+    try:
+        payload = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        payload = None
+    if isinstance(payload, dict) and payload.get("bug") != token.bug.slug:
+        return JsonResponse({"error": "This folder belongs to another exercise."}, status=400)
+    response = _save_attempt(token.user, token.bug, payload)
+    if response.status_code == 201:
+        # The website and the next VS Code opening show the code the learner submitted.
+        Draft.objects.update_or_create(
+            user=token.user, bug=token.bug, defaults={"code": payload["code"]}
+        )
+    return response
 
 
 @require_http_methods(["GET"])
@@ -262,6 +294,28 @@ def bug_test(request, slug, index):
     draft.tests = edited
     draft.save()
     return JsonResponse({"tests": draft.tests or bug.tests, "edited": draft.tests is not None})
+
+
+@require_http_methods(["POST"])
+@login_required_json
+def bug_vscode(request, slug):
+    """Write the learner's workspace for this bug and open it in their VS Code container."""
+    # Imported here: both modules import from this one.
+    from .ide import IdeError, start_ide
+    from .workspaces import WorkspaceError, write_workspace
+
+    bug = Bug.objects.filter(slug=slug).first()
+    if bug is None:
+        return JsonResponse({"error": "Bug not found."}, status=404)
+    try:
+        folder = write_workspace(request.user, bug)
+    except WorkspaceError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    try:
+        port = start_ide(request.user, folder)
+    except IdeError as error:
+        return JsonResponse({"error": str(error)}, status=503)
+    return JsonResponse({"url": f"http://localhost:{port}/?folder=/home/coder/project"})
 
 
 def _words(text):

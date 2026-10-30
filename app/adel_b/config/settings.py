@@ -26,7 +26,10 @@ SECRET_KEY = 'django-insecure-9c(@85c9#i%4eawkq2#e&hi6-=i8uz%ompu6$+&)2ay(+xofmh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# host.docker.internal is how the VS Code containers reach this server.
+ALLOWED_HOSTS = os.getenv(
+    "DEBUG_GYM_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],host.docker.internal"
+).split(",")
 
 
 # Application definition
@@ -126,3 +129,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # The VS Code (code-server) workspace a learner opens for exercises that have one.
 DEBUG_GYM_WORKSPACE_URL = os.getenv("DEBUG_GYM_WORKSPACE_URL", "http://localhost:8080")
+
+# Where each learner's VS Code workspace folders are written, one per user and bug.
+WORKSPACES_DIR = Path(os.getenv("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "workspaces")).resolve()
+
+# The Debug GYM code-server image (built from the repository Dockerfile) used for
+# each learner's VS Code container.
+DEBUG_GYM_IDE_IMAGE = os.getenv("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
+
+# The address the VS Code containers use to reach this server (for the extension's Submit).
+DEBUG_GYM_IDE_SERVER_URL = os.getenv("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8001")
+
+# The website as the learner's browser sees it; the extension links back to it after Submit.
+DEBUG_GYM_SITE_URL = os.getenv("DEBUG_GYM_SITE_URL", "http://localhost:8001")

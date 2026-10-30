@@ -1,10 +1,20 @@
 import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from unittest import mock
 
+import docker
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles import finders
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
-from .models import Attempt, Bug, Draft
+from . import ide
+from .ide import IdeError, start_ide
+from .models import Attempt, Bug, Draft, IdeToken
+from .workspaces import WorkspaceError, render_tests, write_workspace
 
 
 def make_user(username="learner", **extra):
@@ -377,3 +387,347 @@ class TestEditTests(TestCase):
         draft = response.json()["draft"]
         self.assertIn("numbers.remove(number)", draft["code"])
         self.assertEqual(draft["tests"][1]["input"], [7, -1])
+
+
+class WorkspaceFilesTests(TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        override = override_settings(WORKSPACES_DIR=Path(self.tmp.name))
+        override.enable()
+        self.addCleanup(override.disable)
+        self.user = make_user()
+        self.bug = Bug.objects.get(slug="remove-negatives")
+
+    def run_pytest(self, folder):
+        return subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+            cwd=folder,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    def test_writes_code_tests_and_launch_config(self):
+        folder = write_workspace(self.user, self.bug)
+        self.assertEqual(folder, Path(self.tmp.name) / str(self.user.id) / "remove-negatives")
+        self.assertEqual((folder / "remove_negatives.py").read_text(), self.bug.buggy_code + "\n")
+        exercise_launch = json.loads(
+            (settings.BASE_DIR.parent.parent / "exercise" / ".vscode" / "launch.json").read_text()
+        )
+        launch = json.loads((folder / ".vscode" / "launch.json").read_text())
+        for configuration in exercise_launch["configurations"]:
+            configuration["python"] = "/opt/debug-gym/bin/python"
+        self.assertEqual(launch, exercise_launch)
+        self.assertEqual(launch["configurations"][0]["module"], "pytest")
+        self.assertEqual(
+            json.loads((folder / ".vscode" / "settings.json").read_text()),
+            {"python.defaultInterpreterPath": "/opt/debug-gym/bin/python"},
+        )
+        tests = (folder / "tests" / "test_remove_negatives.py").read_text()
+        self.assertIn("from remove_negatives import remove_negatives", tests)
+        self.assertIn("def test_mixed_numbers() -> None:", tests)
+        self.assertIn("assert remove_negatives([4, -3, -2, 5]) == [4, 5]", tests)
+
+    def test_generated_tests_fail_on_the_buggy_code(self):
+        result = self.run_pytest(write_workspace(self.user, self.bug))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("2 failed, 1 passed", result.stdout)
+
+    def test_uses_the_learners_draft_and_passes_when_fixed(self):
+        fixed = "def remove_negatives(numbers):\n    return [n for n in numbers if n >= 0]\n"
+        Draft.objects.create(user=self.user, bug=self.bug, code=fixed)
+        folder = write_workspace(self.user, self.bug)
+        self.assertEqual((folder / "remove_negatives.py").read_text(), fixed)
+        result = self.run_pytest(folder)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("3 passed", result.stdout)
+
+    def test_dictionary_bug_tests(self):
+        bug = Bug.objects.get(slug="count-words")
+        result = self.run_pytest(write_workspace(self.user, bug))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("FAILED tests/test_count_words.py::test_mixed_case", result.stdout)
+        self.assertIn("1 failed, 2 passed", result.stdout)
+
+    def test_each_user_gets_their_own_folder(self):
+        other = make_user("other")
+        self.assertNotEqual(write_workspace(self.user, self.bug), write_workspace(other, self.bug))
+
+    def test_rejects_unsafe_names(self):
+        for field, value in (("file_name", "../evil.py"), ("function_name", "x; import os")):
+            bug = Bug.objects.get(slug="remove-negatives")
+            setattr(bug, field, value)
+            with self.assertRaises(WorkspaceError):
+                write_workspace(self.user, bug)
+
+    def test_rejects_non_literal_test_values(self):
+        self.bug.tests = [{"name": "Bad", "input": object(), "expected": []}]
+        with self.assertRaises(WorkspaceError):
+            render_tests(self.bug)
+
+    def test_duplicate_test_names_get_unique_functions(self):
+        self.bug.tests = [
+            {"name": "Same", "input": [], "expected": []},
+            {"name": "Same", "input": [1], "expected": [1]},
+        ]
+        source = render_tests(self.bug)
+        self.assertIn("def test_same() -> None:", source)
+        self.assertIn("def test_same_2() -> None:", source)
+
+
+class StartIdeTests(TestCase):
+    folder = Path("/srv/workspaces/1/remove-negatives")
+
+    def setUp(self):
+        self.user = make_user()
+        self.client_mock = mock.MagicMock()
+        patcher = mock.patch("bugs.ide.docker.from_env", return_value=self.client_mock)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        ready = mock.patch("bugs.ide._wait_until_ready")
+        self.wait = ready.start()
+        self.addCleanup(ready.stop)
+
+    def container(self, status="running", folder=None, port="49153", image=None, command=None):
+        command = command or ide.settings_label()
+        container = mock.MagicMock()
+        container.status = status
+        container.labels = {"debug-gym.folder": str(folder or self.folder), "debug-gym.settings": command}
+        container.ports = {"8080/tcp": [{"HostIp": "127.0.0.1", "HostPort": port}]}
+        container.image.id = image or self.client_mock.images.get.return_value.id
+        return container
+
+    def test_starts_a_new_container(self):
+        self.client_mock.containers.get.side_effect = docker.errors.NotFound("missing")
+        self.client_mock.containers.run.return_value = self.container(port="49200")
+        self.assertEqual(start_ide(self.user, self.folder), 49200)
+        args, kwargs = self.client_mock.containers.run.call_args
+        self.assertEqual(args, ("debug-gym-ide",))
+        self.assertEqual(kwargs["name"], f"debug-gym-ide-{self.user.id}")
+        self.assertEqual(kwargs["entrypoint"], ["code-server"])
+        self.assertEqual(
+            kwargs["command"][:2] + kwargs["command"][-1:], ["--auth", "none", "/home/coder/project"]
+        )
+        self.assertIn("/opt/debug-gym/extensions", kwargs["command"])
+        self.assertEqual(kwargs["volumes"], {str(self.folder): {"bind": "/home/coder/project", "mode": "rw"}})
+        self.assertEqual(kwargs["ports"], {"8080/tcp": ("127.0.0.1", None)})
+        self.assertEqual(kwargs["mem_limit"], "512m")
+        self.assertEqual(kwargs["security_opt"], ["no-new-privileges:true"])
+        self.assertTrue(kwargs["environment"]["PATH"].startswith("/opt/debug-gym/bin:"))
+        self.assertEqual(kwargs["extra_hosts"], {"host.docker.internal": "host-gateway"})
+        self.assertIn("--disable-workspace-trust", kwargs["command"])
+        self.assertIn("--disable-proxy", kwargs["command"])
+        self.wait.assert_called_once_with(49200)
+
+    def test_reuses_a_running_container_for_the_same_bug(self):
+        existing = self.container(port="49300")
+        self.client_mock.containers.get.return_value = existing
+        self.assertEqual(start_ide(self.user, self.folder), 49300)
+        self.client_mock.containers.run.assert_not_called()
+        existing.remove.assert_not_called()
+
+    def test_replaces_the_container_for_another_bug(self):
+        existing = self.container(folder="/srv/workspaces/1/count-words")
+        self.client_mock.containers.get.return_value = existing
+        self.client_mock.containers.run.return_value = self.container(port="49400")
+        self.assertEqual(start_ide(self.user, self.folder), 49400)
+        existing.remove.assert_called_once_with(force=True)
+        self.client_mock.containers.run.assert_called_once()
+
+    def test_replaces_a_container_from_an_older_image(self):
+        existing = self.container(image="sha256:old")
+        self.client_mock.containers.get.return_value = existing
+        self.client_mock.containers.run.return_value = self.container(port="49600")
+        self.assertEqual(start_ide(self.user, self.folder), 49600)
+        existing.remove.assert_called_once_with(force=True)
+
+    def test_replaces_a_container_started_with_older_settings(self):
+        existing = self.container(command="0000000000000000")
+        self.client_mock.containers.get.return_value = existing
+        self.client_mock.containers.run.return_value = self.container(port="49700")
+        self.assertEqual(start_ide(self.user, self.folder), 49700)
+        existing.remove.assert_called_once_with(force=True)
+
+    def test_replaces_a_stopped_container(self):
+        existing = self.container(status="exited")
+        self.client_mock.containers.get.return_value = existing
+        self.client_mock.containers.run.return_value = self.container(port="49500")
+        self.assertEqual(start_ide(self.user, self.folder), 49500)
+        existing.remove.assert_called_once_with(force=True)
+
+    def test_docker_not_running(self):
+        with mock.patch("bugs.ide.docker.from_env", side_effect=docker.errors.DockerException("no socket")):
+            with self.assertRaisesRegex(IdeError, "Docker is not running"):
+                start_ide(self.user, self.folder)
+
+    def test_image_not_built(self):
+        self.client_mock.containers.get.side_effect = docker.errors.NotFound("missing")
+        self.client_mock.containers.run.side_effect = docker.errors.ImageNotFound("no image")
+        with self.assertRaisesRegex(IdeError, "is not built"):
+            start_ide(self.user, self.folder)
+
+
+class WaitUntilReadyTests(TestCase):
+    def test_gives_up_when_vs_code_never_answers(self):
+        with mock.patch("bugs.ide.READY_TIMEOUT_SECONDS", 0):
+            with self.assertRaisesRegex(IdeError, "did not start in time"):
+                ide._wait_until_ready(1)
+
+    def test_returns_once_healthz_answers(self):
+        response = mock.MagicMock(status=200)
+        response.__enter__.return_value = response
+        with mock.patch("bugs.ide.urlopen", return_value=response) as urlopen:
+            ide._wait_until_ready(49153)
+        urlopen.assert_called_once_with("http://127.0.0.1:49153/healthz", timeout=2)
+
+
+class VscodeEndpointTests(TestCase):
+    url = "/api/bugs/remove-negatives/vscode/"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        override = override_settings(WORKSPACES_DIR=Path(self.tmp.name))
+        override.enable()
+        self.addCleanup(override.disable)
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def test_writes_the_workspace_and_returns_the_vs_code_url(self):
+        with mock.patch("bugs.ide.start_ide", return_value=49153) as start:
+            response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"url": "http://localhost:49153/?folder=/home/coder/project"})
+        folder = Path(self.tmp.name) / str(self.user.id) / "remove-negatives"
+        start.assert_called_once_with(self.user, folder)
+        self.assertTrue((folder / "tests" / "test_remove_negatives.py").exists())
+
+    def test_full_path_with_mocked_docker(self):
+        docker_client = mock.MagicMock()
+        docker_client.containers.get.side_effect = docker.errors.NotFound("missing")
+        container = docker_client.containers.run.return_value
+        container.ports = {"8080/tcp": [{"HostIp": "127.0.0.1", "HostPort": "49999"}]}
+        with mock.patch("bugs.ide.docker.from_env", return_value=docker_client), mock.patch(
+            "bugs.ide._wait_until_ready"
+        ):
+            response = self.client.post(self.url)
+        self.assertEqual(response.json()["url"], "http://localhost:49999/?folder=/home/coder/project")
+        folder = str(Path(self.tmp.name) / str(self.user.id) / "remove-negatives")
+        self.assertIn(folder, docker_client.containers.run.call_args.kwargs["volumes"])
+
+    def test_docker_not_running_is_a_clear_json_error(self):
+        with mock.patch("bugs.ide.docker.from_env", side_effect=docker.errors.DockerException("no socket")):
+            response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json(), {"error": "Docker is not running on the server, so VS Code cannot start."})
+
+    def test_needs_login(self):
+        self.client.logout()
+        with mock.patch("bugs.ide.start_ide") as start:
+            self.assertEqual(self.client.post(self.url).status_code, 401)
+        start.assert_not_called()
+
+    def test_unknown_bug(self):
+        self.assertEqual(self.client.post("/api/bugs/missing/vscode/").status_code, 404)
+
+    def test_get_is_not_allowed(self):
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+    def test_needs_the_csrf_token(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        with mock.patch("bugs.ide.start_ide") as start:
+            self.assertEqual(client.post(self.url).status_code, 403)
+        start.assert_not_called()
+
+
+class IdeSubmitTests(TestCase):
+    url = "/api/ide/submit/"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        override = override_settings(WORKSPACES_DIR=Path(self.tmp.name))
+        override.enable()
+        self.addCleanup(override.disable)
+        self.user = make_user()
+        self.bug = Bug.objects.get(slug="remove-negatives")
+        self.folder = write_workspace(self.user, self.bug)
+        self.config = json.loads((self.folder / ".debug-gym" / "config.json").read_text())
+
+    def submit(self, token=None, **payload):
+        body = {"bug": "remove-negatives", "code": "def remove_negatives(n):\n    return n\n", "passed": 3, "total": 3}
+        body.update(payload)
+        headers = {} if token == "" else {"HTTP_AUTHORIZATION": f"Bearer {token or self.config['token']}"}
+        return Client(enforce_csrf_checks=True).post(
+            self.url, data=json.dumps(body), content_type="application/json", **headers
+        )
+
+    def test_config_file(self):
+        self.assertEqual(
+            {key: value for key, value in self.config.items() if key != "token"},
+            {
+                "server": "http://host.docker.internal:8001",
+                "site": "http://localhost:8001/#/practice/remove-negatives",
+                "bug": "remove-negatives",
+                "file": "remove_negatives.py",
+            },
+        )
+        self.assertGreaterEqual(len(self.config["token"]), 40)
+        self.assertEqual((self.folder / ".debug-gym" / "config.json").stat().st_mode & 0o777, 0o600)
+
+    def test_only_a_hash_of_the_token_is_stored(self):
+        stored = IdeToken.objects.get(user=self.user, bug=self.bug)
+        self.assertNotEqual(stored.key_hash, self.config["token"])
+        self.assertEqual(IdeToken.find(self.config["token"]), stored)
+
+    def test_submit_saves_an_attempt_for_the_tokens_user(self):
+        response = self.submit()
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()["attempt"]["solved"])
+        attempt = Attempt.objects.get()
+        self.assertEqual((attempt.user, attempt.bug, attempt.passed_count), (self.user, self.bug, 3))
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get("/api/history/").json()["items"][0]["status"], "solved")
+
+    def test_submitted_code_becomes_the_website_draft(self):
+        code = "def remove_negatives(n):\n    return [x for x in n if x >= 0]\n"
+        self.submit(code=code)
+        self.assertEqual(Draft.objects.get(user=self.user, bug=self.bug).code, code)
+        self.assertEqual((write_workspace(self.user, self.bug) / "remove_negatives.py").read_text(), code)
+
+    def test_rejected_submission_keeps_the_draft(self):
+        Draft.objects.create(user=self.user, bug=self.bug, code="mine\n")
+        self.submit(total=2, passed=2)
+        self.assertEqual(Draft.objects.get(user=self.user, bug=self.bug).code, "mine\n")
+
+    def test_failed_submission(self):
+        response = self.submit(passed=1)
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse(response.json()["attempt"]["solved"])
+
+    def test_reopening_replaces_the_token(self):
+        old = self.config["token"]
+        write_workspace(self.user, self.bug)
+        self.assertEqual(self.submit(token=old).status_code, 401)
+        new = json.loads((self.folder / ".debug-gym" / "config.json").read_text())["token"]
+        self.assertEqual(self.submit(token=new).status_code, 201)
+
+    def test_rejects_missing_or_wrong_token(self):
+        self.assertEqual(self.submit(token="").status_code, 401)
+        self.assertEqual(self.submit(token="not-a-real-token").status_code, 401)
+        self.assertFalse(Attempt.objects.exists())
+
+    def test_token_only_works_for_its_bug(self):
+        response = self.submit(bug="count-words")
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Attempt.objects.exists())
+
+    def test_same_checks_as_the_website(self):
+        self.assertEqual(self.submit(total=2, passed=2).status_code, 400)
+        self.assertEqual(self.submit(passed="3").status_code, 400)
+        self.assertEqual(self.submit(code=None).status_code, 400)
+
+    def test_containers_can_reach_the_server(self):
+        self.assertIn("host.docker.internal", settings.ALLOWED_HOSTS)

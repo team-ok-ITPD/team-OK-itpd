@@ -1,3 +1,6 @@
+import hashlib
+import secrets
+
 from django.conf import settings
 from django.db import models
 
@@ -106,3 +109,32 @@ class Attempt(models.Model):
             "solved": self.solved,
             "createdAt": self.created_at.isoformat(),
         }
+
+
+class IdeToken(models.Model):
+    """Lets the VS Code extension submit for one user and bug; only a hash is stored."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ide_tokens")
+    bug = models.ForeignKey(Bug, on_delete=models.CASCADE, related_name="ide_tokens")
+    key_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "bug"], name="one_ide_token_per_user_and_bug"),
+        ]
+
+    @staticmethod
+    def hash(key: str) -> str:
+        return hashlib.sha256(key.encode()).hexdigest()
+
+    @classmethod
+    def issue(cls, user, bug) -> str:
+        """Create or replace the user's token for this bug and return the new key."""
+        key = secrets.token_urlsafe(32)
+        cls.objects.update_or_create(user=user, bug=bug, defaults={"key_hash": cls.hash(key)})
+        return key
+
+    @classmethod
+    def find(cls, key: str):
+        return cls.objects.select_related("user", "bug").filter(key_hash=cls.hash(key)).first()

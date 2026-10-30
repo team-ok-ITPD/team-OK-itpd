@@ -25,3 +25,4 @@ htmlcov/
 site/
 
 *.sqlite3
+app/adel_b/workspaces/

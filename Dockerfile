@@ -13,6 +13,11 @@ RUN /opt/debug-gym/bin/pip install --no-cache-dir --requirement /tmp/requirement
     && code-server --extensions-dir /opt/debug-gym/extensions --install-extension ms-python.python \
     && code-server --extensions-dir /opt/debug-gym/extensions --install-extension ms-python.debugpy
 
+COPY app/adel_b/vscode-extension /tmp/debug-gym-extension
+RUN python3 /tmp/debug-gym-extension/package_vsix.py /tmp/debug-gym.vsix \
+    && code-server --extensions-dir /opt/debug-gym/extensions --install-extension /tmp/debug-gym.vsix \
+    && rm -rf /tmp/debug-gym-extension /tmp/debug-gym.vsix
+
 COPY --chown=coder:coder app /opt/debug-gym/app
 COPY --chown=coder:coder exercise /home/coder/project
 COPY --chown=coder:coder scripts/start.sh /usr/local/bin/debug-gym-start

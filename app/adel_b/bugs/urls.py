@@ -11,5 +11,7 @@ urlpatterns = [
     path("api/bugs/<slug:slug>/draft/", views.bug_draft, name="bug-draft"),
     path("api/bugs/<slug:slug>/attempts/", views.bug_attempts, name="bug-attempts"),
     path("api/bugs/<slug:slug>/tests/<int:index>/", views.bug_test, name="bug-test"),
+    path("api/bugs/<slug:slug>/vscode/", views.bug_vscode, name="bug-vscode"),
     path("api/history/", views.history, name="history"),
+    path("api/ide/submit/", views.ide_submit, name="ide-submit"),
 ]
