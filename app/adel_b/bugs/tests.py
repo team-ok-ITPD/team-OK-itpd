@@ -737,6 +737,12 @@ class IdeSubmitTests(TestCase):
         self.assertEqual(Draft.objects.get(user=self.user, bug=self.bug).code, code)
         self.assertEqual((write_workspace(self.user, self.bug) / "remove_negatives.py").read_text(), code)
 
+    def test_failed_draft_update_rolls_back_the_whole_submission(self):
+        with mock.patch("bugs.views.Draft.objects.update_or_create", side_effect=RuntimeError("storage failed")):
+            with self.assertRaises(RuntimeError):
+                self.submit(code="new source")
+        self.assertFalse(Attempt.objects.filter(user=self.user, bug=self.bug).exists())
+
     def test_rejected_submission_keeps_the_draft(self):
         Draft.objects.create(user=self.user, bug=self.bug, code="mine\n")
         self.submit(total=2, passed=2)
@@ -771,3 +777,49 @@ class IdeSubmitTests(TestCase):
 
     def test_containers_can_reach_the_server(self):
         self.assertIn("host.docker.internal", settings.ALLOWED_HOSTS)
+
+
+class ProgressSnapshotTests(TestCase):
+    url = "/api/bugs/remove-negatives/progress/"
+
+    def setUp(self):
+        self.user = make_user()
+        self.other = make_user("other")
+        self.bug = Bug.objects.get(slug="remove-negatives")
+        self.client.force_login(self.user)
+
+    def test_empty_progress_and_no_cache(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"draft": None, "attempt": None})
+        self.assertEqual(response["Cache-Control"], "no-store")
+
+    def test_requires_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 401)
+
+    def test_progress_does_not_expose_other_users(self):
+        Draft.objects.create(user=self.other, bug=self.bug, code="private code")
+        Attempt.objects.create(user=self.other, bug=self.bug, code="private code", passed_count=3, total_count=3)
+        self.assertEqual(self.client.get(self.url).json(), {"draft": None, "attempt": None})
+
+    def test_progress_is_scoped_to_the_exercise(self):
+        other_bug = Bug.objects.exclude(pk=self.bug.pk).first()
+        Draft.objects.create(user=self.user, bug=other_bug, code="other exercise")
+        self.assertEqual(self.client.get(self.url).json(), {"draft": None, "attempt": None})
+        self.assertEqual(self.client.get("/api/bugs/missing/progress/").status_code, 404)
+
+    def test_snapshot_has_current_source_and_latest_attempt(self):
+        Attempt.objects.create(user=self.user, bug=self.bug, code="old", passed_count=0, total_count=3)
+        latest = Attempt.objects.create(user=self.user, bug=self.bug, code="fixed", passed_count=3, total_count=3)
+        Draft.objects.create(user=self.user, bug=self.bug, code="fixed")
+        snapshot = self.client.get(self.url).json()
+        self.assertEqual(snapshot["draft"]["code"], "fixed")
+        self.assertEqual(snapshot["attempt"]["id"], latest.pk)
+        self.assertTrue(snapshot["attempt"]["solved"])
+
+    def test_reading_progress_does_not_create_attempts_or_drafts(self):
+        self.client.get(self.url)
+        self.client.get(self.url)
+        self.assertFalse(Attempt.objects.exists())
+        self.assertFalse(Draft.objects.exists())

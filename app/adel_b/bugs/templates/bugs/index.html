@@ -280,6 +280,7 @@
                   <span class="tests-label">Test results</span>
                   <svg class="icon chevron"><use href="#i-chevron"/></svg>
                 </button>
+                <p class="sync-state" id="sync-state" role="status"></p>
                 <pre class="console-output" id="console-output" aria-live="polite"></pre>
                 <ul class="test-list" id="test-list"></ul>
               </div>
@@ -327,6 +328,7 @@
 
     <div class="toast" id="toast" role="status" hidden></div>
 
+    <script src="{% static 'bugs/submission-sync.js' %}?v={{ asset_version }}"></script>
     <script src="{% static 'bugs/app.js' %}?v={{ asset_version }}"></script>
   </body>
 </html>
