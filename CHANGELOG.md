@@ -6,6 +6,11 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Exercise pages use VS Code for source editing and retain reproduction, actions,
+  tests and read-only output; manual actions read the latest saved solution.
+
 ## 0.3.0 - 2026-10-31
 
 ### Added

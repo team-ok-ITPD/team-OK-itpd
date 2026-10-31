@@ -43,6 +43,9 @@ jobs:
         working-directory: app/adel_b
         run: python manage.py test
 
+      - name: Automated tests - practice page
+        run: node --test app/adel_b/bugs/frontend-tests/*.test.cjs
+
       - name: Automated tests - VS Code extension
         run: node --test app/adel_b/vscode-extension/test/*.test.js
 

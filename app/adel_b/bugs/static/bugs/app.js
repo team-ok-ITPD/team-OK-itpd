@@ -76,15 +76,6 @@ const STATUS_ICONS = {
   failed: { icon: "i-x-circle", label: "Not solved", badge: "danger" },
 };
 
-const PY_KEYWORDS = new Set([
-  "and", "as", "break", "class", "continue", "def", "elif", "else", "except",
-  "False", "for", "from", "if", "import", "in", "is", "lambda", "None", "not",
-  "or", "pass", "raise", "return", "True", "try", "while", "with",
-]);
-const PY_BUILTINS = new Set([
-  "dict", "enumerate", "int", "len", "list", "print", "range", "set", "str", "sum",
-]);
-
 const state = {
   selectedId: "remove-negatives",
   // The last "Describe the bug" search: { query, ids } with the best match first, or null.
@@ -205,43 +196,6 @@ function actualText(result) {
 
 function testFunctionName(test) {
   return `test_${test.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-}
-
-function highlightPython(source) {
-  const token = /(#.*$)|("""[\s\S]*?"""|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(\s+|.)/g;
-  return source
-    .split("\n")
-    .map((line) => {
-      let html = "";
-      let afterDef = false;
-      for (const match of line.matchAll(token)) {
-        const [text, comment, string, number, name] = match;
-        const safe = escapeHtml(text);
-        if (comment) {
-          html += `<span class="tok-comment">${safe}</span>`;
-        } else if (string) {
-          html += `<span class="tok-string">${safe}</span>`;
-        } else if (number) {
-          html += `<span class="tok-number">${safe}</span>`;
-        } else if (name) {
-          if (afterDef) {
-            html += `<span class="tok-function">${safe}</span>`;
-            afterDef = false;
-          } else if (PY_KEYWORDS.has(name)) {
-            html += `<span class="tok-keyword">${safe}</span>`;
-            afterDef = name === "def";
-          } else if (PY_BUILTINS.has(name)) {
-            html += `<span class="tok-builtin">${safe}</span>`;
-          } else {
-            html += safe;
-          }
-        } else {
-          html += safe;
-        }
-      }
-      return `<span class="line">${html || " "}</span>`;
-    })
-    .join("");
 }
 
 let toastTimer;
@@ -709,7 +663,7 @@ function renderWorkspace() {
       ${icon("i-external")}
       Open in VS Code online
     </button>
-    <p>Your code and the tests open in VS Code. Press F5 to debug the tests with breakpoints.</p>
+    <p>Edit your code in VS Code. Press F5 to debug, then use Test or Submit in VS Code. The page uses your latest saved solution.</p>
     <p class="workspace-error" id="workspace-error" role="alert" hidden></p>`;
 }
 
@@ -721,8 +675,7 @@ function consolePrint(html) {
 
 function resetConsole(exercise) {
   $("#console-output").innerHTML = "";
-  $("#console-prompt").textContent = `${exercise.id} $`;
-  consolePrint(`Debug GYM console. Type <span class="cmd">help</span> for commands.`);
+  consolePrint("Edit your code in VS Code, then run the tests or submit your saved solution.");
 }
 
 function pytestReport(exercise, results) {
@@ -740,32 +693,6 @@ function pytestReport(exercise, results) {
   const failed = results.length - passed;
   const summary = [failed && `${failed} failed`, passed && `${passed} passed`].filter(Boolean).join(", ");
   return [dots, ...failures, `<span class="${failed ? "fail" : "pass"}">${summary}</span>`].join("\n");
-}
-
-function handleConsole(event) {
-  event.preventDefault();
-  const exercise = findExercise(state.practiceId);
-  const input = $("#console-command");
-  const command = input.value.trim();
-  input.value = "";
-  if (!exercise || !command) {
-    return;
-  }
-
-  consolePrint(`<span class="cmd">${escapeHtml(exercise.id)} $ ${escapeHtml(command)}</span>`);
-  if (command === "help") {
-    consolePrint("pytest     run the exercise tests\nrepro      run the selected test input\nclear      clear the console");
-  } else if (command === "clear") {
-    $("#console-output").innerHTML = "";
-  } else if (command === "pytest" || command === "python -m pytest" || command === "python -m pytest -q") {
-    handleRunTests();
-  } else if (command === "repro") {
-    const results = state.results[exercise.id] || runTests(exercise);
-    const test = results[Math.max(state.selectedTest[exercise.id] ?? results.findIndex((r) => !r.passed), 0)];
-    consolePrint(`${escapeHtml(exercise.functionName)}(${escapeHtml(pyRepr(test.input))}) -> ${escapeHtml(actualText(test))}`);
-  } else {
-    consolePrint(`${escapeHtml(command.split(" ")[0])}: not available in this preview console. Use the VS Code workspace terminal for a full shell.`);
-  }
 }
 
 function renderPractice(id) {
@@ -786,7 +713,6 @@ function renderPractice(id) {
   $("#practice-title").textContent = exercise.title;
   $("#badge-difficulty").textContent = exercise.difficulty;
   $("#badge-language").textContent = exercise.language;
-  $("#file-name").textContent = exercise.file;
   $("#symptom").textContent = exercise.symptom;
   $("#explanation").textContent = exercise.explanation;
 
@@ -800,127 +726,56 @@ function renderPractice(id) {
   document.title = `Debug GYM | ${exercise.title}`;
 }
 
-/* Code editor */
-
-const SAVE_DELAY_MS = 600;
-let saveTimer;
+/* Saved code: source editing belongs in VS Code. */
 
 function draftUrl(exercise) {
   return `/api/bugs/${encodeURIComponent(exercise.id)}/draft/`;
 }
 
-function setSaveState(text) {
-  $("#save-state").textContent = text;
+function currentCode(exercise) {
+  return state.drafts[exercise.id] ?? exercise.code;
 }
 
-function renderEditor(exercise) {
-  const code = $("#code-input").value;
-  $("#code").innerHTML = highlightPython(code);
-  const edited = code !== exercise.code;
-  const badge = $("#code-state");
-  badge.textContent = edited ? "Edited" : "Buggy";
-  badge.className = `badge ${edited ? "warning" : "danger"} small`;
-  $("#reset-code").hidden = !edited;
-}
-
-function setEditorCode(exercise, code) {
-  $("#code-input").value = code;
-  renderEditor(exercise);
+function applyDraft(exercise, draft) {
+  const previousCode = currentCode(exercise);
+  const previousTests = canonical(state.tests[exercise.id] || null);
+  if (draft) {
+    state.drafts[exercise.id] = draft.code;
+  } else {
+    delete state.drafts[exercise.id];
+  }
+  if (draft?.tests) {
+    state.tests[exercise.id] = draft.tests;
+  } else {
+    delete state.tests[exercise.id];
+  }
+  const changed = previousCode !== currentCode(exercise) || previousTests !== canonical(state.tests[exercise.id] || null);
+  if (changed) {
+    state.results[exercise.id] = currentTests(exercise).map((test) => ({ ...test, notRun: true, passed: false }));
+    renderTests(exercise);
+  }
+  return changed;
 }
 
 async function loadDraft(exercise) {
-  clearTimeout(saveTimer);
-  const shown = state.drafts[exercise.id] ?? exercise.code;
-  setEditorCode(exercise, shown);
-  setSaveState("Python 3.12");
+  const user = state.user;
   try {
     const response = await apiFetch(draftUrl(exercise));
     const payload = await response.json();
-    if (state.practiceId !== exercise.id) {
-      return;
+    if (state.user !== user || state.practiceId !== exercise.id) {
+      return false;
     }
-    const savedTests = payload.draft?.tests || null;
-    if (canonical(savedTests) !== canonical(state.tests[exercise.id] || null)) {
-      if (savedTests) {
-        state.tests[exercise.id] = savedTests;
-      } else {
-        delete state.tests[exercise.id];
-      }
-      delete state.results[exercise.id];
-      renderTests(exercise);
-    }
-    // Skip stale code: the learner already started typing.
-    if ($("#code-input").value !== shown) {
-      return;
-    }
-    if (payload.draft) {
-      state.drafts[exercise.id] = payload.draft.code;
-      setEditorCode(exercise, payload.draft.code);
-      setSaveState("Saved");
-    }
-  } catch {
-    setSaveState("Saved code unavailable");
-  }
-}
-
-async function saveDraft(exercise, code) {
-  setSaveState("Saving...");
-  try {
-    const response = await apiFetch(draftUrl(exercise), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    });
-    const payload = await response.json();
     if (!response.ok) {
       throw new Error(payload.error || `HTTP ${response.status}`);
     }
-    const firstSave = !(exercise.id in state.drafts);
-    state.drafts[exercise.id] = code;
-    if (state.practiceId === exercise.id) {
-      setSaveState("Saved");
-    }
-    if (firstSave) {
-      loadHistory();
-    }
+    applyDraft(exercise, payload.draft);
+    return true;
   } catch (error) {
-    setSaveState("Not saved");
-    toast(`Your code could not be saved: ${error.message}`);
+    if (state.user === user && state.practiceId === exercise.id) {
+      toast(`Saved code could not be loaded: ${error instanceof TypeError ? "the server could not be reached" : error.message}`);
+    }
+    return false;
   }
-}
-
-function handleCodeInput() {
-  const exercise = findExercise(state.practiceId);
-  renderEditor(exercise);
-  setSaveState("Editing...");
-  clearTimeout(saveTimer);
-  const code = $("#code-input").value;
-  saveTimer = setTimeout(() => saveDraft(exercise, code), SAVE_DELAY_MS);
-}
-
-function handleCodeKeydown(event) {
-  if (event.key !== "Tab" || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) {
-    return;
-  }
-  // Indent with four spaces, as Python code expects, instead of leaving the editor.
-  event.preventDefault();
-  event.target.setRangeText("    ", event.target.selectionStart, event.target.selectionEnd, "end");
-  handleCodeInput();
-}
-
-async function resetCode() {
-  const exercise = findExercise(state.practiceId);
-  clearTimeout(saveTimer);
-  setEditorCode(exercise, exercise.code);
-  delete state.drafts[exercise.id];
-  try {
-    await apiFetch(draftUrl(exercise), { method: "DELETE" });
-    setSaveState("Reset to the original code");
-    loadHistory();
-  } catch {
-    setSaveState("Not saved");
-  }
-  $("#code-input").focus();
 }
 
 /* Python runner (Pyodide in a web worker) */
@@ -1045,17 +900,19 @@ function setBusy(busy, button, label) {
 
 async function handleRunTests() {
   const exercise = findExercise(state.practiceId);
-  if ($("#run-tests").disabled) {
-    return;
-  }
+  if (state.busy || !exercise) return;
   setBusy(true, $("#run-tests"), "Running...");
-  const results = await runInPython(exercise, $("#code-input").value, currentTests(exercise), "python -m pytest -q");
-  if (results) {
-    state.results[exercise.id] = results;
-    delete state.selectedTest[exercise.id];
-    showTestList(exercise);
+  try {
+    if (!(await loadDraft(exercise))) return;
+    const results = await runInPython(exercise, currentCode(exercise), currentTests(exercise), "python -m pytest -q");
+    if (results) {
+      state.results[exercise.id] = results;
+      delete state.selectedTest[exercise.id];
+      showTestList(exercise);
+    }
+  } finally {
+    setBusy(false);
   }
-  setBusy(false);
 }
 
 async function handleRunOne(index) {
@@ -1063,11 +920,15 @@ async function handleRunOne(index) {
   if (state.busy) {
     return;
   }
-  const test = currentTests(exercise)[index];
   const button = document.querySelector(`[data-test-action="run"][data-index="${index}"]`);
   setBusy(true, button, "Running");
+  if (!(await loadDraft(exercise))) {
+    setBusy(false);
+    return;
+  }
+  const test = currentTests(exercise)[index];
   const command = `python -m pytest -q tests/test_${exercise.functionName}.py::${testFunctionName(test)}`;
-  const results = await runInPython(exercise, $("#code-input").value, [test], command);
+  const results = await runInPython(exercise, currentCode(exercise), [test], command);
   if (results) {
     const all = state.results[exercise.id] || runTests(exercise);
     all[index] = results[0];
@@ -1158,9 +1019,11 @@ async function restoreTest(index) {
 
 async function handleSubmit() {
   const exercise = findExercise(state.practiceId);
-  const code = $("#code-input").value;
+  if (state.busy || !exercise) return;
   setBusy(true, $("#submit"), "Submitting...");
   try {
+    if (!(await loadDraft(exercise))) return;
+    const code = currentCode(exercise);
     // Submissions are graded on the original tests, never on the learner's edits.
     const edited = hasEditedTests(exercise);
     if (edited) {
@@ -1216,12 +1079,6 @@ async function openWorkspace() {
   button.innerHTML = `${icon("i-loader", "spin")} Starting VS Code...`;
   error.hidden = true;
   try {
-    // VS Code gets the saved code, so save the latest edits first.
-    const code = $("#code-input").value;
-    if (code !== (state.drafts[exercise.id] ?? exercise.code)) {
-      clearTimeout(saveTimer);
-      await saveDraft(exercise, code);
-    }
     const response = await apiFetch(`/api/bugs/${encodeURIComponent(exercise.id)}/vscode/`, { method: "POST" });
     const payload = await response.json();
     if (!response.ok) {
@@ -1262,9 +1119,9 @@ function handleMenu(action) {
     toast("Exercise view restarted.");
   } else if (action === "copy") {
     navigator.clipboard
-      .writeText(exercise.code)
+      .writeText(currentCode(exercise))
       .then(() => toast("Code copied to the clipboard."))
-      .catch(() => toast("Copying isn't allowed here. Select the code instead."));
+      .catch(() => toast("Copying is not available here. Open the code in VS Code instead."));
   } else if (action === "challenges") {
     location.hash = "#/new";
   }
@@ -1283,7 +1140,6 @@ function setUser(user) {
 }
 
 function resetUserState() {
-  clearTimeout(saveTimer);
   Object.assign(state, {
     drafts: {},
     results: {},
@@ -1523,10 +1379,6 @@ $("#tests-toggle").addEventListener("click", (event) => {
   $("#test-list").hidden = expanded;
 });
 
-$("#console-form").addEventListener("submit", handleConsole);
-$("#code-input").addEventListener("input", handleCodeInput);
-$("#code-input").addEventListener("keydown", handleCodeKeydown);
-$("#reset-code").addEventListener("click", resetCode);
 $("#run-tests").addEventListener("click", handleRunTests);
 $("#submit").addEventListener("click", handleSubmit);
 $("#workspace").addEventListener("click", (event) => {
