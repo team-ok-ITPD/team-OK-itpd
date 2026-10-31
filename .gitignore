@@ -19,7 +19,10 @@ __pycache__/
 .venv/
 .coverage
 htmlcov/
-
+.claude/
 *.log
 
 site/
+
+*.sqlite3
+app/adel_b/workspaces/

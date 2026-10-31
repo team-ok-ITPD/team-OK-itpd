@@ -7,3 +7,8 @@ docs
 images
 product_tests
 exercise_author
+# The Django site (with its database, venv and learner workspaces) must never enter the
+# VS Code image; only the Debug GYM extension source is needed there.
+app/adel_b
+!app/adel_b/vscode-extension
+app/adel_b/vscode-extension/test

@@ -1,0 +1,77 @@
+{
+  "name": "debug-gym",
+  "displayName": "Debug GYM",
+  "description": "Test and submit Debug GYM exercises from VS Code.",
+  "version": "0.1.2",
+  "publisher": "team-ok-itpd",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Testing"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "debugGym.runTests",
+        "title": "Test",
+        "category": "Debug GYM",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "debugGym.runTest",
+        "title": "Run This Test",
+        "category": "Debug GYM",
+        "icon": "$(play)"
+      },
+      {
+        "command": "debugGym.submit",
+        "title": "Submit",
+        "category": "Debug GYM",
+        "icon": "$(cloud-upload)"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "debugGym.results",
+          "name": "Debug GYM Tests"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "debugGym.results",
+        "contents": "Run the tests to see which ones pass.\n[Test](command:debugGym.runTests)\n[Submit](command:debugGym.submit)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "debugGym.runTests",
+          "when": "view == debugGym.results",
+          "group": "navigation@1"
+        },
+        {
+          "command": "debugGym.submit",
+          "when": "view == debugGym.results",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "debugGym.runTest",
+          "when": "view == debugGym.results && viewItem == debugGymTest",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "debugGym.runTest",
+          "when": "false"
+        }
+      ]
+    }
+  }
+}
