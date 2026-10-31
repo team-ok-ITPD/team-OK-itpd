@@ -194,3 +194,162 @@ Search only the prepared exercises and list every match below the filters.
   see several matches, and an AI-generated exercise is created fresh, so there
   is nothing to search. The first match is selected and nothing is previewed
   when there are no results.
+
+## DEC-016
+
+Remove the code preview and the debug control from the workspace, show only the
+tests, and update them dynamically.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** Multi-file exercises with about 300 lines per file cannot be read in
+  a small browser preview, and VS Code already shows the code. The test panel
+  stays and must refresh after each run without a reload.
+
+## DEC-017
+
+Use three roles, admin, teacher and student, and let only teachers publish to
+the public gallery.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** A student could upload malicious code that others then run in the
+  gallery or on the server. Exercises that teachers publish are assumed safe,
+  because teachers have already checked that they work. The admin account is
+  fixed in the system, and only the admin creates or changes teacher accounts.
+
+## DEC-018
+
+Let everyone except the admin generate exercises and use their own API key, and
+let the admin's key serve teachers.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** A teacher may want a stronger model than the admin's key provides,
+  and one key with a limit cannot serve a cohort of 250 students. A student may
+  also use an exercise that someone else generated, and then needs no key.
+
+## DEC-019
+
+Require authorization with a university email, with no public access for now.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The service is not expected to be public yet, and a shared link to
+  an exercise opens only after sign-in. Student accounts are created from the
+  university email, and sending the verification code is left to the team.
+
+## DEC-020
+
+Put all exercises in Prepared exercises with the access levels private, public
+and group, and filters My, Public, Group and All.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Team
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** One list replaces a separate section for generated exercises. A
+  student's own generated exercises stay private, a teacher can share an
+  exercise with a group or publish it, and each exercise records its author and
+  group.
+
+## DEC-021
+
+Let teachers form named groups, with one teacher per group, and download each
+group's results as a CSV without grades.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** Named groups let a teacher assign an exercise to a lab or exam
+  group and collect analytics per group. The CSV shows who solved what and how
+  many tests passed, with no overall statistics and no grades.
+
+## DEC-022
+
+Set a deadline per group and exercise, and count the best submission.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** Different groups have labs at different times, so a deadline belongs
+  to the pair of group and exercise and cannot spill over to another group. If
+  the last edit were submitted automatically, a small change before the
+  deadline could turn a passing result into a failing one.
+
+## DEC-023
+
+Keep the title search in Prepared exercises and rename its label so that it no
+longer reads as a bug description.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The box labelled "Describe the bug you want to practice" only
+  searches titles, so the label misleads a learner. This builds on
+  [DEC-015](#dec-015).
+
+## DEC-024
+
+Keep Custom instructions, difficulty and language in the request form, drop
+topic, and give Custom instructions priority on conflict.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Team
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The language model knows several languages while a learner may think
+  only of Python, so language and difficulty must be stated. Custom
+  instructions can replace a fixed topic list, which cannot cover every topic.
+  How usable free text is for a learner who has not met the bug is still to be
+  analysed.
+
+## DEC-025
+
+Keep the left panel for started, unfinished exercises with tests passed and a
+delete option, and remove the New Challenge button and the Back to practice
+button.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Team
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** A learner may leave an exercise unfinished and return to it later.
+  Deleting an exercise from the panel resets it as if it had never been started
+  and cleans up its container.
+
+## DEC-026
+
+Build for the university first, with no paid features and no Moodle
+integration.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The first aim is to test whether learning on bugs works for students
+  and teachers of programming courses. The interface stresses structure, so
+  that a student does not miss an exercise because of poor design. Integration
+  with Moodle costs too much, and paid functions can wait.
