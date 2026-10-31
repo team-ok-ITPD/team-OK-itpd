@@ -5,9 +5,7 @@
 - **Project:** Debug GYM
 - **Team:** Team 02
 - **Week:** Week 5, MVP Workflow, Testing And Deployment Preparation
-- **Release:** `REL-05`, published as
-  [v0.3.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.3.0)
-  on 2026-10-31.
+- **Release:** `REL-05`, published as `v0.3.0` on 2026-10-31.
 
 ## Summary
 
@@ -43,7 +41,7 @@ in the [meeting report](meeting-report.md).
 | Environment and deployment procedure | [Deployment runbook](../../docs/deployment.md) |
 | Sprint retrospective | [Sprint 05 retrospective](sprint-retrospective.md) |
 | AI usage | [Week 5 AI usage](ai-usage.md) |
-| Release | [`REL-05` / v0.3.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.3.0) and [changelog](../../CHANGELOG.md) |
+| Release | `REL-05` / `v0.3.0` and [changelog](../../CHANGELOG.md) |
 
 ## Contribution
 

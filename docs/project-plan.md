@@ -78,8 +78,7 @@ A signed-in learner can choose a prepared exercise, work on it in browser-based 
 
 #### REL-05
 
-Released as [v0.3.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.3.0)
-on 2026-10-31. It adds the signed-in, multi-user Django learner flow, persistent
+Released as `v0.3.0` on 2026-10-31. It adds the signed-in, multi-user Django learner flow, persistent
 drafts and attempts, browser-based VS Code launch, in-editor test results and
 submission, and the prepared-exercise title search. The university VM was not
 available, so this release has CI and local-container evidence but no staging or
