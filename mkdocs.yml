@@ -12,6 +12,7 @@ hooks:
 nav:
   - Home: index.md
   - Setup and run: setup.md
+  - Deployment: deployment.md
   - Product vision: product-vision.md
   - Requirements:
       - Functional requirements: functional-requirements/README.md
