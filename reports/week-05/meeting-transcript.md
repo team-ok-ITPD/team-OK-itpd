@@ -3,7 +3,6 @@
 - **Date:** 2026-10-30
 - **Participants:** @UTKANOS-RIBA, @Danashi11, @qwxiae
 
-
 [00:00:00] Speaker A: We left some issues unfinished here since it's not the deadline.
 
 [00:00:06] Speaker A: So for example, we haven't fixed the links yet, etc.
