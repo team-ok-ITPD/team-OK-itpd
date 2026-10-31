@@ -67,6 +67,51 @@ December 4.
   5, and the code freeze falls in Week 9, so the scope has to be a few exercises
   with minimal agent assistance rather than a full exercise gallery.
 
+### CON-05
+
+The first teaching service targets university students and teachers rather than an unrestricted public service.
+
+- **Status:** Active
+- **Source:** Customer-given
+- **What it costs:** public acquisition and general-purpose commercial use are outside the first rollout; onboarding and access must serve the university audience.
+- **Decision:** [`DEC-026`](decisions.md#dec-026)
+
+### CON-06
+
+Exercise access requires university-email authorization; a shared link is not anonymous access.
+
+- **Status:** Active
+- **Source:** Customer-given
+- **What it costs:** the team must implement verified identity and access checks before broad sharing; the domain and verification mechanism still need agreement.
+- **Decision:** [`DEC-019`](decisions.md#dec-019)
+
+### CON-07
+
+The product has administrator, teacher and student roles; only teachers publish exercises publicly, and only the administrator creates or changes teacher accounts.
+
+- **Status:** Active
+- **Source:** Customer-given
+- **What it costs:** publication and teacher-account administration require separate authorization paths; generic staff access cannot stand in for the product permission model.
+- **Decision:** [`DEC-017`](decisions.md#dec-017)
+
+### CON-08
+
+The administrator-supplied generation API key is usable by teachers only; the administrator does not generate exercises.
+
+- **Status:** Active
+- **Source:** Customer-given
+- **What it costs:** generation must distinguish personal keys from the shared teacher key and authorize their use independently; one shared key is not available to every registered account.
+- **Decision:** [`DEC-018`](decisions.md#dec-018)
+
+### CON-09
+
+Each named teaching group has exactly one teacher.
+
+- **Status:** Active
+- **Source:** Customer-given
+- **What it costs:** the first group model cannot assume co-teaching; ownership transfer and teacher removal need explicit lifecycle policy.
+- **Decision:** [`DEC-021`](decisions.md#dec-021)
+
 ## Boundary
 
 ### BND-01
@@ -108,6 +153,8 @@ connects to the environment through it (`CON-02`), and the agent does not apply
 the fix because `BND-01` leaves that to the learner.
 
 ## Where The Detail Lives
+
+- [Roles, capabilities and access constraints](roles-and-access.md)
 
 - [Architecture](architecture/README.md)
 

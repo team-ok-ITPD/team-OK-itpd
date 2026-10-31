@@ -14,6 +14,7 @@ nav:
   - Setup and run: setup.md
   - Deployment: deployment.md
   - Product vision: product-vision.md
+  - Roles and access: roles-and-access.md
   - Requirements:
       - Functional requirements: functional-requirements/README.md
       - Quality requirements: quality-requirements/README.md

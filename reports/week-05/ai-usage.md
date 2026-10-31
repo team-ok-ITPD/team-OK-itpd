@@ -26,3 +26,7 @@ Every retained change was put in a task-specific pull request and the other
 three team members were requested as reviewers. At least one teammate must
 approve before merge. Generated text was edited to avoid claiming a university
 VM deployment or a passing isolation test that had not occurred.
+
+## Codex Roles And Access Documentation
+
+On 2026-10-31 Codex compared DEC-017 through DEC-022 and DEC-026 with the current Django implementation, drafted the role profiles, capability matrix and access constraints, and linked them into maintained documentation. Proposed enforcement and unresolved policy are labelled separately from confirmed decisions. This contribution does not implement role/group management or change Customer verdicts. The requester also asked Codex to start the current local application.
