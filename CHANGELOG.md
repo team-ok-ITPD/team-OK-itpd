@@ -8,6 +8,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Open exercise pages detect new VS Code submissions, rerun their displayed tests
+  and refresh results, reproduction and history without a page reload.
+
 - Exercise pages use VS Code for source editing and retain reproduction, actions,
   tests and read-only output; manual actions read the latest saved solution.
 

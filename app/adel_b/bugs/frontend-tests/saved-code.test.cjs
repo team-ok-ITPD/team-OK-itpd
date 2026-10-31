@@ -67,3 +67,44 @@ test("opening VS Code never uploads the cached browser draft", async () => {
   await a.run("openWorkspace()");
   assert.deepEqual(calls, [["/api/bugs/demo/vscode/", "POST"]]);
 });
+
+
+test("a new submission reruns saved code once, updates history and skips unchanged snapshots", async () => {
+  let options;
+  const runs = [];
+  let histories = 0;
+  const a = app(async () => ({ ok: true, json: async () => ({}) }));
+  a.context.DebugGymSubmissionSync = { createSubmissionSync(value) { options = value; return { refresh() {}, stop() {} }; } };
+  a.context.runMock = async (_, code) => { runs.push(code); return [{ input: [], expected: [], passed: true }]; };
+  a.context.historyMock = async () => { histories += 1; };
+  a.run('runInPython = runMock; loadHistory = historyMock; showTestList = () => {}; startSubmissionSync(exercise)');
+  const first = { draft: { code: "buggy", tests: null, updatedAt: "first" }, attempt: null };
+  await options.apply(first);
+  await options.apply(first);
+  assert.deepEqual(runs, ["buggy"]);
+  const next = { draft: { code: "fixed", tests: null, updatedAt: "next" }, attempt: { id: 12 } };
+  await options.apply(next);
+  await options.apply(next);
+  assert.deepEqual(runs, ["buggy", "fixed"]);
+  assert.equal(histories, 2);
+  assert.equal(a.run('state.results.demo[0].passed'), true);
+  assert.equal(a.run('state.busy'), false);
+});
+
+test("live refresh pauses while tests are edited and ignores late runs after navigation", async () => {
+  let options;
+  let resolve;
+  const a = app(async () => ({ ok: true, json: async () => ({}) }));
+  a.context.DebugGymSubmissionSync = { createSubmissionSync(value) { options = value; return { refresh() {}, stop() {} }; } };
+  a.context.runMock = () => new Promise((done) => { resolve = done; });
+  a.run('runInPython = runMock; loadHistory = async () => {}; showTestList = () => {}; startSubmissionSync(exercise)');
+  assert.equal(options.isActive(), true);
+  a.run('state.editingTest = { id: "demo", index: 0 }');
+  assert.equal(options.isActive(), false);
+  a.run('state.editingTest = null');
+  const updating = options.apply({ draft: { code: "fixed" }, attempt: { id: 1 } });
+  a.run('stopSubmissionSync(); state.practiceId = "another"');
+  resolve([{ passed: true }]);
+  await updating;
+  assert.notEqual(a.run('state.results.demo?.[0]?.passed'), true);
+});

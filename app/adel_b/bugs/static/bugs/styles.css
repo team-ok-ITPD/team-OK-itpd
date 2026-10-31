@@ -1423,3 +1423,10 @@ body.signed-out .scrim {
   border-color: rgb(99 102 241 / 40%);
   color: #c7d2fe;
 }
+
+.sync-state {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 0.7rem 0.9rem 0;
+}

@@ -30,3 +30,7 @@ VM deployment or a passing isolation test that had not occurred.
 ## Codex Exercise Page
 
 On 2026-10-31 Codex removed the browser source editor and interactive preview console, retained test output and actions, and changed manual runs/submissions to read the current server draft. It checked page contracts and saved-code behavior; editing remains in VS Code.
+
+## Codex Live Submission Results
+
+On 2026-10-31 Codex added an authenticated progress snapshot, atomic IDE submission/draft updates and serial page synchronization with automatic test runs. It added backend isolation/rollback checks and frontend lifecycle tests, and rehearsed a submission on an isolated local fixture rather than changing the requester's solution.
