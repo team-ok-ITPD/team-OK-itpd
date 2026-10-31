@@ -121,6 +121,13 @@ class PageAndMatchTests(TestCase):
         self.assertContains(response, 'id="view-practice"')
         self.assertContains(response, "/static/bugs/app.js")
 
+    def test_practice_is_a_results_view_without_a_browser_editor(self):
+        response = self.client.get("/")
+        for element in ("reproduce-title", "test-list", "console-output", "run-tests", "submit", "workspace"):
+            self.assertContains(response, f'id="{element}"')
+        for removed in ("code-input", "reset-code", "console-form", "console-command"):
+            self.assertNotContains(response, f'id="{removed}"')
+
     def test_page_assets_are_found(self):
         self.assertIsNotNone(finders.find("bugs/app.js"))
         self.assertIsNotNone(finders.find("bugs/styles.css"))

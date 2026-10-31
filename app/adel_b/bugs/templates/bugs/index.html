@@ -274,50 +274,13 @@
 
           <div class="practice-layout">
             <div class="work">
-              <div class="panel editor">
-                <div class="tab-bar">
-                  <span class="file-tab">
-                    <svg class="icon"><use href="#i-file"/></svg>
-                    <span id="file-name"></span>
-                    <span class="badge danger small" id="code-state">Buggy</span>
-                  </span>
-                  <span class="tab-actions">
-                    <span class="runtime" id="save-state">Python 3.12</span>
-                    <button class="button ghost small" type="button" id="reset-code">Reset code</button>
-                  </span>
-                </div>
-                <div class="code-editor">
-                  <pre class="code" id="code" aria-hidden="true"></pre>
-                  <textarea
-                    class="code-input"
-                    id="code-input"
-                    spellcheck="false"
-                    autocomplete="off"
-                    autocapitalize="off"
-                    wrap="off"
-                    aria-label="Exercise source code"
-                  ></textarea>
-                </div>
-              </div>
-
-              <div class="panel console">
-                <div class="panel-title">
-                  <svg class="icon"><use href="#i-terminal"/></svg>
-                  Debug console
-                </div>
-                <div class="console-output" id="console-output" aria-live="polite"></div>
-                <form class="console-input" id="console-form">
-                  <label for="console-command" id="console-prompt"></label>
-                  <input id="console-command" autocomplete="off" spellcheck="false" placeholder="Type help">
-                </form>
-              </div>
-
               <div class="panel tests">
                 <button class="tests-summary" id="tests-toggle" type="button" aria-expanded="true" aria-controls="test-list">
                   <span class="tests-score" id="tests-score"></span>
-                  <span class="tests-label">Terminal &amp; test results</span>
+                  <span class="tests-label">Test results</span>
                   <svg class="icon chevron"><use href="#i-chevron"/></svg>
                 </button>
+                <pre class="console-output" id="console-output" aria-live="polite"></pre>
                 <ul class="test-list" id="test-list"></ul>
               </div>
             </div>
