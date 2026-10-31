@@ -78,6 +78,12 @@ A signed-in learner can choose a prepared exercise, work on it in browser-based 
 
 #### REL-05
 
+Released as `v0.3.0` on 2026-10-31. It adds the signed-in, multi-user Django learner flow, persistent
+drafts and attempts, browser-based VS Code launch, in-editor test results and
+submission, and the prepared-exercise title search. The university VM was not
+available, so this release has CI and local-container evidence but no staging or
+production deployment evidence.
+
 ### SPRINT-06
 
 Provisional: learners can request bounded assistance without the product applying the fix for them.
@@ -114,9 +120,9 @@ Provisional: the release candidate meets the agreed threshold measures available
 
 | QR                                        | QRT                                                     | Status       | Checked | Planned for sprint      | Evidence |
 | ----------------------------------------- | ------------------------------------------------------- | ------------ | ------- | ----------------------- | -------- |
-| [QR-01](quality-requirements/qr/QR-01.md) | [QR-01 QRT-01](quality-requirements/qr/QR-01.md#qrt-01) | Not verified | None    | [SPRINT-05](#sprint-05) | None     |
+| [QR-01](quality-requirements/qr/QR-01.md) | [QR-01 QRT-01](quality-requirements/qr/QR-01.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
 | [QR-02](quality-requirements/qr/QR-02.md) | [QR-02 QRT-01](quality-requirements/qr/QR-02.md#qrt-01) | Not verified | None    | [SPRINT-06](#sprint-06) | None     |
-| [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Not verified | None    | [SPRINT-05](#sprint-05) | None     |
+| [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
 
 ## Progress Monitoring
 
