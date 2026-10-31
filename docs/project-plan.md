@@ -85,11 +85,20 @@ Provisional: the release candidate meets the agreed threshold measures available
 
 #### REL-09
 
+## Quality Requirement Testing Plan
+
+| QR                                        | QRT                                                     | Status       | Checked | Planned for sprint      | Evidence |
+| ----------------------------------------- | ------------------------------------------------------- | ------------ | ------- | ----------------------- | -------- |
+| [QR-01](quality-requirements/qr/QR-01.md) | [QR-01 QRT-01](quality-requirements/qr/QR-01.md#qrt-01) | Not verified | None    | [SPRINT-05](#sprint-05) | None     |
+| [QR-02](quality-requirements/qr/QR-02.md) | [QR-02 QRT-01](quality-requirements/qr/QR-02.md#qrt-01) | Not verified | None    | [SPRINT-06](#sprint-06) | None     |
+| [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Not verified | None    | [SPRINT-05](#sprint-05) | None     |
+
 ## Progress Monitoring
 
 - **Review:** the team reviews
   [threshold-of-success.md](threshold-of-success.md) and
-  [risks.md](risks.md) every Friday before the weekly submission.
+  [risks.md](risks.md), including every testing-plan row that is not `Passes`,
+  every Friday before the weekly submission.
 - **Checked by:** all four team members walk the sprint goal, scheduled issues,
   threshold measures, and risk triggers; each accountable member reports the
   state of their issues.

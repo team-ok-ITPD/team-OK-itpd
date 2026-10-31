@@ -11,3 +11,5 @@ This index is the priority matrix of the quality requirements. Each row finds th
 | [QR-05](qr/QR-05.md) | A learner who has changed or broken the exercise can restore the original buggy version within two minutes, and it fails the same tests as before. | Medium              | Low            | Reliability            | Recoverability     | Active |
 
 Active means a requirement the product is expected to meet, not a passed test or Customer acceptance. The numerical targets remain proposals for Customer review. The current deployment is learner-local; the shared-service scenario is a future target, not an implemented hosting model. Dedicated quality-test evidence is not asserted by this index.
+
+The tests and their results are in [the testing plan](../project-plan.md#quality-requirement-testing-plan).
