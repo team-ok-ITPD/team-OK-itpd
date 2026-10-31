@@ -17,12 +17,12 @@
 | Action | Outcome | Decision |
 | --- | --- | --- |
 | [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Try both routes to VS Code, desktop VS Code over SSH and VS Code in the browser embedded in the site, and report which one can submit a multi-file solution and return the test results." | Partly shown. The workspace now has a VS Code button, an extension to test and upload, and the files live on the server, not on the learner's device. A comparison of the two routes was not presented. | None |
-| [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Build one complete scenario, preferably two exercises: log in, choose an exercise, open it in VS Code, solve it and submit from VS Code." | Partly carried out. The VS Code button and upload exist and the test panel updates after a run. Some links are still unfixed and the team said the rest was left for later. | None |
+| [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Build one complete scenario, preferably two exercises: log in, choose an exercise, open it in VS Code, solve it and submit from VS Code." | Carried out for the completed core increment. The Customer reviewed the current login, exercise, VS Code, test and submission flow and accepted `US-01` through `US-05`; remaining link and interface changes became follow-up work. | [DEC-027](../../docs/decisions.md#dec-027), [DEC-028](../../docs/decisions.md#dec-028), [DEC-029](../../docs/decisions.md#dec-029), [DEC-030](../../docs/decisions.md#dec-030), [DEC-031](../../docs/decisions.md#dec-031) |
 | [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Keep the default tests read-only and add a separate set that learners can edit, per DEC-011." | Not discussed in this meeting. | None |
 | [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Rework the search: prepared exercises only, the input just above the list, every match listed, the first match selected, and no preview when there are no results, per DEC-015." | Partly carried out. Search moved into Prepared exercises. The Customer noted that the "Describe the bug you want to practice" box is only a title search, so its label misleads. | [DEC-023](../../docs/decisions.md#dec-023) |
 | [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Update the stories for DEC-012 and DEC-013, and cite the decisions in each story's change comment." | Not discussed in this meeting. | None |
 | [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Present the options for where learner code runs, with their cost per learner, to the customer." | Not presented. The Customer asked where files are stored, and the team answered that they stay on the server and nothing is kept on the device. | None |
-| [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Show the containerized workspace against the acceptance criteria of US-01 to US-05 and ask for a verdict on each." | Not done. No story was shown against its acceptance criteria. | None |
+| [reports/week-04/meeting-report.md#action-points](../week-04/meeting-report.md#action-points): "Show the containerized workspace against the acceptance criteria of US-01 to US-05 and ask for a verdict on each." | Carried out. The current implementation was shown and satisfied the Customer as the completed learner increment; each story is accepted and remains closed. | [DEC-027](../../docs/decisions.md#dec-027), [DEC-028](../../docs/decisions.md#dec-028), [DEC-029](../../docs/decisions.md#dec-029), [DEC-030](../../docs/decisions.md#dec-030), [DEC-031](../../docs/decisions.md#dec-031) |
 
 ## Previous open questions
 
@@ -30,7 +30,7 @@
 | --- | --- | --- |
 | [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "Should learner code run in a sandboxed server-side container or on the learner's own computer?" | Answered in part. The team stated that files are kept on the server. Options and cost per learner were not presented, and it reappears below. | None |
 | [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "Should learners see every default test?" | Not asked. | None |
-| [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "Does the customer accept US-01 to US-05 against their acceptance criteria?" | Not asked. | None |
+| [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "Does the customer accept US-01 to US-05 against their acceptance criteria?" | Yes. The Customer accepted the current core learner implementation; new requirements extend the next increments rather than reopening these stories. | [DEC-027](../../docs/decisions.md#dec-027), [DEC-028](../../docs/decisions.md#dec-028), [DEC-029](../../docs/decisions.md#dec-029), [DEC-030](../../docs/decisions.md#dec-030), [DEC-031](../../docs/decisions.md#dec-031) |
 | [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "How can the team verify that an exercise contains the specific intended bug?" | Not asked. | None |
 | [reports/week-04/meeting-report.md#open-questions](../week-04/meeting-report.md#open-questions): "Will the team ship desktop VS Code over SSH or VS Code in the browser embedded in the site?" | Not answered. The Customer questioned the in-page preview and agreed to drop it, see DEC-016. | [DEC-016](../../docs/decisions.md#dec-016) |
 
@@ -42,6 +42,7 @@
 - The Customer wants teachers to form named groups, assign exercises to them, set deadlines and download the group's results as a CSV. None of this was in the requirements before.
 - Prepared exercises becomes the single list for all exercises, with the access levels private, public and shared with a group.
 - The Customer wants a first version for Innopolis students and teachers, in the manner of Moodle. The team had understood the target as an open training service for any beginner.
+- The Customer accepted `US-01` through `US-05` as the completed core learner increment. The newly requested roles, groups, deadlines and exports extend that baseline and do not reopen it.
 
 ## Decisions
 
@@ -56,6 +57,11 @@
 - [DEC-024: Keep Custom instructions, difficulty and language in the request form, drop topic, and give Custom instructions priority on conflict.](../../docs/decisions.md#dec-024)
 - [DEC-025: Keep the left panel for started, unfinished exercises with tests passed and a delete option, and remove the New Challenge button and the Back to practice button.](../../docs/decisions.md#dec-025)
 - [DEC-026: Build for the university first, with no paid features and no Moodle integration.](../../docs/decisions.md#dec-026)
+- [DEC-027: Accept US-01, requesting a prepared exercise.](../../docs/decisions.md#dec-027)
+- [DEC-028: Accept US-02, opening a ready exercise environment.](../../docs/decisions.md#dec-028)
+- [DEC-029: Accept US-03, reproducing the intended bug.](../../docs/decisions.md#dec-029)
+- [DEC-030: Accept US-04, checking whether the fix works.](../../docs/decisions.md#dec-030)
+- [DEC-031: Accept US-05, using VS Code debugging tools.](../../docs/decisions.md#dec-031)
 
 ## Action points
 

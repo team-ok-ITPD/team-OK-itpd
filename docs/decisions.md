@@ -353,3 +353,63 @@ integration.
   and teachers of programming courses. The interface stresses structure, so
   that a student does not miss an exercise because of poor design. Integration
   with Moodle costs too much, and paid functions can wait.
+
+## DEC-027
+
+Accept `US-01`, requesting a prepared exercise.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The demonstrated prepared-exercise request satisfies the completed
+  core learner increment; later generation and access requirements extend it.
+
+## DEC-028
+
+Accept `US-02`, opening a ready exercise environment.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The learner can open the prepared browser-based VS Code environment
+  from the current application without setting up its Python tooling.
+
+## DEC-029
+
+Accept `US-03`, reproducing the intended bug.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The demonstrated exercise repeatedly exposes its intended failure
+  through the supplied tests.
+
+## DEC-030
+
+Accept `US-04`, checking whether the fix works.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** The learner can run the tests, inspect their result and submit the
+  current solution through the implemented workflow.
+
+## DEC-031
+
+Accept `US-05`, using VS Code debugging tools.
+
+- **Status:** Active
+- **Date:** 2026-10-31
+- **Made by:** Customer
+- **Source:**
+  [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
+- **Why:** Browser-based VS Code provides the real debugging environment used
+  by the accepted core workflow; later access controls extend this capability.
