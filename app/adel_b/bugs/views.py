@@ -5,6 +5,7 @@ import re
 from functools import wraps
 from pathlib import Path
 
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -158,6 +159,7 @@ def _save_attempt(user, bug, payload):
 # The extension authenticates with its token, not a session cookie, so CSRF does not apply.
 @csrf_exempt
 @require_http_methods(["POST"])
+@transaction.atomic
 def ide_submit(request):
     """Save an attempt sent by the Debug GYM VS Code extension."""
     scheme, _, key = request.headers.get("Authorization", "").partition(" ")
@@ -179,6 +181,24 @@ def ide_submit(request):
         Draft.objects.update_or_create(
             user=token.user, bug=token.bug, defaults={"code": payload["code"]}
         )
+    return response
+
+
+@require_http_methods(["GET"])
+@login_required_json
+@transaction.atomic
+def bug_progress(request, slug):
+    """One learner-scoped snapshot, consistent with atomic IDE submissions."""
+    bug = Bug.objects.filter(slug=slug).first()
+    if bug is None:
+        return JsonResponse({"error": "Bug not found."}, status=404)
+    draft = Draft.objects.filter(user=request.user, bug=bug).first()
+    attempt = Attempt.objects.filter(user=request.user, bug=bug).first()
+    response = JsonResponse({
+        "draft": draft.to_dict() if draft else None,
+        "attempt": attempt.to_dict() if attempt else None,
+    })
+    response["Cache-Control"] = "no-store"
     return response
 
 

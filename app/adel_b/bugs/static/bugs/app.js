@@ -4,8 +4,8 @@
 // The catalog (titles, code, tests) comes from the Django API at /api/bugs/.
 let EXERCISES = [];
 
-// The browser cannot run Python, so each exercise's buggy function is mirrored
-// in JavaScript to compute the preview test results.
+// Prepared buggy functions supply an initial preview; saved solutions are run
+// in the Python worker before their actual test results are displayed.
 const RUNNERS = {
   "remove-negatives"(input) {
     // Mirrors Python: list.remove() while a for loop walks the same list.
@@ -113,8 +113,9 @@ async function apiFetch(url, options = {}) {
   if (method !== "GET") {
     headers["X-CSRFToken"] = csrfToken();
   }
+  const user = state.user;
   const response = await fetch(url, { ...options, headers, credentials: "same-origin" });
-  if (response.status === 401 && state.user) {
+  if (response.status === 401 && user && state.user === user) {
     signedOut();
   }
   return response;
@@ -233,12 +234,15 @@ function historyStatus(id) {
 }
 
 async function loadHistory() {
+  const user = state.user;
   try {
     const response = await apiFetch("/api/history/");
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    state.history = await response.json();
+    const history = await response.json();
+    if (state.user !== user) return;
+    state.history = history;
   } catch {
     return;
   }
@@ -629,7 +633,7 @@ function renderTests(exercise) {
               <button class="button ghost small" type="button" data-test-action="run" data-index="${index}" aria-label="Run test ${index + 1}"${state.busy ? " disabled" : ""}>
                 ${icon("i-play")} Run
               </button>
-              <button class="button ghost small" type="button" data-test-action="edit" data-index="${index}" aria-label="Edit test ${index + 1}"${index === editing ? " disabled" : ""}>
+              <button class="button ghost small" type="button" data-test-action="edit" data-index="${index}" aria-label="Edit test ${index + 1}"${state.busy || index === editing ? " disabled" : ""}>
                 Edit
               </button>
             </span>
@@ -703,9 +707,9 @@ function renderPractice(id) {
   }
 
   if (state.practiceId !== exercise.id) {
+    state.editingTest = null;
     state.practiceId = exercise.id;
     resetConsole(exercise);
-    loadDraft(exercise);
   }
   state.lastPracticeId = exercise.id;
 
@@ -724,6 +728,65 @@ function renderPractice(id) {
   renderWorkspace(exercise);
   renderStatus(exercise.id);
   document.title = `Debug GYM | ${exercise.title}`;
+  startSubmissionSync(exercise);
+}
+
+/* Live submissions: stop on route/account changes and never overlap reads/runs. */
+
+let practiceEpoch = 0;
+let submissionSync = null;
+
+function stopSubmissionSync() {
+  practiceEpoch += 1;
+  submissionSync?.stop();
+  submissionSync = null;
+}
+
+function startSubmissionSync(exercise) {
+  if (submissionSync) return;
+  const user = state.user;
+  const epoch = practiceEpoch;
+  const current = () => state.user === user && state.practiceId === exercise.id && practiceEpoch === epoch;
+  let lastSnapshot = null;
+  let lastMessage = "Watching for VS Code submissions...";
+  const status = (message) => { if (current()) $("#sync-state").textContent = message; };
+  status(lastMessage);
+  submissionSync = DebugGymSubmissionSync.createSubmissionSync({
+    isActive: () => current() && !document.hidden && !state.busy && !state.editingTest,
+    read: async (signal) => {
+      const response = await apiFetch(`/api/bugs/${encodeURIComponent(exercise.id)}/progress/`, { signal });
+      const snapshot = await response.json();
+      if (!response.ok) throw new Error(snapshot.error || `HTTP ${response.status}`);
+      return snapshot;
+    },
+    apply: async (snapshot) => {
+      if (!current()) return;
+      const fingerprint = canonical([snapshot.draft, snapshot.attempt?.id ?? null]);
+      if (fingerprint === lastSnapshot) { status(lastMessage); return; }
+      lastSnapshot = fingerprint;
+      applyDraft(exercise, snapshot.draft);
+      status(snapshot.attempt ? "Submission received. Running tests..." : "Running tests on your saved solution...");
+      setBusy(true, $("#run-tests"), "Running...");
+      try {
+        const results = await runInPython(exercise, currentCode(exercise), currentTests(exercise), "python -m pytest -q");
+        if (!current()) return;
+        if (results) {
+          state.results[exercise.id] = results;
+          delete state.selectedTest[exercise.id];
+          showTestList(exercise);
+          lastMessage = snapshot.attempt ? "Submission received. Tests updated automatically." : "Tests up to date. Watching for VS Code submissions...";
+        } else {
+          lastMessage = "Automatic tests could not run. Use Run Tests to retry.";
+        }
+        await loadHistory();
+        status(lastMessage);
+      } finally {
+        setBusy(false);
+      }
+    },
+    onError: () => status("Connection interrupted. Retrying automatically..."),
+  });
+  void submissionSync.refresh();
 }
 
 /* Saved code: source editing belongs in VS Code. */
@@ -854,9 +917,13 @@ async function runPython(exercise, code, tests) {
 
 // Runs code against the given tests and returns one result per test (or null on failure).
 async function runInPython(exercise, code, tests, command) {
+  const user = state.user;
+  const epoch = practiceEpoch;
+  const current = () => state.user === user && state.practiceId === exercise.id && practiceEpoch === epoch;
   consolePrint(`<span class="cmd">${escapeHtml(exercise.id)} $ ${escapeHtml(command)}</span>`);
   try {
     const output = await runPython(exercise, code, tests);
+    if (!current()) return null;
     if (output.stdout) {
       consolePrint(escapeHtml(output.stdout.replace(/\n$/, "")));
     }
@@ -868,7 +935,7 @@ async function runInPython(exercise, code, tests, command) {
     consolePrint(pytestReport(exercise, results));
     return results;
   } catch (error) {
-    consolePrint(`<span class="fail">${escapeHtml(error.message)}</span>`);
+    if (current()) consolePrint(`<span class="fail">${escapeHtml(error.message)}</span>`);
     return null;
   }
 }
@@ -883,7 +950,7 @@ function setBusy(busy, button, label) {
   state.busy = busy;
   $("#run-tests").disabled = busy;
   $("#submit").disabled = busy;
-  document.querySelectorAll('[data-test-action="run"]').forEach((element) => {
+  document.querySelectorAll('[data-test-action="run"], [data-test-action="edit"]').forEach((element) => {
     element.disabled = busy;
   });
   if (busy) {
@@ -1140,6 +1207,7 @@ function setUser(user) {
 }
 
 function resetUserState() {
+  stopSubmissionSync();
   Object.assign(state, {
     drafts: {},
     results: {},
@@ -1240,6 +1308,7 @@ async function handleLogout() {
 /* Routing */
 
 function route() {
+  stopSubmissionSync();
   const [, view, id] = location.hash.split("/");
   const authView = view === "login" || view === "register";
   if (!state.user) {
@@ -1426,6 +1495,10 @@ if (!/Mac|iPhone|iPad/.test(navigator.platform)) {
 }
 
 window.addEventListener("hashchange", route);
+window.addEventListener("focus", () => { void submissionSync?.refresh(); });
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void submissionSync?.refresh();
+});
 if (!location.hash) {
   history.replaceState(null, "", "#/new");
 }
