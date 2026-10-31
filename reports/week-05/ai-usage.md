@@ -27,6 +27,3 @@ three team members were requested as reviewers. At least one teammate must
 approve before merge. Generated text was edited to avoid claiming a university
 VM deployment or a passing isolation test that had not occurred.
 
-## Codex Exercise Page
-
-On 2026-10-31 Codex removed the browser source editor and interactive preview console, retained test output and actions, and changed manual runs/submissions to read the current server draft. It checked page contracts and saved-code behavior; editing remains in VS Code.

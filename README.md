@@ -25,6 +25,7 @@ This repository is a work in progress for the ITPD course. It captures the proje
 ## Maintained Documentation
 
 - [Product vision](docs/product-vision.md)
+- [Roles, capabilities and access](docs/roles-and-access.md)
 - [Functional requirements](docs/functional-requirements/README.md)
 - [Quality requirements](docs/quality-requirements/README.md)
 - [Architecture and decisions](docs/architecture/README.md)
