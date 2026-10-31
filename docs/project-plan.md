@@ -13,6 +13,28 @@ reproduce the failure, debug it, and verify the fix. The increment includes one
 curated exercise and the setup evidence needed to run the flow from a clean
 checkout.
 
+### MLS-05
+
+- **Due:** 2026-10-31
+- **Sprints:** [SPRINT-04](#sprint-04), [SPRINT-05](#sprint-05)
+- **Advances:** [TOS-01](threshold-of-success.md#tos-01), [TOS-03](threshold-of-success.md#tos-03)
+
+A signed-in learner completes the prepared debugging workflow from choosing an
+exercise through submitting the tested fix from browser-based VS Code. The
+increment also keeps each learner's drafts and attempts separate and records
+the Customer's validation of the workflow.
+
+### MLS-06
+
+- **Due:** 2026-11-07
+- **Sprints:** [SPRINT-06](#sprint-06)
+- **Advances:** [TOS-03](threshold-of-success.md#tos-03)
+
+Teachers and students have the first university-specific sharing increment:
+roles determine who may publish an exercise and which prepared exercises each
+learner may open. Group assignment, deadlines and result export build on this
+access model in later increments.
+
 ## Sprints
 
 ### SPRINT-03
@@ -47,9 +69,12 @@ browsing (US-07) are not included.
 
 ### SPRINT-05
 
-Provisional: pilot learners can complete the validated end-to-end MVP workflow.
+A signed-in learner can choose a prepared exercise, work on it in browser-based VS Code, run its tests and submit the result in the validated end-to-end workflow.
 
 - **Due:** 2026-10-31
+- **Sprint Backlog:** [the issues scheduled into SPRINT-05](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/7)
+- **Planned Velocity:** 23
+- **Actual Velocity:** 23; `US-01` through `US-05` and `US-08` completed, while the refined `US-09` remains unscheduled for `SPRINT-06` planning.
 
 #### REL-05
 
