@@ -10,6 +10,7 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - A sourced administrator, teacher and student capability model, access constraints,
   proposed enforcement rules and unresolved policy questions.
+
 ### Changed
 
 - Open exercise pages detect new VS Code submissions, rerun their displayed tests
