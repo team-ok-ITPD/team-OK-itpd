@@ -13,25 +13,6 @@ from django.views.decorators.http import require_http_methods
 
 from .models import Attempt, Bug, Draft, IdeToken
 
-REQUIRED_FIELDS = ("slug", "title", "description")
-EDITABLE_FIELDS = {
-    "slug": "slug",
-    "title": "title",
-    "language": "language",
-    "difficulty": "difficulty",
-    "duration": "duration",
-    "topic": "category",
-    "topicLabel": "topic",
-    "summary": "summary",
-    "description": "description",
-    "file": "file_name",
-    "functionName": "function_name",
-    "buggyCode": "buggy_code",
-    "tests": "tests",
-    "symptom": "symptom",
-    "explanation": "explanation",
-    "workspace": "has_workspace",
-}
 MAX_DRAFT_LENGTH = 50_000
 MAX_VALUE_LENGTH = 2_000
 STOP_WORDS = {"a", "an", "and", "bug", "for", "in", "of", "the", "to", "with", "python"}
@@ -47,34 +28,14 @@ def login_required_json(view):
     return wrapper
 
 
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET"])
 def bug_list(request):
-    if request.method == "GET":
-        return JsonResponse({"bugs": [bug.to_dict() for bug in Bug.objects.all()]})
-
-    if not request.user.is_staff:
-        return JsonResponse({"error": "Only staff can add bugs."}, status=403)
-    try:
-        payload = json.loads(request.body or b"{}")
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Send a JSON body."}, status=400)
-    if not isinstance(payload, dict):
-        return JsonResponse({"error": "Send a JSON object."}, status=400)
-
-    missing = [name for name in REQUIRED_FIELDS if not payload.get(name)]
-    if missing:
-        return JsonResponse({"error": f"Missing fields: {', '.join(missing)}."}, status=400)
-    if Bug.objects.filter(slug=payload["slug"]).exists():
-        return JsonResponse({"error": "A bug with that id already exists."}, status=409)
-
-    fields = {model: payload[key] for key, model in EDITABLE_FIELDS.items() if key in payload}
-    bug = Bug.objects.create(**fields)
-    return JsonResponse({"bug": bug.to_dict()}, status=201)
+    return JsonResponse({"bugs": [bug.to_dict() for bug in Bug.visible_to(request.user)]})
 
 
 @require_http_methods(["GET"])
 def bug_detail(request, slug):
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
     return JsonResponse({"bug": bug.to_dict()})
@@ -88,7 +49,7 @@ def health(request):
 @require_http_methods(["GET", "PUT", "DELETE"])
 @login_required_json
 def bug_draft(request, slug):
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
 
@@ -125,7 +86,7 @@ def bug_draft(request, slug):
 @require_http_methods(["GET", "POST"])
 @login_required_json
 def bug_attempts(request, slug):
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
 
@@ -278,7 +239,7 @@ def _json_safe(value):
 @login_required_json
 def bug_test(request, slug, index):
     """Edit (PUT) or restore (DELETE) one of the learner's copies of a bug's tests."""
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
     if not 0 <= index < len(bug.tests):
@@ -325,7 +286,7 @@ def bug_vscode(request, slug):
     from .ide import IdeError, start_ide
     from .workspaces import WorkspaceError, write_workspace
 
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
     try:
@@ -364,7 +325,7 @@ def _title_hits(wanted, title):
     )
 
 
-def rank_bugs(query):
+def rank_bugs(query, user):
     """Return (bugs, "title" | "description"): title matches first, else description matches.
 
     Bugs whose title matches are ranked by matched words, an exact phrase from the title
@@ -372,7 +333,7 @@ def rank_bugs(query):
     """
     wanted = {_stem(word) for word in _words(query)}
     phrase = " ".join(query.lower().split())
-    bugs = list(Bug.objects.all())
+    bugs = list(Bug.visible_to(user))
 
     def order(item):
         score, bug = item
@@ -398,12 +359,6 @@ def rank_bugs(query):
     return [bug for _, bug in sorted(by_text, key=order)], "description"
 
 
-def match_bug(query):
-    """Return the stored bug whose text shares the most words with the query."""
-    ranked, _ = rank_bugs(query)
-    return ranked[0] if ranked else None
-
-
 @require_http_methods(["POST"])
 def exercise_match(request):
     try:
@@ -414,7 +369,7 @@ def exercise_match(request):
     except (json.JSONDecodeError, AttributeError, ValueError):
         return JsonResponse({"error": "Send a text query."}, status=400)
 
-    ranked, matched_by = rank_bugs(query)
+    ranked, matched_by = rank_bugs(query, request.user)
     if not ranked:
         return JsonResponse(
             {"error": "No prepared exercise matches that request. Try a Python list, loop, or dictionary bug."},

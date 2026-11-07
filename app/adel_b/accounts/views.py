@@ -8,11 +8,13 @@ from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 
+from .models import role_of
+
 User = get_user_model()
 
 
 def user_dict(user):
-    return {"username": user.username, "email": user.email}
+    return {"username": user.username, "email": user.email, "role": role_of(user)}
 
 
 def _read_json(request):

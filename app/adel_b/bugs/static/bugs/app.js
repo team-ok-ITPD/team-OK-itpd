@@ -57,7 +57,7 @@ function fromApi(bug) {
   return {
     ...bug,
     code: bug.buggyCode,
-    run: RUNNERS[bug.id] || (() => null),
+    run: RUNNERS[bug.id] || null,
   };
 }
 
@@ -95,6 +95,8 @@ const state = {
   tests: {},
   editingTest: null,
   busy: false,
+  teach: { editing: null, assigning: null, students: [], total: 0 },
+  assignments: [],
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -185,6 +187,9 @@ function hasEditedTests(exercise) {
 }
 
 function runTests(exercise) {
+  if (!exercise.run) {
+    return currentTests(exercise).map((test) => ({ ...test, notRun: true, passed: false }));
+  }
   return currentTests(exercise).map((test) => {
     const actual = exercise.run(structuredClone(test.input));
     return { ...test, actual, passed: canonical(actual) === canonical(test.expected) };
@@ -234,7 +239,7 @@ function historyStatus(id) {
 }
 
 async function loadHistory() {
-  const user = state.user;
+  loadAssignments();
   try {
     const response = await apiFetch("/api/history/");
     if (!response.ok) {
@@ -348,13 +353,21 @@ function visibleExercises() {
   const query = state.search.trim().toLowerCase();
   // After a search, list only its matches, best match first.
   const pool = state.matches ? state.matches.ids.map(findExercise).filter(Boolean) : EXERCISES;
-  return pool.filter(
+  const titleMatches = (exercise) => !query || exercise.title.toLowerCase().includes(query);
+  const filtered = pool.filter(
     (exercise) =>
       (topic === "all" || exercise.topic === topic) &&
       (difficulty === "all" || exercise.difficulty === difficulty) &&
       exercise.language === language &&
-      (!query || exercise.title.toLowerCase().includes(query)),
+      titleMatches(exercise),
   );
+  if (state.matches) {
+    return filtered;
+  }
+  // Assigned exercises lead the list even when the filters would hide them.
+  const assigned = state.assignments.map((item) => findExercise(item.bugId)).filter(Boolean).filter(titleMatches);
+  const assignedIds = new Set(assigned.map((exercise) => exercise.id));
+  return [...assigned, ...filtered.filter((exercise) => !assignedIds.has(exercise.id))];
 }
 
 function matchBar() {
@@ -415,6 +428,10 @@ function renderExerciseList() {
       const checked = exercise.id === state.selectedId ? " checked" : "";
       const status = STATUS_ICONS[historyStatus(exercise.id)];
       const best = state.matches && index === 0 ? '<span class="badge accent small">Best match</span>' : "";
+      const assignment = assignmentFor(exercise.id);
+      const assignedBadge = assignment
+        ? `<span class="badge accent small">${assignment.dueDate ? `Assigned · due ${escapeHtml(shortDate(assignment.dueDate))}` : "Assigned"}</span>`
+        : "";
       return `
         <label class="exercise-card">
           <input type="radio" name="exercise" value="${exercise.id}"${checked}>
@@ -424,6 +441,7 @@ function renderExerciseList() {
           </span>
           <span class="exercise-meta">
             ${best}
+            ${assignedBadge}
             ${status ? `<span class="badge ${status.badge} small">${status.label}</span>` : ""}
             <span class="badge">${escapeHtml(exercise.difficulty)}</span>
             <span class="badge">${escapeHtml(exercise.duration)}</span>
@@ -714,6 +732,7 @@ function renderPractice(id) {
   state.lastPracticeId = exercise.id;
 
   $("#practice-crumb").textContent = `Practice / ${exercise.topicLabel}`;
+  renderAssignedNote(exercise.id);
   $("#practice-title").textContent = exercise.title;
   $("#badge-difficulty").textContent = exercise.difficulty;
   $("#badge-language").textContent = exercise.language;
@@ -869,7 +888,7 @@ function stopPython() {
   python.worker = null;
 }
 
-async function runPython(exercise, code, tests) {
+async function runPython(exercise, code, tests, { literal = false } = {}) {
   if (!python.worker) {
     startPython();
   }
@@ -911,6 +930,7 @@ async function runPython(exercise, code, tests) {
       code,
       functionName: exercise.functionName,
       tests: tests.map(({ input, expected }) => ({ input, expected })),
+      literal,
     });
   });
 }
@@ -1201,13 +1221,22 @@ function setUser(user) {
   document.body.classList.toggle("signed-out", !user);
   if (user) {
     $("#profile-name").textContent = user.username;
-    $("#profile-email").textContent = user.email;
+    const role = user.role === "professor" ? "Professor" : "Student";
+    $("#profile-email").textContent = `${role} · ${user.email}`;
+    document.body.dataset.role = user.role || "student";
+    $("#nav-teach").hidden = user.role !== "professor";
+    $("#nav-assignments").hidden = user.role === "professor";
     $("#profile-avatar").textContent = user.username.slice(0, 2).toUpperCase();
   }
 }
 
 function resetUserState() {
-  stopSubmissionSync();
+  clearTimeout(saveTimer);
+  // Nothing from the previous account stays in the page, even hidden.
+  for (const selector of ["#assignment-list", "#teach-list", "#results", "#student-list", "#history"]) {
+    $(selector).innerHTML = "";
+  }
+  $("#assignments-count").hidden = true;
   Object.assign(state, {
     drafts: {},
     results: {},
@@ -1215,6 +1244,7 @@ function resetUserState() {
     tests: {},
     editingTest: null,
     history: { items: [], activity: [] },
+    assignments: [],
     practiceId: null,
     lastPracticeId: "remove-negatives",
     instructions: "",
@@ -1235,7 +1265,7 @@ function signedIn(user) {
   for (const form of document.querySelectorAll(".auth-form")) {
     form.reset();
   }
-  goTo(state.afterLogin);
+  goTo(state.afterLogin === "#/new" && user.role === "professor" ? "#/teach" : state.afterLogin);
   state.afterLogin = "#/new";
   loadHistory();
 }
@@ -1259,14 +1289,17 @@ function clearAuthErrors(form) {
     element.hidden = true;
     element.textContent = "";
   });
-  form.querySelectorAll("input").forEach((input) => input.removeAttribute("aria-invalid"));
+  form.querySelectorAll("[aria-invalid]").forEach((input) => input.removeAttribute("aria-invalid"));
 }
 
 function showAuthError(form, name, message) {
   const element = form.querySelector(`[data-error="${name}"]`);
+  if (!element) {
+    return;
+  }
   element.textContent = message;
   element.hidden = false;
-  form.querySelector(`input[name="${name}"]`)?.setAttribute("aria-invalid", "true");
+  form.querySelector(`[name="${name}"]`)?.setAttribute("aria-invalid", "true");
 }
 
 async function handleAuthSubmit(event, url) {
@@ -1305,6 +1338,492 @@ async function handleLogout() {
   }
 }
 
+/* Teaching (professor pages) */
+
+const STUDENT_STATUS = {
+  "not-started": { label: "Not started", badge: "" },
+  progress: { label: "In progress", badge: "warning" },
+  failed: { label: "Not solved", badge: "danger" },
+  solved: { label: "Solved", badge: "success" },
+};
+const EMPTY_TEST = { name: "", input: "", expected: "" };
+
+function isProfessor() {
+  return state.user?.role === "professor";
+}
+
+async function teachFetch(url, options = {}) {
+  const response = await apiFetch(url, {
+    ...options,
+    headers: options.body ? { "Content-Type": "application/json" } : undefined,
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.error || `The server answered with HTTP ${response.status}.`);
+    error.fields = payload.fields || {};
+    error.status = response.status;
+    throw error;
+  }
+  return payload;
+}
+
+function failureText(error) {
+  return error instanceof TypeError ? "The server could not be reached." : error.message;
+}
+
+/* My exercises */
+
+async function renderTeachList() {
+  document.title = "Debug GYM | Teaching";
+  const list = $("#teach-list");
+  list.innerHTML = '<div class="empty"><span>Loading your exercises...</span></div>';
+  try {
+    const { exercises } = await teachFetch("/api/teach/exercises/");
+    if (exercises.length === 0) {
+      list.innerHTML = `
+        <div class="empty">
+          <strong>No exercises yet.</strong>
+          <span>Create your first one: buggy code and the tests it should pass.</span>
+        </div>`;
+      return;
+    }
+    list.innerHTML = exercises
+      .map(
+        (exercise) => `
+          <article class="teach-row">
+            <div>
+              <h2>${escapeHtml(exercise.title)}</h2>
+              <p>${escapeHtml(exercise.summary || exercise.description)}</p>
+              <div class="badges">
+                <span class="badge small">${escapeHtml(exercise.difficulty)}</span>
+                <span class="badge small">${escapeHtml(exercise.topicLabel)}</span>
+                <span class="badge small">${exercise.tests.length} ${exercise.tests.length === 1 ? "test" : "tests"}</span>
+              </div>
+            </div>
+            <div class="teach-stats">
+              <span><strong>${exercise.assigned}</strong> assigned</span>
+              <span><strong>${exercise.solved}</strong> solved</span>
+            </div>
+            <div class="row-actions">
+              <a class="button ghost small" href="#/teach/${encodeURIComponent(exercise.id)}/edit">Edit</a>
+              <a class="button primary small" href="#/teach/${encodeURIComponent(exercise.id)}">Assign &amp; results</a>
+            </div>
+          </article>`,
+      )
+      .join("");
+  } catch (error) {
+    list.innerHTML = `<div class="empty"><strong>Your exercises could not be loaded.</strong><span>${escapeHtml(failureText(error))}</span></div>`;
+  }
+}
+
+/* Exercise editor */
+
+function testRowHtml(test, index) {
+  const field = (name, label, placeholder) => `
+    <label>
+      <span>${label}</span>
+      <input name="tests.${index}.${name}" value="${escapeHtml(test[name])}" placeholder="${placeholder}" spellcheck="false" autocomplete="off">
+      <small class="field-error" data-error="tests.${index}.${name}" hidden></small>
+    </label>`;
+  return `
+    <div class="test-row" data-index="${index}">
+      <span class="test-number">${index + 1}</span>
+      ${field("name", "Name", "Empty list")}
+      ${field("input", "Input", "[0, 1, 0]")}
+      ${field("expected", "Expected", "2")}
+      <button class="icon-button" type="button" data-remove-test="${index}" aria-label="Remove test ${index + 1}">
+        ${icon("i-x")}
+      </button>
+    </div>`;
+}
+
+function readTests() {
+  return [...document.querySelectorAll("#test-rows .test-row")].map((row) => {
+    const index = row.dataset.index;
+    const value = (name) => row.querySelector(`[name="tests.${index}.${name}"]`).value;
+    return { name: value("name").trim(), input: value("input").trim(), expected: value("expected").trim() };
+  });
+}
+
+function renderTestRows(tests) {
+  $("#test-rows").innerHTML = tests.map(testRowHtml).join("");
+  // Keep at least one row so there is always somewhere to type.
+  $("#test-rows").querySelectorAll("[data-remove-test]").forEach((button) => {
+    button.disabled = tests.length === 1;
+  });
+}
+
+function fillExerciseForm(exercise) {
+  const form = $("#exercise-form");
+  form.reset();
+  clearAuthErrors(form);
+  $("#check-result").hidden = true;
+  const values = exercise || {};
+  for (const name of ["title", "summary", "description", "duration", "functionName", "file", "buggyCode", "symptom", "explanation"]) {
+    form.elements[name].value = values[name] || "";
+  }
+  form.elements.difficulty.value = values.difficulty || "Easy";
+  form.elements.topic.value = values.topic || "arrays";
+  renderTestRows(values.editTests?.length ? values.editTests : [{ ...EMPTY_TEST }]);
+}
+
+function readExerciseForm() {
+  const form = $("#exercise-form");
+  const value = (name) => form.elements[name].value;
+  return {
+    title: value("title"),
+    summary: value("summary"),
+    description: value("description"),
+    difficulty: value("difficulty"),
+    topic: value("topic"),
+    duration: value("duration"),
+    functionName: value("functionName").trim(),
+    file: value("file").trim(),
+    buggyCode: value("buggyCode"),
+    symptom: value("symptom"),
+    explanation: value("explanation"),
+    tests: readTests(),
+  };
+}
+
+async function renderTeachEditor(slug) {
+  state.teach.editing = slug || null;
+  const isNew = !slug;
+  $("#edit-title").textContent = isNew ? "New exercise" : "Edit exercise";
+  $("#edit-crumb").textContent = isNew ? "New exercise" : "Edit";
+  $("#delete-exercise").hidden = isNew;
+  $("#edit-assign-link").hidden = isNew;
+  document.title = `Debug GYM | ${isNew ? "New exercise" : "Edit exercise"}`;
+  fillExerciseForm(null);
+  if (isNew) {
+    $("#exercise-form").elements.title.focus();
+    return;
+  }
+  $("#edit-assign-link").href = `#/teach/${encodeURIComponent(slug)}`;
+  try {
+    const { exercise } = await teachFetch(`/api/teach/exercises/${encodeURIComponent(slug)}/`);
+    if (state.teach.editing !== slug) {
+      return;
+    }
+    fillExerciseForm(exercise);
+    $("#edit-title").textContent = exercise.title;
+  } catch (error) {
+    toast(error.status === 404 ? "That exercise was not found." : failureText(error));
+    goTo("#/teach");
+  }
+}
+
+async function saveExercise(event) {
+  event.preventDefault();
+  const form = $("#exercise-form");
+  const button = $("#save-exercise");
+  clearAuthErrors(form);
+  button.disabled = true;
+  const slug = state.teach.editing;
+  try {
+    const { exercise } = await teachFetch(slug ? `/api/teach/exercises/${encodeURIComponent(slug)}/` : "/api/teach/exercises/", {
+      method: slug ? "PUT" : "POST",
+      body: JSON.stringify(readExerciseForm()),
+    });
+    // The catalog on the other pages now includes this exercise.
+    await loadExercises();
+    toast(slug ? "Exercise saved." : "Exercise created. Now assign it to students.");
+    goTo(`#/teach/${encodeURIComponent(exercise.id)}`);
+  } catch (error) {
+    showAuthError(form, "form", error.message);
+    for (const [name, message] of Object.entries(error.fields || {})) {
+      showAuthError(form, name, message);
+    }
+    form.querySelector('[aria-invalid="true"]')?.focus();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteExercise() {
+  const slug = state.teach.editing;
+  const title = $("#exercise-form").elements.title.value;
+  if (!slug || !window.confirm(`Delete “${title}”? Students lose it, with their code and submissions.`)) {
+    return;
+  }
+  try {
+    await teachFetch(`/api/teach/exercises/${encodeURIComponent(slug)}/`, { method: "DELETE" });
+    await loadExercises();
+    toast("Exercise deleted.");
+    goTo("#/teach");
+  } catch (error) {
+    toast(failureText(error));
+  }
+}
+
+// Run the buggy code against the tests in the browser: a good exercise fails at least one.
+async function checkExercise() {
+  const data = readExerciseForm();
+  const result = $("#check-result");
+  const button = $("#check-exercise");
+  const show = (kind, html) => {
+    result.hidden = false;
+    result.className = `check-result wide ${kind}`;
+    result.innerHTML = html;
+  };
+  if (!data.functionName || !data.buggyCode.trim() || data.tests.some((test) => !test.input || !test.expected)) {
+    show("bad", "Fill in the function name, the code, and every test's input and expected value first.");
+    return;
+  }
+  button.disabled = true;
+  show("", "Running the buggy code in your browser (the first run downloads Python, about 10 MB)...");
+  try {
+    const output = await runPython({ functionName: data.functionName }, data.buggyCode, data.tests, { literal: true });
+    if (output.error) {
+      show("bad", `The code could not run: ${escapeHtml(output.error)}`);
+      return;
+    }
+    const lines = output.results.map((outcome, index) => {
+      const name = escapeHtml(data.tests[index].name || `Test ${index + 1}`);
+      const verdict = outcome.passed ? "passes" : `fails (got ${escapeHtml(outcome.error || outcome.actualRepr)})`;
+      return `<li>${name}: ${verdict}</li>`;
+    });
+    const failed = output.results.filter((outcome) => !outcome.passed).length;
+    if (failed === 0) {
+      show("warn", `<strong>Every test passes on the buggy code.</strong> Add a test that shows the bug, or students have nothing to find.<ul>${lines.join("")}</ul>`);
+    } else {
+      show("good", `<strong>${failed} of ${output.results.length} tests fail on the buggy code.</strong> Students have a bug to find.<ul>${lines.join("")}</ul>`);
+    }
+  } catch (error) {
+    show("bad", escapeHtml(error.message));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/* Assign & results */
+
+function dueText(date) {
+  return date ? new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+}
+
+function renderResults(rows, total) {
+  const results = $("#results");
+  if (rows.length === 0) {
+    results.innerHTML = '<div class="empty"><strong>Not assigned yet.</strong><span>Pick students on the left and press Assign.</span></div>';
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  results.innerHTML = `
+    <table class="results-table">
+      <thead><tr><th>Student</th><th>Status</th><th>Best</th><th>Submissions</th><th>Due</th><th></th></tr></thead>
+      <tbody>
+        ${rows
+          .map((row) => {
+            const status = STUDENT_STATUS[row.status];
+            const overdue = row.dueDate && row.dueDate < today && row.status !== "solved";
+            const last = row.lastActivity ? new Date(row.lastActivity).toLocaleString() : "No activity yet";
+            return `
+              <tr>
+                <td>${escapeHtml(row.username)}<small>${escapeHtml(row.email)}</small></td>
+                <td><span class="badge small ${status.badge}">${status.label}</span><small>${escapeHtml(last)}</small></td>
+                <td>${row.bestPassed === null ? "—" : `${row.bestPassed} / ${total}`}</td>
+                <td>${row.attempts}</td>
+                <td class="${overdue ? "overdue" : ""}">${dueText(row.dueDate)}${overdue ? "<small>Overdue</small>" : ""}</td>
+                <td><button class="button ghost small" type="button" data-unassign="${row.studentId}">Unassign</button></td>
+              </tr>`;
+          })
+          .join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderStudentChoices(students, rows) {
+  const assigned = new Set(rows.map((row) => row.studentId));
+  $("#student-list").innerHTML = students.length
+    ? students
+        .map(
+          (student) => `
+            <label class="student-option">
+              <input type="checkbox" name="students" value="${student.id}">
+              ${escapeHtml(student.username)}
+              ${assigned.has(student.id) ? "<small>Assigned</small>" : ""}
+            </label>`,
+        )
+        .join("")
+    : '<p class="field-hint">No student accounts yet. Students appear here once they register.</p>';
+}
+
+async function renderTeachAssign(slug) {
+  state.teach.assigning = slug;
+  $("#assign-title").textContent = "Loading...";
+  $("#assign-edit-link").href = `#/teach/${encodeURIComponent(slug)}/edit`;
+  $("#assign-try-link").href = `#/practice/${encodeURIComponent(slug)}`;
+  $("#assign-message").hidden = true;
+  $("#assign-form").reset();
+  $("#results").innerHTML = "";
+  try {
+    const base = `/api/teach/exercises/${encodeURIComponent(slug)}/`;
+    const [{ exercise }, { assignments }, { students }] = await Promise.all([
+      teachFetch(base),
+      teachFetch(`${base}assignments/`),
+      teachFetch("/api/teach/students/"),
+    ]);
+    if (state.teach.assigning !== slug) {
+      return;
+    }
+    state.teach.total = exercise.tests.length;
+    state.teach.students = students;
+    $("#assign-title").textContent = exercise.title;
+    document.title = `Debug GYM | ${exercise.title}`;
+    renderStudentChoices(students, assignments);
+    renderResults(assignments, exercise.tests.length);
+  } catch (error) {
+    toast(error.status === 404 ? "That exercise was not found." : failureText(error));
+    goTo("#/teach");
+  }
+}
+
+function showAssignMessage(kind, text) {
+  const message = $("#assign-message");
+  message.hidden = false;
+  message.className = `ask-result ${kind}`;
+  message.textContent = text;
+}
+
+async function assignStudents(event) {
+  event.preventDefault();
+  const form = event.target;
+  const ids = [...form.querySelectorAll('input[name="students"]:checked')].map((input) => Number(input.value));
+  if (ids.length === 0) {
+    showAssignMessage("error", "Choose at least one student.");
+    return;
+  }
+  const slug = state.teach.assigning;
+  try {
+    const { assignments } = await teachFetch(`/api/teach/exercises/${encodeURIComponent(slug)}/assignments/`, {
+      method: "POST",
+      body: JSON.stringify({ students: ids, dueDate: form.elements.dueDate.value || null }),
+    });
+    renderStudentChoices(state.teach.students, assignments);
+    renderResults(assignments, state.teach.total);
+    showAssignMessage("success", `Assigned to ${ids.length} ${ids.length === 1 ? "student" : "students"}.`);
+  } catch (error) {
+    showAssignMessage("error", failureText(error));
+  }
+}
+
+async function unassignStudent(studentId) {
+  const slug = state.teach.assigning;
+  try {
+    const { assignments } = await teachFetch(
+      `/api/teach/exercises/${encodeURIComponent(slug)}/assignments/${studentId}/`,
+      { method: "DELETE" },
+    );
+    renderStudentChoices(state.teach.students, assignments);
+    renderResults(assignments, state.teach.total);
+  } catch (error) {
+    toast(failureText(error));
+  }
+}
+
+/* My assignments (students) */
+
+function assignmentFor(id) {
+  return state.assignments.find((item) => item.bugId === id) || null;
+}
+
+function shortDate(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+// Open work first, then the earliest due date; no due date last.
+function sortAssignments(items) {
+  const rank = (item) => [item.status === "solved" ? 1 : 0, item.dueDate || "9999-12-31", item.title];
+  return [...items].sort((a, b) => {
+    const [x, y] = [rank(a), rank(b)];
+    return x[0] - y[0] || x[1].localeCompare(y[1]) || x[2].localeCompare(y[2]);
+  });
+}
+
+async function loadAssignments() {
+  if (isProfessor()) {
+    return;
+  }
+  try {
+    const { assignments } = await teachFetch("/api/assignments/");
+    state.assignments = sortAssignments(assignments);
+  } catch {
+    return;
+  }
+  const open = state.assignments.filter((item) => item.status !== "solved").length;
+  const count = $("#assignments-count");
+  count.hidden = open === 0;
+  count.textContent = open;
+  if (!$("#view-assignments").hidden) {
+    renderAssignments();
+  } else if (!$("#view-new").hidden) {
+    renderExerciseList();
+  } else if (state.practiceId) {
+    renderAssignedNote(state.practiceId);
+  }
+}
+
+function renderAssignedNote(id) {
+  const note = $("#practice-assigned");
+  const assignment = assignmentFor(id);
+  note.hidden = !assignment;
+  if (!assignment) {
+    return;
+  }
+  const parts = [assignment.assignedBy ? `Assigned by ${assignment.assignedBy}` : "Assigned to you"];
+  if (assignment.dueDate) {
+    parts.push(`due ${dueText(assignment.dueDate)}`);
+  }
+  note.textContent = parts.join(" · ");
+  note.classList.toggle("overdue", assignment.overdue);
+  if (assignment.overdue) {
+    note.textContent += " · overdue";
+  }
+}
+
+function renderAssignments() {
+  document.title = "Debug GYM | My assignments";
+  const list = $("#assignment-list");
+  if (state.assignments.length === 0) {
+    list.innerHTML = `
+      <div class="empty">
+        <strong>No assignments yet.</strong>
+        <span>When a professor assigns you an exercise, it shows up here. Meanwhile, browse all exercises.</span>
+      </div>`;
+    return;
+  }
+  list.innerHTML = state.assignments
+    .map((item) => {
+      const status = STUDENT_STATUS[item.status];
+      const due = item.dueDate
+        ? `<span class="${item.overdue ? "overdue" : ""}">Due ${escapeHtml(dueText(item.dueDate))}${item.overdue ? " · overdue" : ""}</span>`
+        : "<span>No due date</span>";
+      const score = item.bestPassed === null ? "" : `<span>Best ${item.bestPassed} / ${item.total}</span>`;
+      const action = item.status === "solved" ? "Review" : item.status === "not-started" ? "Start" : "Continue";
+      return `
+        <article class="teach-row">
+          <div>
+            <h2>${escapeHtml(item.title)}</h2>
+            <p>${escapeHtml(item.summary)}</p>
+            <div class="badges">
+              <span class="badge small ${status.badge}">${status.label}</span>
+              <span class="badge small">${escapeHtml(item.difficulty)}</span>
+            </div>
+          </div>
+          <div class="teach-stats">
+            ${due}
+            ${score}
+            ${item.assignedBy ? `<span>From ${escapeHtml(item.assignedBy)}</span>` : ""}
+          </div>
+          <div class="row-actions">
+            <a class="button ${item.status === "solved" ? "ghost" : "primary"} small" href="#/practice/${encodeURIComponent(item.bugId)}">${action}</a>
+          </div>
+        </article>`;
+    })
+    .join("");
+}
+
 /* Routing */
 
 function route() {
@@ -1321,18 +1840,47 @@ function route() {
     return;
   }
   if (authView) {
-    goTo("#/new");
+    goTo(isProfessor() ? "#/teach" : "#/new");
+    return;
+  }
+  if ((view === "teach" && !isProfessor()) || (view === "assignments" && isProfessor())) {
+    goTo(isProfessor() ? "#/teach" : "#/new");
     return;
   }
   $("#auth").hidden = true;
 
   const practice = view === "practice";
-  $("#view-new").hidden = practice;
-  $("#view-practice").hidden = !practice;
+  const action = location.hash.split("/")[3];
+  let shown = practice ? "view-practice" : view === "assignments" ? "view-assignments" : "view-new";
+  if (view === "teach") {
+    shown = !id ? "view-teach" : id === "new" || action === "edit" ? "view-teach-edit" : "view-teach-assign";
+  }
+  document.querySelectorAll("main > .view").forEach((section) => {
+    section.hidden = section.id !== shown;
+  });
+  for (const [link, current] of [["#nav-teach", view === "teach"], ["#nav-assignments", view === "assignments"]]) {
+    if (current) {
+      $(link).setAttribute("aria-current", "page");
+    } else {
+      $(link).removeAttribute("aria-current");
+    }
+  }
   setSidebar(false);
   setMenu(false);
 
-  if (practice) {
+  if (view === "teach") {
+    state.practiceId = null;
+    if (shown === "view-teach") {
+      renderTeachList();
+    } else if (shown === "view-teach-edit") {
+      renderTeachEditor(id === "new" ? null : decodeURIComponent(id));
+    } else {
+      renderTeachAssign(decodeURIComponent(id));
+    }
+  } else if (view === "assignments") {
+    state.practiceId = null;
+    renderAssignments();
+  } else if (practice) {
     renderPractice(id || state.lastPracticeId);
   } else {
     state.practiceId = null;
@@ -1347,6 +1895,29 @@ function route() {
 /* Events */
 
 $("#request-form").addEventListener("submit", handleAsk);
+$("#exercise-form").addEventListener("submit", saveExercise);
+$("#check-exercise").addEventListener("click", checkExercise);
+$("#delete-exercise").addEventListener("click", deleteExercise);
+$("#add-test").addEventListener("click", () => {
+  const tests = [...readTests(), { ...EMPTY_TEST }];
+  renderTestRows(tests);
+  $(`[name="tests.${tests.length - 1}.name"]`).focus();
+});
+$("#test-rows").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-test]");
+  if (button) {
+    const tests = readTests();
+    tests.splice(Number(button.dataset.removeTest), 1);
+    renderTestRows(tests);
+  }
+});
+$("#assign-form").addEventListener("submit", assignStudents);
+$("#results").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-unassign]");
+  if (button) {
+    unassignStudent(Number(button.dataset.unassign));
+  }
+});
 $("#login-form").addEventListener("submit", (event) => handleAuthSubmit(event, "/api/auth/login/"));
 $("#register-form").addEventListener("submit", (event) => handleAuthSubmit(event, "/api/auth/register/"));
 $("#logout").addEventListener("click", handleLogout);

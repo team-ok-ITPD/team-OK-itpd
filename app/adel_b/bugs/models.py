@@ -24,10 +24,27 @@ class Bug(models.Model):
     symptom = models.CharField(max_length=200, blank=True)
     explanation = models.TextField(blank=True)
     has_workspace = models.BooleanField(default=False)
+    # The professor who wrote it; empty for the built-in catalog every learner can open.
+    # PROTECT: deleting the professor must not turn their private exercises into catalog ones.
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="created_bugs",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["id"]
+
+    @classmethod
+    def visible_to(cls, user):
+        """The catalog, plus a professor's own exercises or a student's assigned ones."""
+        visible = models.Q(created_by__isnull=True)
+        if user.is_authenticated:
+            visible |= models.Q(created_by=user) | models.Q(assignments__student=user)
+        return cls.objects.filter(visible).distinct()
 
     def __str__(self) -> str:
         return self.title
@@ -51,6 +68,7 @@ class Bug(models.Model):
             "explanation": self.explanation,
             "workspace": self.has_workspace,
             "workspaceUrl": settings.DEBUG_GYM_WORKSPACE_URL if self.has_workspace else None,
+            "createdBy": self.created_by.username if self.created_by else None,
         }
 
 
@@ -138,3 +156,24 @@ class IdeToken(models.Model):
     @classmethod
     def find(cls, key: str):
         return cls.objects.select_related("user", "bug").filter(key_hash=cls.hash(key)).first()
+
+
+class Assignment(models.Model):
+    """A professor's exercise given to one student, with an optional due date."""
+
+    bug = models.ForeignKey(Bug, on_delete=models.CASCADE, related_name="assignments")
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assignments")
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="assigned"
+    )
+    due_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["due_date", "created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["bug", "student"], name="one_assignment_per_student_and_bug"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.bug} → {self.student}"
