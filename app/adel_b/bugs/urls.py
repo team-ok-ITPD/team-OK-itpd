@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import teaching, views
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -14,4 +14,14 @@ urlpatterns = [
     path("api/bugs/<slug:slug>/vscode/", views.bug_vscode, name="bug-vscode"),
     path("api/history/", views.history, name="history"),
     path("api/ide/submit/", views.ide_submit, name="ide-submit"),
+    path("api/teach/exercises/", teaching.exercises, name="teach-exercises"),
+    path("api/teach/exercises/<slug:slug>/", teaching.exercise, name="teach-exercise"),
+    path("api/teach/exercises/<slug:slug>/assignments/", teaching.assignments, name="teach-assignments"),
+    path(
+        "api/teach/exercises/<slug:slug>/assignments/<int:student_id>/",
+        teaching.unassign,
+        name="teach-unassign",
+    ),
+    path("api/teach/students/", teaching.students, name="teach-students"),
+    path("api/assignments/", teaching.my_assignments, name="my-assignments"),
 ]

@@ -10,6 +10,8 @@
     <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
       <symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.9 1.9M14.1 3.9 16 2M9 7.1v-1a3 3 0 0 1 6 0v1"/><path d="M12 20a6 6 0 0 1-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3a6 6 0 0 1-6 6Zm0 0v-9"/><path d="M6.5 13H3M21 13h-3.5M6 9 3.5 7.5M18 9l2.5-1.5M6.5 17 4 19M17.5 17l2.5 2"/></symbol>
       <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h14v16H6.5A2.5 2.5 0 0 0 4 21.5v0A2.5 2.5 0 0 0 6.5 24H20"/><path d="M8 7h8M8 11h6"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
@@ -114,6 +116,16 @@
         <a class="new-challenge" href="#/new">
           <svg class="icon"><use href="#i-plus"/></svg>
           New Challenge
+        </a>
+
+        <a class="nav-link" id="nav-teach" href="#/teach" hidden>
+          <svg class="icon"><use href="#i-book"/></svg>
+          Teaching
+        </a>
+        <a class="nav-link" id="nav-assignments" href="#/assignments" hidden>
+          <svg class="icon"><use href="#i-list"/></svg>
+          My assignments
+          <span class="nav-count" id="assignments-count" hidden></span>
         </a>
 
         <label class="search">
@@ -251,6 +263,7 @@
             <div class="practice-heading">
               <p class="eyebrow" id="practice-crumb">Practice</p>
               <h1 id="practice-title"></h1>
+              <p class="assigned-note" id="practice-assigned" hidden></p>
             </div>
             <div class="practice-status">
               <span class="badge" id="badge-difficulty"></span>
@@ -357,6 +370,196 @@
                 Your reasoning comes first. Always.
               </p>
             </aside>
+          </div>
+        </section>
+        <section class="view" id="view-assignments" aria-labelledby="assignments-title" hidden>
+          <div class="teach-layout">
+            <header class="page-header">
+              <div>
+                <p class="eyebrow">Practice</p>
+                <h1 id="assignments-title">My assignments</h1>
+              </div>
+              <a class="button ghost" href="#/new">
+                <svg class="icon"><use href="#i-search"/></svg>
+                Browse all exercises
+              </a>
+            </header>
+            <p class="intro">
+              <strong>Exercises your professors gave you.</strong> Open one, find the bug,
+              and submit when every test passes.
+            </p>
+            <div class="teach-list" id="assignment-list" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-teach" aria-labelledby="teach-title" hidden>
+          <div class="teach-layout">
+            <header class="page-header">
+              <div>
+                <p class="eyebrow">Teaching</p>
+                <h1 id="teach-title">My exercises</h1>
+              </div>
+              <a class="button primary" href="#/teach/new">
+                <svg class="icon"><use href="#i-plus"/></svg>
+                New exercise
+              </a>
+            </header>
+            <p class="intro">
+              <strong>Write a bug, assign it, follow progress.</strong> Each exercise is buggy
+              code with tests that fail until a student fixes it.
+            </p>
+            <div class="teach-list" id="teach-list" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-teach-edit" aria-labelledby="edit-title" hidden>
+          <div class="teach-layout">
+            <header class="page-header">
+              <div>
+                <p class="eyebrow"><a href="#/teach">Teaching</a> / <span id="edit-crumb">New exercise</span></p>
+                <h1 id="edit-title">New exercise</h1>
+              </div>
+              <a class="button ghost" id="edit-assign-link" href="#/teach" hidden>
+                <svg class="icon"><use href="#i-users"/></svg>
+                Assign &amp; results
+              </a>
+            </header>
+
+            <form class="exercise-form" id="exercise-form" novalidate>
+              <section class="form-card">
+                <h2>About the exercise</h2>
+                <label class="form-field wide">
+                  Title
+                  <input name="title" maxlength="200" required placeholder="The forgotten zero">
+                  <small class="field-error" data-error="title" hidden></small>
+                </label>
+                <label class="form-field wide">
+                  <span class="field-label">Summary <small>One line shown in the exercise list</small></span>
+                  <input name="summary" maxlength="200" placeholder="Counting zeros misses some of them.">
+                  <small class="field-error" data-error="summary" hidden></small>
+                </label>
+                <label class="form-field wide">
+                  Description
+                  <textarea name="description" rows="3" required placeholder="What should the function do, and what goes wrong?"></textarea>
+                  <small class="field-error" data-error="description" hidden></small>
+                </label>
+                <label class="form-field">
+                  Difficulty
+                  <select name="difficulty">
+                    <option>Easy</option>
+                    <option>Medium</option>
+                    <option>Hard</option>
+                  </select>
+                  <small class="field-error" data-error="difficulty" hidden></small>
+                </label>
+                <label class="form-field">
+                  Topic
+                  <select name="topic">
+                    <option value="arrays">Arrays &amp; loops</option>
+                    <option value="dicts">Dictionaries</option>
+                    <option value="strings">Strings</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <small class="field-error" data-error="topic" hidden></small>
+                </label>
+                <label class="form-field">
+                  Duration
+                  <input name="duration" maxlength="30" placeholder="10–15 min">
+                  <small class="field-error" data-error="duration" hidden></small>
+                </label>
+              </section>
+
+              <section class="form-card">
+                <h2>Buggy code</h2>
+                <label class="form-field">
+                  Function name
+                  <input name="functionName" maxlength="100" required placeholder="count_zeros" spellcheck="false">
+                  <small class="field-error" data-error="functionName" hidden></small>
+                </label>
+                <label class="form-field">
+                  <span class="field-label">File name <small>Optional</small></span>
+                  <input name="file" maxlength="100" placeholder="Same as the function" spellcheck="false">
+                  <small class="field-error" data-error="file" hidden></small>
+                </label>
+                <label class="form-field wide">
+                  Code
+                  <textarea class="code-area" name="buggyCode" rows="9" spellcheck="false" required placeholder="def count_zeros(numbers):&#10;    return numbers[1:].count(0)"></textarea>
+                  <small class="field-error" data-error="buggyCode" hidden></small>
+                </label>
+                <label class="form-field wide">
+                  <span class="field-label">Symptom <small>Optional, shown as the problem headline</small></span>
+                  <input name="symptom" maxlength="200" placeholder="Wrong result · no exception raised">
+                </label>
+                <label class="form-field wide">
+                  <span class="field-label">Explanation <small>Optional hint shown with the symptom</small></span>
+                  <textarea name="explanation" rows="2"></textarea>
+                </label>
+              </section>
+
+              <section class="form-card">
+                <div class="card-head">
+                  <h2>Tests</h2>
+                  <button class="button ghost small" type="button" id="add-test">
+                    <svg class="icon"><use href="#i-plus"/></svg>
+                    Add test
+                  </button>
+                </div>
+                <p class="field-hint wide">Write Python values, for example <code>[0, 1, 0]</code>, <code>'text'</code> or <code>{'a': 1}</code>. The function is called with the input as its only argument.</p>
+                <div class="test-rows wide" id="test-rows"></div>
+                <small class="field-error wide" data-error="tests" hidden></small>
+                <div class="check-result wide" id="check-result" aria-live="polite" hidden></div>
+              </section>
+
+              <p class="ask-result error" data-error="form" hidden></p>
+              <div class="form-actions">
+                <button class="button ghost danger" type="button" id="delete-exercise" hidden>Delete exercise</button>
+                <span class="spacer"></span>
+                <button class="button secondary" type="button" id="check-exercise">
+                  <svg class="icon"><use href="#i-play"/></svg>
+                  Check with Python
+                </button>
+                <button class="button primary" type="submit" id="save-exercise">Save exercise</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="view" id="view-teach-assign" aria-labelledby="assign-title" hidden>
+          <div class="teach-layout">
+            <header class="page-header">
+              <div>
+                <p class="eyebrow"><a href="#/teach">Teaching</a> / Assign &amp; results</p>
+                <h1 id="assign-title">Exercise</h1>
+              </div>
+              <div class="header-actions">
+                <a class="button ghost" id="assign-try-link" href="#/teach">
+                  <svg class="icon"><use href="#i-play"/></svg>
+                  Try it
+                </a>
+                <a class="button ghost" id="assign-edit-link" href="#/teach">Edit exercise</a>
+              </div>
+            </header>
+
+            <div class="assign-layout">
+              <form class="form-card assign-card" id="assign-form" novalidate>
+                <h2>Assign to students</h2>
+                <div class="student-list" id="student-list"></div>
+                <label class="form-field">
+                  <span class="field-label">Due date <small>Optional</small></span>
+                  <input name="dueDate" type="date">
+                </label>
+                <p class="ask-result" id="assign-message" aria-live="polite" hidden></p>
+                <button class="button primary" type="submit">
+                  <svg class="icon"><use href="#i-send"/></svg>
+                  Assign
+                </button>
+              </form>
+
+              <section class="form-card results-card">
+                <h2>Student progress</h2>
+                <div id="results" aria-live="polite"></div>
+              </section>
+            </div>
           </div>
         </section>
       </main>

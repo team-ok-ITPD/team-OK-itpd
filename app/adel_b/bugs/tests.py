@@ -60,57 +60,10 @@ class BugApiTests(TestCase):
         response = self.client.get("/api/bugs/missing/")
         self.assertEqual(response.status_code, 404)
 
-    def test_create_bug_needs_staff(self):
-        self.client.force_login(make_user())
-        response = self.client.post(
-            "/api/bugs/",
-            data=json.dumps({"slug": "x", "title": "X", "description": "X"}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_create_bug(self):
+    def test_creating_bugs_through_this_api_is_gone(self):
         self.client.force_login(make_user(is_staff=True))
-        response = self.client.post(
-            "/api/bugs/",
-            data=json.dumps({
-                "slug": "off-by-one",
-                "title": "One step too far",
-                "description": "A loop reads past the end of the list.",
-                "topic": "Indexes",
-            }),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()["bug"]["id"], "off-by-one")
-        self.assertTrue(Bug.objects.filter(slug="off-by-one").exists())
-
-    def test_create_rejects_missing_fields(self):
-        self.client.force_login(make_user(is_staff=True))
-        response = self.client.post(
-            "/api/bugs/", data=json.dumps({"slug": "x"}), content_type="application/json"
-        )
-        self.assertEqual(response.status_code, 400)
-
-    def test_create_rejects_duplicate_slug(self):
-        self.client.force_login(make_user(is_staff=True))
-        response = self.client.post(
-            "/api/bugs/",
-            data=json.dumps({
-                "slug": "remove-negatives",
-                "title": "Again",
-                "description": "Duplicate.",
-            }),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, 409)
-
-    def test_create_rejects_bad_json(self):
-        self.client.force_login(make_user(is_staff=True))
-        response = self.client.post(
-            "/api/bugs/", data="not json", content_type="application/json"
-        )
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post("/api/bugs/", data="{}", content_type="application/json")
+        self.assertEqual(response.status_code, 405)
 
 
 class PageAndMatchTests(TestCase):

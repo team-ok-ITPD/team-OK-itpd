@@ -4,6 +4,7 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js");
 
 const HARNESS = `
+import ast
 import contextlib
 import copy
 import io
@@ -42,6 +43,21 @@ def run_exercise(code, function_name, tests_json):
         except Exception as error:
             results.append({"error": _error_text(error), "passed": False})
     return json.dumps({"results": results, "stdout": stdout.getvalue()})
+
+
+def run_literal(code, function_name, tests_json):
+    """Like run_exercise, for tests whose input and expected are still Python text."""
+    tests = []
+    for number, test in enumerate(json.loads(tests_json), start=1):
+        try:
+            tests.append({"input": ast.literal_eval(test["input"]), "expected": ast.literal_eval(test["expected"])})
+        except (ValueError, SyntaxError, TypeError, MemoryError, RecursionError):
+            return json.dumps({"error": f"Test {number}: input or expected is not a Python value."})
+    try:
+        tests_json = json.dumps(tests)
+    except (TypeError, ValueError):
+        return json.dumps({"error": "Tests can use lists, dicts, strings, numbers, True/False and None."})
+    return run_exercise(code, function_name, tests_json)
 `;
 
 const ready = (async () => {
@@ -53,10 +69,10 @@ const ready = (async () => {
 ready.catch((error) => self.postMessage({ type: "load-failed", failure: String(error.message || error) }));
 
 self.onmessage = async (event) => {
-  const { id, code, functionName, tests } = event.data;
+  const { id, code, functionName, tests, literal } = event.data;
   try {
     const pyodide = await ready;
-    const run = pyodide.globals.get("run_exercise");
+    const run = pyodide.globals.get(literal ? "run_literal" : "run_exercise");
     const output = run(code, functionName, JSON.stringify(tests));
     run.destroy();
     self.postMessage({ id, ...JSON.parse(output) });
