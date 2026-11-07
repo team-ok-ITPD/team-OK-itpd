@@ -204,6 +204,9 @@ class AttemptAndHistoryTests(TestCase):
 
     def setUp(self):
         self.client.force_login(make_user())
+        patcher = mock.patch("bugs.verification.verify_submission")
+        self.verify = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_needs_login(self):
         self.client.logout()
@@ -217,6 +220,7 @@ class AttemptAndHistoryTests(TestCase):
         self.assertEqual(self.client.get(self.url).json(), {"attempts": []})
 
     def submit(self, passed, total=3, code="def remove_negatives(numbers):\n    return numbers\n"):
+        self.verify.return_value = (passed, 3)
         return self.client.post(
             self.url,
             data=json.dumps({"code": code, "passed": passed, "total": total}),
@@ -239,15 +243,34 @@ class AttemptAndHistoryTests(TestCase):
         attempts = self.client.get(self.url).json()["attempts"]
         self.assertEqual([attempt["passed"] for attempt in attempts], [3, 1])
 
-    def test_rejects_wrong_test_count(self):
-        self.assertEqual(self.submit(2, total=2).status_code, 400)
+    def test_ignores_client_test_count(self):
+        response = self.submit(2, total=999)
+        self.assertEqual((response.status_code, response.json()["attempt"]["total"]), (201, 3))
 
-    def test_rejects_passed_above_total(self):
-        self.assertEqual(self.submit(4).status_code, 400)
+    def test_ignores_forged_passing_count(self):
+        self.verify.return_value = (0, 3)
+        response = self.client.post(
+            self.url,
+            data=json.dumps({"code": "wrong", "passed": 3, "total": 3}),
+            content_type="application/json",
+        )
+        self.assertEqual((response.status_code, response.json()["attempt"]["passed"]), (201, 0))
 
-    def test_rejects_non_integer_counts(self):
-        self.assertEqual(self.submit("3").status_code, 400)
-        self.assertEqual(self.submit(True).status_code, 400)
+    def test_client_counts_are_optional(self):
+        self.verify.return_value = (1, 3)
+        response = self.client.post(
+            self.url, data=json.dumps({"code": "code"}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_busy_verifier_returns_retryable_service_unavailable(self):
+        from bugs.verification import VerificationBusy
+
+        self.verify.side_effect = VerificationBusy("busy")
+        response = self.client.post(
+            self.url, data=json.dumps({"code": "code"}), content_type="application/json"
+        )
+        self.assertEqual((response.status_code, response.headers["Retry-After"]), (503, "5"))
 
     def test_unknown_bug_returns_404(self):
         response = self.client.post(
@@ -267,6 +290,7 @@ class AttemptAndHistoryTests(TestCase):
             content_type="application/json",
         )
         self.submit(1)
+        self.verify.return_value = (3, 3)
         self.client.post(
             "/api/bugs/total-starts-late/attempts/",
             data=json.dumps({"code": "", "passed": 3, "total": 3}),
@@ -648,10 +672,16 @@ class IdeSubmitTests(TestCase):
         self.bug = Bug.objects.get(slug="remove-negatives")
         self.folder = write_workspace(self.user, self.bug)
         self.config = json.loads((self.folder / ".debug-gym" / "config.json").read_text())
+        patcher = mock.patch("bugs.verification.verify_submission")
+        self.verify = patcher.start()
+        self.verify.return_value = (3, 3)
+        self.addCleanup(patcher.stop)
 
     def submit(self, token=None, **payload):
         body = {"bug": "remove-negatives", "code": "def remove_negatives(n):\n    return n\n", "passed": 3, "total": 3}
         body.update(payload)
+        if type(body.get("passed")) is int and type(body.get("total")) is int:
+            self.verify.return_value = (min(body["passed"], 3), 3)
         headers = {} if token == "" else {"HTTP_AUTHORIZATION": f"Bearer {token or self.config['token']}"}
         return Client(enforce_csrf_checks=True).post(
             self.url, data=json.dumps(body), content_type="application/json", **headers
@@ -696,9 +726,12 @@ class IdeSubmitTests(TestCase):
                 self.submit(code="new source")
         self.assertFalse(Attempt.objects.filter(user=self.user, bug=self.bug).exists())
 
-    def test_rejected_submission_keeps_the_draft(self):
+    def test_verification_failure_keeps_the_draft(self):
         Draft.objects.create(user=self.user, bug=self.bug, code="mine\n")
-        self.submit(total=2, passed=2)
+        from bugs.verification import VerificationError
+
+        self.verify.side_effect = VerificationError("verification unavailable")
+        self.assertEqual(self.submit().status_code, 503)
         self.assertEqual(Draft.objects.get(user=self.user, bug=self.bug).code, "mine\n")
 
     def test_failed_submission(self):
@@ -723,13 +756,89 @@ class IdeSubmitTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Attempt.objects.exists())
 
-    def test_same_checks_as_the_website(self):
-        self.assertEqual(self.submit(total=2, passed=2).status_code, 400)
-        self.assertEqual(self.submit(passed="3").status_code, 400)
+    def test_client_counts_do_not_control_the_result(self):
+        self.verify.return_value = (1, 3)
+        response = self.submit(passed="3", total=999)
+        self.assertEqual((response.status_code, response.json()["attempt"]["passed"]), (201, 1))
+
+    def test_same_code_validation_as_the_website(self):
         self.assertEqual(self.submit(code=None).status_code, 400)
 
     def test_containers_can_reach_the_server(self):
         self.assertIn("host.docker.internal", settings.ALLOWED_HOSTS)
+
+
+class SubmissionVerificationTests(TestCase):
+    def setUp(self):
+        self.bug = Bug.objects.get(slug="remove-negatives")
+        self.container = mock.MagicMock()
+        self.container.wait.return_value = {"StatusCode": 0}
+        self.container.logs.return_value = b'{"passed": 2, "total": 3}\n'
+        self.client = mock.MagicMock()
+        self.client.containers.run.return_value = self.container
+
+    @mock.patch("bugs.verification.docker.from_env")
+    def test_runs_in_a_fresh_restricted_container(self, from_env):
+        from bugs.verification import verify_submission
+
+        from_env.return_value = self.client
+        self.assertEqual(verify_submission(self.bug, "def remove_negatives(values): return values"), (2, 3))
+        options = self.client.containers.run.call_args.kwargs
+        self.assertTrue(options["network_disabled"])
+        self.assertTrue(options["read_only"])
+        self.assertEqual(options["security_opt"], ["no-new-privileges:true"])
+        self.container.wait.assert_called_once_with(timeout=settings.DEBUG_GYM_VERIFICATION_TIMEOUT)
+        self.container.remove.assert_called_once_with(force=True)
+
+    @mock.patch("bugs.verification.docker.from_env")
+    def test_removes_a_timed_out_container(self, from_env):
+        from bugs.verification import VerificationError, verify_submission
+
+        from_env.return_value = self.client
+        self.container.wait.side_effect = docker.errors.DockerException("timeout")
+        with self.assertRaises(VerificationError):
+            verify_submission(self.bug, "while True: pass")
+        self.container.remove.assert_called_once_with(force=True)
+
+    def test_default_limits_are_bounded(self):
+        self.assertEqual(settings.DEBUG_GYM_VERIFICATION_CONCURRENCY, 2)
+        self.assertEqual(settings.DEBUG_GYM_VERIFICATION_QUEUE_SIZE, 8)
+        self.assertEqual(settings.DEBUG_GYM_VERIFICATION_QUEUE_TIMEOUT, 30)
+
+    def test_rejects_when_running_and_queue_capacity_are_full(self):
+        from bugs.verification import VerificationBusy, VerificationGate
+
+        gate = VerificationGate(concurrency=1, queue_size=1, wait_timeout=1)
+        self.assertTrue(gate.runners.acquire(blocking=False))
+        self.assertTrue(gate.capacity.acquire(blocking=False))
+        self.assertTrue(gate.capacity.acquire(blocking=False))
+        with self.assertRaises(VerificationBusy):
+            with gate.slot():
+                pass
+
+    def test_queue_timeout_releases_its_capacity(self):
+        from bugs.verification import VerificationBusy, VerificationGate
+
+        gate = VerificationGate(concurrency=1, queue_size=1, wait_timeout=0.01)
+        self.assertTrue(gate.runners.acquire(blocking=False))
+        self.assertTrue(gate.capacity.acquire(blocking=False))
+        with self.assertRaises(VerificationBusy):
+            with gate.slot():
+                pass
+        gate.runners.release()
+        gate.capacity.release()
+        with gate.slot():
+            pass
+
+    def test_runner_slot_is_released_after_an_error(self):
+        from bugs.verification import VerificationGate
+
+        gate = VerificationGate(concurrency=1, queue_size=0, wait_timeout=0)
+        with self.assertRaises(RuntimeError):
+            with gate.slot():
+                raise RuntimeError("verification failed")
+        with gate.slot():
+            pass
 
 
 class ProgressSnapshotTests(TestCase):

@@ -5,6 +5,8 @@
 - An online transcription service converted the two meeting recordings to text.
 - OpenCode compared the transcript with the previous meeting records and
   Assignment 6, then helped structure the report, notes and decision records.
+- OpenCode reviewed the merged teaching workflow and helped implement and test
+  isolated server-side submission verification.
 
 ## Review And Use
 

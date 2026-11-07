@@ -137,6 +137,16 @@ WORKSPACES_DIR = Path(os.getenv("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "workspac
 # each learner's VS Code container.
 DEBUG_GYM_IDE_IMAGE = os.getenv("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
 
+# Every submitted solution runs once in this image with no network and strict resources.
+DEBUG_GYM_VERIFICATION_IMAGE = os.getenv("DEBUG_GYM_VERIFICATION_IMAGE", DEBUG_GYM_IDE_IMAGE)
+DEBUG_GYM_VERIFICATION_TIMEOUT = int(os.getenv("DEBUG_GYM_VERIFICATION_TIMEOUT", "10"))
+DEBUG_GYM_VERIFICATION_MEMORY = os.getenv("DEBUG_GYM_VERIFICATION_MEMORY", "128m")
+DEBUG_GYM_VERIFICATION_NANO_CPUS = int(os.getenv("DEBUG_GYM_VERIFICATION_NANO_CPUS", "500000000"))
+DEBUG_GYM_VERIFICATION_PIDS = int(os.getenv("DEBUG_GYM_VERIFICATION_PIDS", "32"))
+DEBUG_GYM_VERIFICATION_CONCURRENCY = int(os.getenv("DEBUG_GYM_VERIFICATION_CONCURRENCY", "2"))
+DEBUG_GYM_VERIFICATION_QUEUE_SIZE = int(os.getenv("DEBUG_GYM_VERIFICATION_QUEUE_SIZE", "8"))
+DEBUG_GYM_VERIFICATION_QUEUE_TIMEOUT = int(os.getenv("DEBUG_GYM_VERIFICATION_QUEUE_TIMEOUT", "30"))
+
 # The address the VS Code containers use to reach this server (for the extension's Submit).
 DEBUG_GYM_IDE_SERVER_URL = os.getenv("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8001")
 

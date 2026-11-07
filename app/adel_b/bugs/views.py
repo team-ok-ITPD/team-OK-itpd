@@ -103,15 +103,24 @@ def bug_attempts(request, slug):
 
 def _save_attempt(user, bug, payload):
     try:
-        code, passed, total = payload.get("code"), payload.get("passed"), payload.get("total")
-        if not isinstance(code, str) or type(passed) is not int or type(total) is not int:
+        code = payload.get("code")
+        if not isinstance(code, str):
             raise ValueError
     except (AttributeError, ValueError):
-        return JsonResponse({"error": "Send the code and the passed and total test counts."}, status=400)
+        return JsonResponse({"error": "Send the code as text."}, status=400)
     if len(code) > MAX_DRAFT_LENGTH:
         return JsonResponse({"error": "The code is too long to save."}, status=400)
-    if total != len(bug.tests) or not 0 <= passed <= total:
-        return JsonResponse({"error": f"This bug has {len(bug.tests)} tests."}, status=400)
+
+    from .verification import VerificationBusy, VerificationError, verify_submission
+
+    try:
+        passed, total = verify_submission(bug, code)
+    except VerificationBusy as error:
+        response = JsonResponse({"error": str(error)}, status=503)
+        response["Retry-After"] = "5"
+        return response
+    except VerificationError as error:
+        return JsonResponse({"error": str(error)}, status=503)
 
     attempt = Attempt.objects.create(user=user, bug=bug, code=code, passed_count=passed, total_count=total)
     return JsonResponse({"attempt": attempt.to_dict()}, status=201)
