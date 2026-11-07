@@ -13,6 +13,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Teachers assign exercises to administrator-managed groups with an independent
+  deadline per group, replacing direct student assignments and estimated duration.
 - Submitted solutions are verified in a fresh, resource-limited container instead
   of trusting test counts reported by the browser or VS Code extension; concurrent
   verification and its waiting queue are bounded to protect the service.

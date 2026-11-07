@@ -16,7 +16,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import Profile
-from bugs.models import Assignment, Attempt, Bug, Draft
+from bugs.models import Assignment, Attempt, Bug, Draft, GroupMembership, TeachingGroup
 
 User = get_user_model()
 DOMAIN = "debuggym.demo"
@@ -40,7 +40,6 @@ EXERCISES = [
         "difficulty": "Easy",
         "category": "arrays",
         "topic": "Arrays & loops",
-        "duration": "10–15 min",
         "function_name": "count_zeros",
         "file_name": "count_zeros.py",
         "buggy_code": 'def count_zeros(numbers):\n    """Return how many zeros the list contains."""\n    return numbers[1:].count(0)\n',
@@ -61,7 +60,6 @@ EXERCISES = [
         "difficulty": "Easy",
         "category": "strings",
         "topic": "Strings",
-        "duration": "5–10 min",
         "function_name": "shout",
         "file_name": "shout.py",
         "buggy_code": 'def shout(word):\n    """Return the word in capitals, followed by \'!\'."""\n    return word[:-1].upper() + "!"\n',
@@ -104,6 +102,7 @@ class Command(BaseCommand):
         # Exercises are protected while their professor exists: remove the demo ones first.
         Bug.objects.filter(created_by__username__in=usernames).delete()
         Bug.objects.filter(slug__in=[exercise["slug"] for exercise in EXERCISES]).delete()
+        TeachingGroup.objects.filter(teacher__username__in=usernames).delete()
         User.objects.filter(username__in=usernames).delete()
 
         users, passwords = {}, {}
@@ -125,18 +124,21 @@ class Command(BaseCommand):
     def create_progress(self, users):
         prof = users["prof_lina"]
         today = timezone.localdate()
+        group = TeachingGroup.objects.create(name="Debug GYM 2026", teacher=prof)
+        GroupMembership.objects.bulk_create([
+            GroupMembership(group=group, student=users[student])
+            for student in ("student_ali", "student_maria", "student_omar")
+        ])
         bugs = {}
         for data in EXERCISES:
             fields = {key: value for key, value in data.items() if key not in ("fixed_code", "due_in_days")}
             bug = Bug.objects.create(created_by=prof, **fields)
             bugs[bug.slug] = (bug, data)
-            for student in ("student_ali", "student_maria", "student_omar"):
-                Assignment.objects.create(
-                    bug=bug,
-                    student=users[student],
-                    assigned_by=prof,
-                    due_date=today + datetime.timedelta(days=data["due_in_days"]),
-                )
+            Assignment.objects.create(
+                bug=bug,
+                group=group,
+                deadline=today + datetime.timedelta(days=data["due_in_days"]),
+            )
 
         def attempt(student, slug, passed, days_ago, code=None):
             bug, data = bugs[slug] if slug in bugs else (Bug.objects.get(slug=slug), None)
@@ -191,7 +193,7 @@ Keep this file private. It is listed in `.gitignore` and must not be committed.
 
 ## Demo Data
 
-Prof. Lina wrote 2 exercises and assigned both to all 3 students:
+Prof. Lina wrote 2 exercises and assigned both to the Debug GYM 2026 group of 3 students:
 
 | Exercise | Due | Ali | Maria | Omar |
 |---|---|---|---|---|
@@ -205,7 +207,7 @@ Prof. Lina wrote 2 exercises and assigned both to all 3 students:
 3. Open **Edit** and press **Check with Python** to show that the tests catch the bug.
 4. Log in as `student_omar`: **My assignments** shows two open exercises, one overdue.
 5. Open one, press **Run Tests**, fix the code, then **Submit**; back as `prof_lina`, the result appears.
-6. Log in as `demo_admin` at the Django admin to show how a student is made a professor.
+6. Log in as `demo_admin` at the Django admin to maintain group membership or change a role.
 """)
 
     @staticmethod

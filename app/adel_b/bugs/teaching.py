@@ -5,18 +5,14 @@ import json
 import keyword
 import re
 
-from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 
-from accounts.models import Profile
 from accounts.permissions import professor_required_json
 
-from .models import Assignment, Attempt, Bug, Draft
+from .models import Assignment, Attempt, Bug, Draft, TeachingGroup
 from .views import MAX_DRAFT_LENGTH, LiteralError, login_required_json, parse_test_value
-
-User = get_user_model()
 
 TOPICS = {"arrays": "Arrays & loops", "dicts": "Dictionaries", "strings": "Strings", "other": "Other"}
 DIFFICULTIES = ("Easy", "Medium", "Hard")
@@ -51,7 +47,6 @@ def clean_exercise(payload):
         "title": _text(payload, "title", 200, required=True, errors=errors),
         "summary": _text(payload, "summary", 200, errors=errors),
         "description": _text(payload, "description", 5000, required=True, errors=errors),
-        "duration": _text(payload, "duration", 30, errors=errors) or "10–15 min",
         "symptom": _text(payload, "symptom", 200, errors=errors),
         "explanation": _text(payload, "explanation", 5000, errors=errors),
     }
@@ -167,9 +162,18 @@ def exercises(request):
     if request.method == "GET":
         items = []
         for bug in Bug.objects.filter(created_by=request.user).order_by("-created_at"):
-            students = [assignment.student for assignment in bug.assignments.select_related("student")]
+            students = {
+                membership.student
+                for assignment in bug.assignments.prefetch_related("group__memberships__student")
+                for membership in assignment.group.memberships.all()
+            }
             solved = sum(1 for student in students if student_status(student, bug)["status"] == "solved")
-            items.append({**bug.to_dict(), "assigned": len(students), "solved": solved})
+            items.append({
+                **bug.to_dict(),
+                "assigned": bug.assignments.count(),
+                "assignedStudents": len(students),
+                "solved": solved,
+            })
         return JsonResponse({"exercises": items})
 
     payload = _read_json(request)
@@ -209,31 +213,39 @@ def exercise(request, slug):
     return JsonResponse({"exercise": _editor_dict(bug)})
 
 
-def _students():
-    """Learner accounts: students, leaving out staff and admin accounts."""
-    return User.objects.filter(profile__role=Profile.STUDENT, is_active=True, is_staff=False)
-
-
 @require_http_methods(["GET"])
 @professor_required_json
-def students(request):
-    accounts = _students().order_by("username")
+def groups(request):
+    owned = TeachingGroup.objects.filter(teacher=request.user).order_by("name")
     return JsonResponse({
-        "students": [{"id": user.id, "username": user.username, "email": user.email} for user in accounts]
+        "groups": [
+            {"id": group.id, "name": group.name, "memberCount": group.memberships.count()}
+            for group in owned
+        ]
     })
 
 
 def _assignment_rows(bug):
     rows = []
-    for assignment in bug.assignments.select_related("student"):
+    assignments = bug.assignments.select_related("group").prefetch_related("group__memberships__student")
+    for assignment in assignments:
+        members = []
+        for membership in assignment.group.memberships.all():
+            student = membership.student
+            members.append({
+                "studentId": student.id,
+                "username": student.username,
+                "email": student.email,
+                **student_status(student, bug),
+            })
         rows.append({
-            "studentId": assignment.student.id,
-            "username": assignment.student.username,
-            "email": assignment.student.email,
-            "dueDate": assignment.due_date.isoformat() if assignment.due_date else None,
-            **student_status(assignment.student, bug),
+            "assignmentId": assignment.id,
+            "groupId": assignment.group_id,
+            "groupName": assignment.group.name,
+            "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+            "members": sorted(members, key=lambda row: row["username"].lower()),
         })
-    return sorted(rows, key=lambda row: row["username"].lower())
+    return sorted(rows, key=lambda row: row["groupName"].lower())
 
 
 @require_http_methods(["GET", "POST"])
@@ -246,43 +258,42 @@ def assignments(request, slug):
         return JsonResponse({"assignments": _assignment_rows(bug)})
 
     payload = _read_json(request)
-    ids = payload.get("students") if payload else None
+    ids = payload.get("groups") if payload else None
     if not isinstance(ids, list) or not ids or not all(type(value) is int for value in ids):
-        return JsonResponse({"error": "Choose at least one student."}, status=400)
-    due = payload.get("dueDate")
-    due_date = None
-    if due not in (None, ""):
+        return JsonResponse({"error": "Choose at least one group."}, status=400)
+    value = payload.get("deadline")
+    deadline = None
+    if value not in (None, ""):
         try:
-            due_date = datetime.date.fromisoformat(due)
+            deadline = datetime.date.fromisoformat(value)
         except (TypeError, ValueError):
-            return JsonResponse({"error": "Use a due date like 2026-12-01."}, status=400)
-    chosen = list(_students().filter(id__in=ids))
+            return JsonResponse({"error": "Use a deadline like 2026-12-01."}, status=400)
+    chosen = list(TeachingGroup.objects.filter(teacher=request.user, id__in=ids))
     if len(chosen) != len(set(ids)):
-        return JsonResponse({"error": "Only students can be assigned an exercise."}, status=400)
-    for student in chosen:
-        Assignment.objects.update_or_create(
-            bug=bug, student=student, defaults={"assigned_by": request.user, "due_date": due_date}
-        )
+        return JsonResponse({"error": "Only your groups can be assigned an exercise."}, status=400)
+    for group in chosen:
+        Assignment.objects.update_or_create(bug=bug, group=group, defaults={"deadline": deadline})
     return JsonResponse({"assignments": _assignment_rows(bug)})
 
 
 @require_http_methods(["DELETE"])
 @professor_required_json
-def unassign(request, slug, student_id):
+def unassign(request, slug, assignment_id):
     bug = _own_bug(request, slug)
     if bug is None:
         return JsonResponse({"error": "Exercise not found."}, status=404)
-    Assignment.objects.filter(bug=bug, student_id=student_id).delete()
+    Assignment.objects.filter(id=assignment_id, bug=bug, group__teacher=request.user).delete()
     return JsonResponse({"assignments": _assignment_rows(bug)})
 
 
 @require_http_methods(["GET"])
 @login_required_json
 def my_assignments(request):
-    """The logged-in student's assignments, earliest due date first."""
+    """The logged-in student's group assignments, earliest deadline first."""
     today = datetime.date.today()
     items = []
-    for assignment in Assignment.objects.filter(student=request.user).select_related("bug", "assigned_by"):
+    assignments = Assignment.objects.filter(group__memberships__student=request.user).select_related("bug", "group__teacher")
+    for assignment in assignments:
         bug = assignment.bug
         progress = student_status(request.user, bug)
         items.append({
@@ -290,9 +301,12 @@ def my_assignments(request):
             "title": bug.title,
             "summary": bug.summary,
             "difficulty": bug.difficulty,
-            "assignedBy": assignment.assigned_by.username if assignment.assigned_by else None,
-            "dueDate": assignment.due_date.isoformat() if assignment.due_date else None,
-            "overdue": bool(assignment.due_date and assignment.due_date < today and progress["status"] != "solved"),
+            "assignmentId": assignment.id,
+            "groupId": assignment.group_id,
+            "groupName": assignment.group.name,
+            "assignedBy": assignment.group.teacher.username,
+            "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+            "overdue": bool(assignment.deadline and assignment.deadline < today and progress["status"] != "solved"),
             **progress,
         })
     return JsonResponse({"assignments": items})

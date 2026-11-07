@@ -349,7 +349,7 @@
               </a>
             </header>
             <p class="intro">
-              <strong>Exercises your professors gave you.</strong> Open one, find the bug,
+              <strong>Exercises assigned to your groups.</strong> Open one, find the bug,
               and submit when every test passes.
             </p>
             <div class="teach-list" id="assignment-list" aria-live="polite"></div>
@@ -369,7 +369,7 @@
               </a>
             </header>
             <p class="intro">
-              <strong>Write a bug, assign it, follow progress.</strong> Each exercise is buggy
+              <strong>Write a bug, assign it to a group, follow progress.</strong> Each exercise is buggy
               code with tests that fail until a student fixes it.
             </p>
             <div class="teach-list" id="teach-list" aria-live="polite"></div>
@@ -425,11 +425,6 @@
                     <option value="other">Other</option>
                   </select>
                   <small class="field-error" data-error="topic" hidden></small>
-                </label>
-                <label class="form-field">
-                  Duration
-                  <input name="duration" maxlength="30" placeholder="10–15 min">
-                  <small class="field-error" data-error="duration" hidden></small>
                 </label>
               </section>
 
@@ -506,11 +501,11 @@
 
             <div class="assign-layout">
               <form class="form-card assign-card" id="assign-form" novalidate>
-                <h2>Assign to students</h2>
+                <h2>Assign to groups</h2>
                 <div class="student-list" id="student-list"></div>
                 <label class="form-field">
-                  <span class="field-label">Due date <small>Optional</small></span>
-                  <input name="dueDate" type="date">
+                  <span class="field-label">Deadline <small>Optional</small></span>
+                  <input name="deadline" type="date">
                 </label>
                 <p class="ask-result" id="assign-message" aria-live="polite" hidden></p>
                 <button class="button primary" type="submit">

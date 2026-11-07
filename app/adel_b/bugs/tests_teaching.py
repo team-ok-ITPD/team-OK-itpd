@@ -8,7 +8,7 @@ from django.test import Client, TestCase
 
 from accounts.models import Profile
 
-from .models import Assignment, Attempt, Bug, Draft
+from .models import Assignment, Attempt, Bug, Draft, GroupMembership, IdeToken, TeachingGroup
 
 User = get_user_model()
 
@@ -52,6 +52,13 @@ class TeachingTestCase(TestCase):
         response = self.send("post", "/api/teach/exercises/", {**EXERCISE, **changes})
         self.assertEqual(response.status_code, 201, response.content)
         return response.json()["exercise"]
+
+    def group(self, name="Group A", teacher=None, students=()):
+        group = TeachingGroup.objects.create(name=name, teacher=teacher or self.prof)
+        GroupMembership.objects.bulk_create(
+            [GroupMembership(group=group, student=student) for student in students]
+        )
+        return group
 
 
 class ExerciseApiTests(TeachingTestCase):
@@ -101,7 +108,8 @@ class ExerciseApiTests(TeachingTestCase):
 
     def test_list_shows_only_own_exercises_with_counts(self):
         slug = self.create()["id"]
-        Assignment.objects.create(bug=Bug.objects.get(slug=slug), student=self.alice, assigned_by=self.prof)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=Bug.objects.get(slug=slug), group=group)
         Attempt.objects.create(user=self.alice, bug=Bug.objects.get(slug=slug), code="", passed_count=2, total_count=2)
         items = self.client.get("/api/teach/exercises/").json()["exercises"]
         self.assertEqual([(item["id"], item["assigned"], item["solved"]) for item in items], [(slug, 1, 1)])
@@ -140,54 +148,56 @@ class AssignmentApiTests(TeachingTestCase):
         super().setUp()
         self.slug = self.create()["id"]
         self.url = f"/api/teach/exercises/{self.slug}/assignments/"
+        self.group_a = self.group("Group A", students=[self.alice, self.bob])
+        self.group_b = self.group("Group B", students=[self.bob])
 
-    def test_students_list_has_only_students(self):
-        names = [student["username"] for student in self.client.get("/api/teach/students/").json()["students"]]
-        self.assertEqual(names, ["alice", "bob"])
+    def test_groups_list_has_only_the_teachers_groups(self):
+        self.group("Other", teacher=self.other_prof, students=[self.alice])
+        groups = self.client.get("/api/teach/groups/").json()["groups"]
+        self.assertEqual([(group["name"], group["memberCount"]) for group in groups], [("Group A", 2), ("Group B", 1)])
 
-    def test_assign_with_due_date_and_see_progress(self):
-        response = self.send("post", self.url, {"students": [self.alice.id, self.bob.id], "dueDate": "2026-12-01"})
+    def test_assign_group_with_deadline_and_see_member_progress(self):
+        response = self.send("post", self.url, {"groups": [self.group_a.id], "deadline": "2026-12-01"})
         self.assertEqual(response.status_code, 200)
         bug = Bug.objects.get(slug=self.slug)
         Attempt.objects.create(user=self.alice, bug=bug, code="", passed_count=1, total_count=2)
         Attempt.objects.create(user=self.alice, bug=bug, code="", passed_count=2, total_count=2)
         Draft.objects.create(user=self.bob, bug=bug, code="x")
-        rows = {row["username"]: row for row in self.client.get(self.url).json()["assignments"]}
+        assignment = self.client.get(self.url).json()["assignments"][0]
+        rows = {row["username"]: row for row in assignment["members"]}
         self.assertEqual((rows["alice"]["status"], rows["alice"]["bestPassed"], rows["alice"]["attempts"]), ("solved", 2, 2))
         self.assertEqual((rows["bob"]["status"], rows["bob"]["bestPassed"]), ("progress", None))
-        self.assertEqual(rows["alice"]["dueDate"], "2026-12-01")
+        self.assertEqual((assignment["groupName"], assignment["deadline"]), ("Group A", "2026-12-01"))
 
-    def test_admin_accounts_are_not_students(self):
-        admin = User.objects.create_superuser("boss", "boss@example.com", "debug-gym-pass")
-        names = [student["username"] for student in self.client.get("/api/teach/students/").json()["students"]]
-        self.assertNotIn("boss", names)
-        self.assertEqual(self.send("post", self.url, {"students": [admin.id]}).status_code, 400)
+    def test_other_teachers_group_cannot_be_assigned(self):
+        other = self.group("Other", teacher=self.other_prof, students=[self.alice])
+        self.assertEqual(self.send("post", self.url, {"groups": [other.id]}).status_code, 400)
 
-    def test_reassigning_updates_the_due_date(self):
-        self.send("post", self.url, {"students": [self.alice.id], "dueDate": "2026-12-01"})
-        self.send("post", self.url, {"students": [self.alice.id], "dueDate": None})
-        self.assertEqual(Assignment.objects.get().due_date, None)
+    def test_each_group_has_an_independent_deadline(self):
+        self.send("post", self.url, {"groups": [self.group_a.id], "deadline": "2026-12-01"})
+        self.send("post", self.url, {"groups": [self.group_b.id], "deadline": "2026-12-10"})
+        deadlines = {row.group.name: row.deadline.isoformat() for row in Assignment.objects.all()}
+        self.assertEqual(deadlines, {"Group A": "2026-12-01", "Group B": "2026-12-10"})
 
-    def test_only_students_can_be_assigned(self):
-        response = self.send("post", self.url, {"students": [self.other_prof.id]})
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(self.send("post", self.url, {"students": []}).status_code, 400)
-        self.assertEqual(self.send("post", self.url, {"students": [self.alice.id], "dueDate": "soon"}).status_code, 400)
+    def test_assignment_input_is_validated(self):
+        self.assertEqual(self.send("post", self.url, {"groups": []}).status_code, 400)
+        self.assertEqual(self.send("post", self.url, {"groups": [self.group_a.id], "deadline": "soon"}).status_code, 400)
         self.assertFalse(Assignment.objects.exists())
 
     def test_unassign(self):
-        self.send("post", self.url, {"students": [self.alice.id, self.bob.id]})
-        response = self.client.delete(f"{self.url}{self.alice.id}/")
-        self.assertEqual([row["username"] for row in response.json()["assignments"]], ["bob"])
+        response = self.send("post", self.url, {"groups": [self.group_a.id, self.group_b.id]})
+        assignment_id = response.json()["assignments"][0]["assignmentId"]
+        response = self.client.delete(f"{self.url}{assignment_id}/")
+        self.assertEqual(len(response.json()["assignments"]), 1)
 
     def test_other_professors_cannot_assign_or_see_results(self):
         self.as_user(self.other_prof)
-        self.assertEqual(self.send("post", self.url, {"students": [self.alice.id]}).status_code, 404)
+        self.assertEqual(self.send("post", self.url, {"groups": [self.group_a.id]}).status_code, 404)
         self.assertEqual(self.client.get(self.url).status_code, 404)
 
     def test_students_cannot_use_professor_endpoints(self):
         self.as_user(self.alice)
-        self.assertEqual(self.client.get("/api/teach/students/").status_code, 403)
+        self.assertEqual(self.client.get("/api/teach/groups/").status_code, 403)
         self.assertEqual(self.client.get(self.url).status_code, 403)
 
 
@@ -217,7 +227,8 @@ class StudentVisibilityTests(TeachingTestCase):
         self.assertNotIn(self.slug, [bug["id"] for bug in response.json().get("exercises", [])])
 
     def test_assigned_student_sees_and_submits(self):
-        Assignment.objects.create(bug=Bug.objects.get(slug=self.slug), student=self.alice, assigned_by=self.prof)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=Bug.objects.get(slug=self.slug), group=group)
         self.as_user(self.alice)
         self.assertIn(self.slug, self.bug_ids())
         with mock.patch("bugs.verification.verify_submission", return_value=(2, 2)):
@@ -232,6 +243,39 @@ class StudentVisibilityTests(TeachingTestCase):
         self.as_user(self.other_prof)
         self.assertNotIn(self.slug, self.bug_ids())
 
+    def test_membership_removal_revokes_access_without_deleting_work(self):
+        bug = Bug.objects.get(slug=self.slug)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=bug, group=group)
+        Attempt.objects.create(user=self.alice, bug=bug, code="work", passed_count=1, total_count=2)
+        GroupMembership.objects.get(group=group, student=self.alice).delete()
+        self.as_user(self.alice)
+        self.assertNotIn(self.slug, self.bug_ids())
+        self.assertTrue(Attempt.objects.filter(user=self.alice, bug=bug).exists())
+
+    def test_membership_removal_revokes_an_existing_ide_token(self):
+        bug = Bug.objects.get(slug=self.slug)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=bug, group=group)
+        key = IdeToken.issue(self.alice, bug)
+        GroupMembership.objects.get(group=group, student=self.alice).delete()
+        with mock.patch("bugs.verification.verify_submission") as verify:
+            response = self.send_with_token(key, {
+                "bug": bug.slug,
+                "code": "def count_zeros(numbers): return 0",
+            })
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(IdeToken.objects.filter(user=self.alice, bug=bug).exists())
+        verify.assert_not_called()
+
+    def send_with_token(self, key, payload):
+        return Client(enforce_csrf_checks=True).post(
+            "/api/ide/submit/",
+            data=json.dumps(payload),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {key}",
+        )
+
     def test_logged_out_sees_only_the_catalog(self):
         self.client.logout()
         self.assertEqual(len(self.bug_ids()), 5)
@@ -242,24 +286,84 @@ class MyAssignmentsTests(TeachingTestCase):
         slug = self.create()["id"]
         bug = Bug.objects.get(slug=slug)
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
-        Assignment.objects.create(bug=bug, student=self.alice, assigned_by=self.prof, due_date=yesterday)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=bug, group=group, deadline=yesterday)
         self.as_user(self.alice)
         item = self.client.get("/api/assignments/").json()["assignments"][0]
         self.assertEqual(
-            (item["bugId"], item["assignedBy"], item["status"], item["overdue"]),
-            (slug, "prof", "not-started", True),
+            (item["bugId"], item["groupName"], item["assignedBy"], item["status"], item["overdue"]),
+            (slug, "Group A", "prof", "not-started", True),
         )
         Attempt.objects.create(user=self.alice, bug=bug, code="", passed_count=2, total_count=2)
         item = self.client.get("/api/assignments/").json()["assignments"][0]
         self.assertEqual((item["status"], item["overdue"]), ("solved", False))
 
     def test_others_assignments_are_not_listed(self):
-        Assignment.objects.create(bug=Bug.objects.get(slug=self.create()["id"]), student=self.bob, assigned_by=self.prof)
+        group = self.group(students=[self.bob])
+        Assignment.objects.create(bug=Bug.objects.get(slug=self.create()["id"]), group=group)
         self.as_user(self.alice)
         self.assertEqual(self.client.get("/api/assignments/").json()["assignments"], [])
 
     def test_needs_login(self):
         self.assertEqual(Client().get("/api/assignments/").status_code, 401)
+
+    def test_same_exercise_keeps_each_group_deadline(self):
+        bug = Bug.objects.get(slug=self.create()["id"])
+        first = self.group("First", students=[self.alice])
+        second = self.group("Second", students=[self.alice])
+        Assignment.objects.create(bug=bug, group=first, deadline="2026-12-01")
+        Assignment.objects.create(bug=bug, group=second, deadline="2026-12-10")
+        self.as_user(self.alice)
+        rows = self.client.get("/api/assignments/").json()["assignments"]
+        self.assertEqual([(row["groupName"], row["deadline"]) for row in rows], [
+            ("First", "2026-12-01"),
+            ("Second", "2026-12-10"),
+        ])
+
+
+class GroupAdminTests(TeachingTestCase):
+    def test_admin_creates_a_group_and_maintains_membership(self):
+        admin = User.objects.create_superuser("boss", "boss@example.com", "debug-gym-pass")
+        self.client.force_login(admin)
+        response = self.client.post(
+            "/admin/bugs/teachinggroup/add/",
+            {
+                "name": "CS-101",
+                "teacher": self.prof.id,
+                "memberships-TOTAL_FORMS": "1",
+                "memberships-INITIAL_FORMS": "0",
+                "memberships-MIN_NUM_FORMS": "0",
+                "memberships-MAX_NUM_FORMS": "1000",
+                "memberships-0-student": self.alice.id,
+                "_save": "Save",
+            },
+        )
+        self.assertEqual(response.status_code, 302, response.context and response.context.get("adminform"))
+        group = TeachingGroup.objects.get(name="CS-101")
+        self.assertEqual((group.teacher, list(group.students.all())), (self.prof, [self.alice]))
+
+    def test_teacher_cannot_open_group_admin(self):
+        self.as_user(self.prof)
+        response = self.client.get("/admin/bugs/teachinggroup/add/")
+        self.assertEqual(response.status_code, 302)
+
+    def test_staff_professor_cannot_manage_membership(self):
+        self.prof.is_staff = True
+        self.prof.save(update_fields=["is_staff"])
+        self.as_user(self.prof)
+        self.assertNotEqual(self.client.get("/admin/bugs/teachinggroup/add/").status_code, 200)
+
+    def test_group_roles_and_assignment_ownership_are_validated(self):
+        from django.core.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            TeachingGroup(name="Invalid", teacher=self.alice).full_clean()
+        group = self.group(teacher=self.other_prof, students=[self.alice])
+        with self.assertRaises(ValidationError):
+            GroupMembership(group=group, student=self.prof).full_clean()
+        bug = Bug.objects.get(slug=self.create()["id"])
+        with self.assertRaises(ValidationError):
+            Assignment(bug=bug, group=group).full_clean()
 
 
 class DeletingProfessorsTests(TeachingTestCase):
@@ -285,9 +389,11 @@ class DeletingProfessorsTests(TeachingTestCase):
 
     def test_students_are_still_deleted_normally(self):
         slug = self.create()["id"]
-        Assignment.objects.create(bug=Bug.objects.get(slug=slug), student=self.alice, assigned_by=self.prof)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=Bug.objects.get(slug=slug), group=group)
         self.alice.delete()
-        self.assertFalse(Assignment.objects.exists())
+        self.assertTrue(Assignment.objects.exists())
+        self.assertFalse(GroupMembership.objects.exists())
 
 
 class SeedDemoTests(TestCase):
@@ -305,7 +411,8 @@ class SeedDemoTests(TestCase):
         self.assertEqual(User.objects.filter(username__in=["prof_lina", "student_ali", "student_maria", "student_omar", "demo_admin"]).count(), 5)
         self.assertEqual(User.objects.get(username="prof_lina").profile.role, Profile.PROFESSOR)
         self.assertEqual(Bug.objects.filter(created_by__username="prof_lina").count(), 2)
-        self.assertEqual(Assignment.objects.count(), 6)
+        self.assertEqual(Assignment.objects.count(), 2)
+        self.assertEqual(TeachingGroup.objects.get(name="Debug GYM 2026").memberships.count(), 3)
         self.assertIn("| Professor | `prof_lina` |", text)
         password = text.split("| `prof_lina` | `prof_lina@debuggym.demo` | `")[1].split("`")[0]
         self.assertTrue(User.objects.get(username="prof_lina").check_password(password))

@@ -39,3 +39,13 @@ test result and submit the current solution from VS Code.
 - **Stories:** [US-04](https://github.com/team-ok-ITPD/team-OK-itpd/issues/31), [US-05](https://github.com/team-ok-ITPD/team-OK-itpd/issues/32)
 - **Behavior:** [FR-004](functional-requirements/fr/FR-004.md), [FR-005](functional-requirements/fr/FR-005.md)
 - **Decisions:** [ADR-001](architecture/adr/ADR-001.md), [ADR-002](architecture/adr/ADR-002.md)
+
+## Assign Exercises To Groups
+
+An administrator maintains each named teaching group's student membership. A
+teacher can assign their own exercise to one of their groups, set an independent
+deadline for that group/exercise pair and inspect each member's progress.
+
+- **Story:** [US-09](https://github.com/team-ok-ITPD/team-OK-itpd/issues/111)
+- **Access model:** [Roles and access](roles-and-access.md#groups-and-assignments)
+- **Decisions:** [DEC-033](decisions.md#dec-033), [DEC-035](decisions.md#dec-035)

@@ -139,6 +139,9 @@ def ide_submit(request):
             {"error": "This VS Code folder is no longer connected. Open it again from the website."},
             status=401,
         )
+    if not Bug.visible_to(token.user).filter(pk=token.bug_id).exists():
+        token.delete()
+        return JsonResponse({"error": "You no longer have access to this exercise."}, status=403)
     try:
         payload = json.loads(request.body or b"{}")
     except json.JSONDecodeError:

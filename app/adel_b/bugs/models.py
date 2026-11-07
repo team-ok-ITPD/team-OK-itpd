@@ -2,7 +2,10 @@ import hashlib
 import secrets
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from accounts.models import Profile, role_of
 
 
 class Bug(models.Model):
@@ -12,7 +15,6 @@ class Bug(models.Model):
     title = models.CharField(max_length=200)
     language = models.CharField(max_length=50, default="Python 3")
     difficulty = models.CharField(max_length=20, default="Easy")
-    duration = models.CharField(max_length=30, blank=True)
     category = models.SlugField(default="arrays")
     topic = models.CharField(max_length=100, blank=True)
     summary = models.CharField(max_length=200, blank=True)
@@ -43,7 +45,7 @@ class Bug(models.Model):
         """The catalog, plus a professor's own exercises or a student's assigned ones."""
         visible = models.Q(created_by__isnull=True)
         if user.is_authenticated:
-            visible |= models.Q(created_by=user) | models.Q(assignments__student=user)
+            visible |= models.Q(created_by=user) | models.Q(assignments__group__memberships__student=user)
         return cls.objects.filter(visible).distinct()
 
     def __str__(self) -> str:
@@ -55,7 +57,6 @@ class Bug(models.Model):
             "title": self.title,
             "language": self.language,
             "difficulty": self.difficulty,
-            "duration": self.duration,
             "topic": self.category,
             "topicLabel": self.topic,
             "summary": self.summary,
@@ -158,22 +159,70 @@ class IdeToken(models.Model):
         return cls.objects.select_related("user", "bug").filter(key_hash=cls.hash(key)).first()
 
 
-class Assignment(models.Model):
-    """A professor's exercise given to one student, with an optional due date."""
+class TeachingGroup(models.Model):
+    """A named student group owned by exactly one teacher."""
 
-    bug = models.ForeignKey(Bug, on_delete=models.CASCADE, related_name="assignments")
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assignments")
-    assigned_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="assigned"
+    name = models.CharField(max_length=150)
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="teaching_groups"
     )
-    due_date = models.DateField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    students = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="GroupMembership", related_name="learning_groups"
+    )
 
     class Meta:
-        ordering = ["due_date", "created_at"]
+        ordering = ["name", "id"]
         constraints = [
-            models.UniqueConstraint(fields=["bug", "student"], name="one_assignment_per_student_and_bug"),
+            models.UniqueConstraint(fields=["teacher", "name"], name="unique_group_name_per_teacher"),
         ]
 
     def __str__(self) -> str:
-        return f"{self.bug} → {self.student}"
+        return self.name
+
+    def clean(self):
+        if self.teacher_id and role_of(self.teacher) != Profile.PROFESSOR:
+            raise ValidationError({"teacher": "Choose a professor account."})
+
+
+class GroupMembership(models.Model):
+    """Administrator-maintained membership of one student in a teaching group."""
+
+    group = models.ForeignKey(TeachingGroup, on_delete=models.CASCADE, related_name="memberships")
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="group_memberships"
+    )
+
+    class Meta:
+        ordering = ["student__username", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["group", "student"], name="one_membership_per_group_student"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.group}: {self.student}"
+
+    def clean(self):
+        if self.student_id and role_of(self.student) != Profile.STUDENT:
+            raise ValidationError({"student": "Choose a student account."})
+
+
+class Assignment(models.Model):
+    """One exercise assigned to one teaching group on its own schedule."""
+
+    bug = models.ForeignKey(Bug, on_delete=models.CASCADE, related_name="assignments")
+    group = models.ForeignKey(TeachingGroup, on_delete=models.CASCADE, related_name="assignments")
+    deadline = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["deadline", "created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["bug", "group"], name="one_assignment_per_group_and_bug"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.bug} → {self.group}"
+
+    def clean(self):
+        if self.bug_id and self.group_id and self.bug.created_by_id != self.group.teacher_id:
+            raise ValidationError("An exercise can only be assigned to its owner's group.")
