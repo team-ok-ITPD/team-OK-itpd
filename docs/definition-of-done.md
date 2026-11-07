@@ -23,7 +23,10 @@
 - The accountable reviewer ticks every task acceptance criterion before
   approving.
 - The approval comes from a member other than the author.
-- The repository link and Markdown checks are green.
+- The repository link, Markdown and `actionlint` checks are green.
+- Product CI is green for the applicable build and automated-test checks; its
+  linting, formatting and type-checking steps record why they are not
+  applicable to the current stack.
 - A user-visible change updates the `[Unreleased]` section of
   [`CHANGELOG.md`](../CHANGELOG.md).
 - The acceptance criteria claimed by the pull request pass on its branch and on

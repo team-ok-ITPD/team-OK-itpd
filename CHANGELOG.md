@@ -6,6 +6,32 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A sourced administrator, teacher and student capability model, access constraints,
+  proposed enforcement rules and unresolved policy questions.
+
+### Changed
+
+- Open exercise pages detect new VS Code submissions, rerun their displayed tests
+  and refresh results, reproduction and history without a page reload.
+
+- Exercise pages use VS Code for source editing and retain reproduction, actions,
+  tests and read-only output; manual actions read the latest saved solution.
+
+## 0.3.0 - 2026-10-31
+
+### Added
+
+- A signed-in Django learner flow with separate persistent drafts and attempts.
+- Browser-based VS Code launch, test-result display and solution submission.
+- Prepared-exercise title search and automated Django and extension checks.
+
+### Changed
+
+- Product documentation now describes the implemented features, four
+  environments, manual deployment and rollback procedure.
+
 ## [0.2.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.2.0) - 2026-10-25
 
 ### Added
