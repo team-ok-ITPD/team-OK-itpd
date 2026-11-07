@@ -413,3 +413,95 @@ Accept `US-05`, using VS Code debugging tools.
   [the Week 5 customer meeting](../reports/week-05/meeting-report.md#decisions)
 - **Why:** Browser-based VS Code provides the real debugging environment used
   by the accepted core workflow; later access controls extend this capability.
+
+## DEC-032
+
+Give students three practice routes: group assignments, the teacher-published
+university gallery and private AI-generated exercises.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** Students need both course work and independent practice, while the
+  public gallery remains curated by teachers under DEC-017.
+
+## DEC-033
+
+Assign exercises to groups rather than individual students, and manage group
+membership through the administrator workflow.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** A teacher assigns an existing exercise once to a teaching group;
+  maintaining the group's student list is a separate administrative concern.
+
+## DEC-034
+
+Show selected reproduction tests to learners and keep additional verification
+tests hidden from both the learner and submitted code.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** Learners need executable examples to reproduce a bug, but exposing
+  every verification case would let a solution target the cases instead of the
+  intended behavior.
+
+## DEC-035
+
+Remove estimated exercise duration and put a deadline on each group/exercise
+assignment.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** The same exercise may be assigned to different groups on different
+  schedules. The meeting did not settle late-submission behavior.
+
+## DEC-036
+
+Keep legal-excuse handling outside Debug GYM.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** Legal excuses remain part of the university's Moodle process and do
+  not need another status or exception workflow in this product.
+
+## DEC-037
+
+Run every submission in a fresh temporary container, destroy it after
+verification, and bound both concurrent execution and the waiting queue.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** Learner code is untrusted. Per-submission isolation limits retained
+  state, while concurrency and queue bounds protect finite server capacity.
+  The numeric limits require load evidence and remain open.
+
+## DEC-038
+
+Keep reproduction and test information on the learner page after removing its
+browser code editor and debug controls.
+
+- **Status:** Active
+- **Date:** 2026-11-06
+- **Made by:** Customer
+- **Source:**
+  [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
+- **Why:** VS Code is the editing and debugging environment, but learners still
+  need to see their current verification state when they return to the product.
