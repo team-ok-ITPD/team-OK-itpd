@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.db.models import ProtectedError
@@ -219,7 +220,8 @@ class StudentVisibilityTests(TeachingTestCase):
         Assignment.objects.create(bug=Bug.objects.get(slug=self.slug), student=self.alice, assigned_by=self.prof)
         self.as_user(self.alice)
         self.assertIn(self.slug, self.bug_ids())
-        response = self.send("post", f"/api/bugs/{self.slug}/attempts/", {"code": "x", "passed": 2, "total": 2})
+        with mock.patch("bugs.verification.verify_submission", return_value=(2, 2)):
+            response = self.send("post", f"/api/bugs/{self.slug}/attempts/", {"code": "x", "passed": 2, "total": 2})
         self.assertEqual(response.status_code, 201)
         self.as_user(self.bob)
         self.assertNotIn(self.slug, self.bug_ids())

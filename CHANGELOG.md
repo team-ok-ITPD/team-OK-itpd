@@ -13,6 +13,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Submitted solutions are verified in a fresh, resource-limited container instead
+  of trusting test counts reported by the browser or VS Code extension; concurrent
+  verification and its waiting queue are bounded to protect the service.
 - Open exercise pages detect new VS Code submissions, rerun their displayed tests
   and refresh results, reproduction and history without a page reload.
 
