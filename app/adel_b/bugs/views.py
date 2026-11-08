@@ -29,16 +29,26 @@ def login_required_json(view):
 
 
 @require_http_methods(["GET"])
+@login_required_json
 def bug_list(request):
-    return JsonResponse({"bugs": [bug.to_dict() for bug in Bug.visible_to(request.user)]})
+    audience_filter = request.GET.get("filter", "all")
+    try:
+        bugs = Bug.filtered_for(request.user, audience_filter)
+    except ValueError:
+        return JsonResponse({"error": "Choose one of my, public, group or all."}, status=400)
+    return JsonResponse({
+        "filter": audience_filter,
+        "bugs": [{**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id} for bug in bugs],
+    })
 
 
 @require_http_methods(["GET"])
+@login_required_json
 def bug_detail(request, slug):
     bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
-    return JsonResponse({"bug": bug.to_dict()})
+    return JsonResponse({"bug": {**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id}})
 
 
 @require_http_methods(["GET"])
@@ -162,7 +172,7 @@ def ide_submit(request):
 @transaction.atomic
 def bug_progress(request, slug):
     """One learner-scoped snapshot, consistent with atomic IDE submissions."""
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
     draft = Draft.objects.filter(user=request.user, bug=bug).first()
@@ -186,7 +196,8 @@ def history(request):
         drafts_by_bug[draft.bug_id] = draft
 
     items = []
-    for bug in Bug.objects.filter(id__in=attempts_by_bug.keys() | drafts_by_bug.keys()):
+    visible = Bug.visible_to(request.user).filter(id__in=attempts_by_bug.keys() | drafts_by_bug.keys())
+    for bug in visible:
         attempts = attempts_by_bug.get(bug.id, [])
         draft = drafts_by_bug.get(bug.id)
         if any(attempt.solved for attempt in attempts):
@@ -205,9 +216,10 @@ def history(request):
             "lastActivity": max(times).isoformat(),
         })
     items.sort(key=lambda item: item["lastActivity"], reverse=True)
+    visible_ids = Bug.visible_to(request.user).values("id")
     activity = [
         moment.isoformat()
-        for moment in request.user.attempts.values_list("created_at", flat=True)[:500]
+        for moment in request.user.attempts.filter(bug_id__in=visible_ids).values_list("created_at", flat=True)[:500]
     ]
     return JsonResponse({"items": items, "activity": activity})
 
@@ -372,6 +384,7 @@ def rank_bugs(query, user):
 
 
 @require_http_methods(["POST"])
+@login_required_json
 def exercise_match(request):
     try:
         payload = json.loads(request.body or b"{}")
@@ -389,8 +402,10 @@ def exercise_match(request):
         )
     # "exercise" is the best match; "exercises" lists every related one, best first.
     return JsonResponse({
-        "exercise": ranked[0].to_dict(),
-        "exercises": [bug.to_dict() for bug in ranked],
+        "exercise": {**ranked[0].to_dict(), "ownedByMe": ranked[0].created_by_id == request.user.id},
+        "exercises": [
+            {**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id} for bug in ranked
+        ],
         "matchedBy": matched_by,
     })
 

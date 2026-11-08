@@ -133,6 +133,6 @@ These are future verification scenarios, not passed tests or newly issued FR ide
 
 ## Current Implementation And Next Records
 
-The Django app has student/professor profiles, administrator-managed teaching groups and membership, and teacher-owned group/exercise assignments with independent deadlines. Drafts, attempts and IDE tokens remain linked to individual users. Public/private gallery audiences, university-email authorization and the complete administrator role are not implemented, so this increment is not proof that the full target matrix is enforced.
+The Django app has student/professor profiles, administrator-managed teaching groups and membership, teacher-owned group/exercise assignments with independent deadlines, and server-enforced private, signed-in public and assigned-group exercise audiences. Drafts, attempts and IDE tokens remain linked to individual users and lose access when the audience no longer permits them. University-email verification and the complete product administrator role are not implemented, so this increment is not proof that the full target matrix is enforced.
 
 Refine the remaining backlog stories and measurable FR criteria before implementing unresolved audience and lifecycle policy. Keep proposed policy separate until it is confirmed. Do not rewrite the accepted US-01 through US-05.

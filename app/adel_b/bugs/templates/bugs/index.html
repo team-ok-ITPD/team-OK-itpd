@@ -217,6 +217,16 @@
 
               <div class="filters">
                 <label class="select">
+                  <span>Access</span>
+                  <select id="filter-audience">
+                    <option value="all" selected>All accessible</option>
+                    <option value="my">My</option>
+                    <option value="public">Public</option>
+                    <option value="group">Group</option>
+                  </select>
+                  <svg class="icon"><use href="#i-chevron"/></svg>
+                </label>
+                <label class="select">
                   <span>Topic</span>
                   <select id="filter-topic">
                     <option value="all">All topics</option>
@@ -500,6 +510,20 @@
             </header>
 
             <div class="assign-layout">
+              <form class="form-card assign-card" id="audience-form">
+                <h2>Exercise access</h2>
+                <label class="form-field">
+                  Audience
+                  <select name="audience">
+                    <option value="private">Private</option>
+                    <option value="public">Public gallery</option>
+                    <option value="group">Assigned groups</option>
+                  </select>
+                </label>
+                <p class="field-hint">Group access uses the assignments below. Public exercises are available to every signed-in user.</p>
+                <p class="ask-result" id="audience-message" aria-live="polite" hidden></p>
+                <button class="button secondary" type="submit">Save access</button>
+              </form>
               <form class="form-card assign-card" id="assign-form" novalidate>
                 <h2>Assign to groups</h2>
                 <div class="student-list" id="student-list"></div>

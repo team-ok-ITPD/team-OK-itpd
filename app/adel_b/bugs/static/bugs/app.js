@@ -61,13 +61,15 @@ function fromApi(bug) {
   };
 }
 
-async function loadExercises() {
-  const response = await apiFetch("/api/bugs/");
+async function loadExercises(audienceFilter = state.audienceFilter) {
+  const response = await apiFetch(`/api/bugs/?filter=${encodeURIComponent(audienceFilter)}`);
   if (!response.ok) {
     throw new Error(`The catalog answered with HTTP ${response.status}.`);
   }
   const payload = await response.json();
   EXERCISES = payload.bugs.map(fromApi);
+  state.audienceFilter = payload.filter;
+  $("#filter-audience").value = payload.filter;
 }
 
 const STATUS_ICONS = {
@@ -97,6 +99,7 @@ const state = {
   busy: false,
   teach: { editing: null, assigning: null, groups: [], total: 0 },
   assignments: [],
+  audienceFilter: "all",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -442,6 +445,7 @@ function renderExerciseList() {
           <span class="exercise-meta">
             ${best}
             ${assignedBadge}
+            <span class="badge small">${escapeHtml(exercise.audience)}</span>
             ${status ? `<span class="badge ${status.badge} small">${status.label}</span>` : ""}
             <span class="badge">${escapeHtml(exercise.difficulty)}</span>
           </span>
@@ -1246,6 +1250,7 @@ function resetUserState() {
     practiceId: null,
     lastPracticeId: "remove-negatives",
     instructions: "",
+    audienceFilter: "all",
   });
 }
 
@@ -1257,12 +1262,13 @@ function goTo(hash) {
   }
 }
 
-function signedIn(user) {
+async function signedIn(user) {
   resetUserState();
   setUser(user);
   for (const form of document.querySelectorAll(".auth-form")) {
     form.reset();
   }
+  await loadExercises();
   goTo(state.afterLogin === "#/new" && user.role === "professor" ? "#/teach" : state.afterLogin);
   state.afterLogin = "#/new";
   loadHistory();
@@ -1270,6 +1276,7 @@ function signedIn(user) {
 
 function signedOut() {
   resetUserState();
+  EXERCISES = [];
   setUser(null);
   goTo("#/login");
 }
@@ -1320,7 +1327,7 @@ async function handleAuthSubmit(event, url) {
       }
       return;
     }
-    signedIn(payload.user);
+    await signedIn(payload.user);
   } catch {
     showAuthError(form, "form", "The server could not be reached. Try again in a moment.");
   } finally {
@@ -1656,6 +1663,7 @@ async function renderTeachAssign(slug) {
   $("#assign-edit-link").href = `#/teach/${encodeURIComponent(slug)}/edit`;
   $("#assign-try-link").href = `#/practice/${encodeURIComponent(slug)}`;
   $("#assign-message").hidden = true;
+  $("#audience-message").hidden = true;
   $("#assign-form").reset();
   $("#results").innerHTML = "";
   try {
@@ -1670,6 +1678,7 @@ async function renderTeachAssign(slug) {
     }
     state.teach.total = exercise.tests.length;
     state.teach.groups = groups;
+    $("#audience-form").elements.audience.value = exercise.audience;
     $("#assign-title").textContent = exercise.title;
     document.title = `Debug GYM | ${exercise.title}`;
     renderGroupChoices(groups, assignments);
@@ -1677,6 +1686,28 @@ async function renderTeachAssign(slug) {
   } catch (error) {
     toast(error.status === 404 ? "That exercise was not found." : failureText(error));
     goTo("#/teach");
+  }
+}
+
+async function saveAudience(event) {
+  event.preventDefault();
+  const form = event.target;
+  const message = $("#audience-message");
+  message.hidden = true;
+  try {
+    const { exercise } = await teachFetch(
+      `/api/teach/exercises/${encodeURIComponent(state.teach.assigning)}/audience/`,
+      { method: "PUT", body: JSON.stringify({ audience: form.elements.audience.value }) },
+    );
+    form.elements.audience.value = exercise.audience;
+    message.className = "ask-result success";
+    message.textContent = `Access changed to ${exercise.audience}.`;
+    message.hidden = false;
+    await loadExercises();
+  } catch (error) {
+    message.className = "ask-result error";
+    message.textContent = failureText(error);
+    message.hidden = false;
   }
 }
 
@@ -1712,12 +1743,13 @@ async function assignGroups(event) {
 async function unassignGroup(assignmentId) {
   const slug = state.teach.assigning;
   try {
-    const { assignments } = await teachFetch(
+    const { assignments, audience } = await teachFetch(
       `/api/teach/exercises/${encodeURIComponent(slug)}/assignments/${assignmentId}/`,
       { method: "DELETE" },
     );
     renderGroupChoices(state.teach.groups, assignments);
     renderResults(assignments, state.teach.total);
+    $("#audience-form").elements.audience.value = audience;
   } catch (error) {
     toast(failureText(error));
   }
@@ -1923,6 +1955,7 @@ $("#test-rows").addEventListener("click", (event) => {
   }
 });
 $("#assign-form").addEventListener("submit", assignGroups);
+$("#audience-form").addEventListener("submit", saveAudience);
 $("#results").addEventListener("click", (event) => {
   const button = event.target.closest("[data-unassign]");
   if (button) {
@@ -1942,6 +1975,16 @@ document.querySelectorAll('input[name="source"]').forEach((input) => {
 
 ["#filter-topic", "#filter-difficulty", "#filter-language"].forEach((selector) => {
   $(selector).addEventListener("change", renderNewChallenge);
+});
+$("#filter-audience").addEventListener("change", async (event) => {
+  try {
+    await loadExercises(event.target.value);
+    state.matches = null;
+    renderExerciseList();
+    renderPreview();
+  } catch (error) {
+    toast(failureText(error));
+  }
 });
 
 $("#exercise-list").addEventListener("click", (event) => {
@@ -2088,7 +2131,9 @@ async function start() {
   try {
     const response = await apiFetch("/api/auth/me/");
     setUser((await response.json()).user);
-    await loadExercises();
+    if (state.user) {
+      await loadExercises();
+    }
   } catch (error) {
     toast(error instanceof TypeError ? "The catalog could not be reached." : error.message);
   }

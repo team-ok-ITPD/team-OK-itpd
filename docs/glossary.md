@@ -44,6 +44,13 @@ stores that group's independent deadline for the exercise.
 
 **Defined by:** [`DEC-033`](decisions.md#dec-033), [`DEC-035`](decisions.md#dec-035).
 
+### Exercise audience
+
+The access level of an exercise: private to its author, public to signed-in
+users or available to current members of its assigned teaching groups.
+
+**Defined by:** [`DEC-019`](decisions.md#dec-019), [`DEC-020`](decisions.md#dec-020).
+
 ## Execution Environment
 
 ### Workspace

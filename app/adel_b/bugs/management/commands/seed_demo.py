@@ -132,7 +132,7 @@ class Command(BaseCommand):
         bugs = {}
         for data in EXERCISES:
             fields = {key: value for key, value in data.items() if key not in ("fixed_code", "due_in_days")}
-            bug = Bug.objects.create(created_by=prof, **fields)
+            bug = Bug.objects.create(created_by=prof, audience=Bug.GROUP, **fields)
             bugs[bug.slug] = (bug, data)
             Assignment.objects.create(
                 bug=bug,

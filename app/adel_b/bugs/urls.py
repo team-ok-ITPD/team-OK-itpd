@@ -17,6 +17,7 @@ urlpatterns = [
     path("api/ide/submit/", views.ide_submit, name="ide-submit"),
     path("api/teach/exercises/", teaching.exercises, name="teach-exercises"),
     path("api/teach/exercises/<slug:slug>/", teaching.exercise, name="teach-exercise"),
+    path("api/teach/exercises/<slug:slug>/audience/", teaching.audience, name="teach-audience"),
     path("api/teach/exercises/<slug:slug>/assignments/", teaching.assignments, name="teach-assignments"),
     path(
         "api/teach/exercises/<slug:slug>/assignments/<int:assignment_id>/",
