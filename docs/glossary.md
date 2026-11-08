@@ -81,3 +81,12 @@ Deliberately deleting a selected local project's exercise volume and recreating 
 | Service level indicator (SLI) | A measured aspect of service behavior, such as catalog request duration. |
 
 See the [observability plan](observability.md) for the signals and their queries.
+
+## Analytics
+
+| Term | Meaning in Debug GYM |
+| --- | --- |
+| Focus metric | The one number the product's value is read from: [solved exercises per active learner per week](analytics.md#solved-exercises-per-active-learner-per-week). |
+| Input metric | A metric one level under another in the metric tree that explains movement in it. |
+| Counter-metric | A metric that guards the focus metric rather than feeding it, such as [attempts per solved exercise](analytics.md#attempts-per-solved-exercise). |
+| Metric tree | The nested list of the focus metric, its counter-metric and its input metrics in the [analytics plan](analytics.md#the-metric-tree). |
