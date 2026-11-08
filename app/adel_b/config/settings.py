@@ -60,6 +60,10 @@ ROOT_URLCONF = 'config.urls'
 
 DEBUG_GYM_METRICS_TOKEN = os.getenv("DEBUG_GYM_METRICS_TOKEN", "")
 
+# Analytics collection is off unless the backend address is an https URL.
+DEBUG_GYM_ANALYTICS_URL = os.getenv("DEBUG_GYM_ANALYTICS_URL", "")
+DEBUG_GYM_ANALYTICS_KEY = os.getenv("DEBUG_GYM_ANALYTICS_KEY", "")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -73,6 +77,11 @@ LOGGING = {
         "debug_gym.requests": {
             "handlers": ["request_telemetry"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "debug_gym.analytics": {
+            "handlers": ["request_telemetry"],
+            "level": "WARNING",
             "propagate": False,
         },
     },

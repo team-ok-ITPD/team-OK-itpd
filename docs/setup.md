@@ -50,8 +50,11 @@ The current configuration is:
 | `DEBUG_GYM_CATALOG_PORT` | `3000` | Catalog port. Keep this at 3000: the current Compose mapping has a fixed internal target of 3000. |
 | `DEBUG_GYM_WORKSPACE_PORT` | `8080` | Host port for browser VS Code. |
 | `DEBUG_GYM_WORKSPACE_URL` | `http://localhost:8080` | Link the catalog presents to the learner. Update it if the workspace host port changes. |
+| `DEBUG_GYM_METRICS_TOKEN` | empty | Bearer token for the metrics endpoint described in [Observability](observability.md). Empty keeps the endpoint off (404). |
+| `DEBUG_GYM_ANALYTICS_URL` | empty | `https://` address of the analytics backend. Empty, or an address that is not `https://`, turns event collection off. |
+| `DEBUG_GYM_ANALYTICS_KEY` | empty | Key sent as a bearer token with each analytics event. |
 
-No API key is required for the prepared exercise. Keep `.env` local; it is
+The three telemetry variables stay empty on a local run. No API key is required for the prepared exercise. Keep `.env` local; it is
 ignored by Git. If port 3000 is occupied, stop the conflicting service before
 starting this version rather than changing its catalog port.
 

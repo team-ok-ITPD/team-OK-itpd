@@ -74,3 +74,16 @@ verifies it in a fresh container before recording the result.
 
 - **Behavior:** [FR-011](functional-requirements/fr/FR-011.md), [FR-012](functional-requirements/fr/FR-012.md)
 - **Decisions:** [ADR-004](architecture/adr/ADR-004.md), [DEC-037](decisions.md#dec-037)
+
+## Measure The Core Task
+
+The product records one event for each core-task step: searching for an
+exercise, opening it, opening its workspace and a server-verified submission.
+Each event carries a random learner identifier and no personal data, and
+nothing is collected unless an analytics backend is configured. A failed send
+never affects the learner's request. The product also exposes a request-duration
+metric on a token-protected endpoint.
+
+- **Behavior:** [FR-014](functional-requirements/fr/FR-014.md)
+- **Decisions:** [ADR-006](architecture/adr/ADR-006.md)
+- **Plan:** [Analytics](analytics.md), [Observability](observability.md)
