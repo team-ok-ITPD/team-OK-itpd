@@ -213,6 +213,23 @@ def exercise(request, slug):
     return JsonResponse({"exercise": _editor_dict(bug)})
 
 
+@require_http_methods(["PUT"])
+@professor_required_json
+def audience(request, slug):
+    bug = _own_bug(request, slug)
+    if bug is None:
+        return JsonResponse({"error": "Exercise not found."}, status=404)
+    payload = _read_json(request)
+    value = payload.get("audience") if payload else None
+    if value not in {Bug.PRIVATE, Bug.PUBLIC, Bug.GROUP}:
+        return JsonResponse({"error": "Choose private, public or group access."}, status=400)
+    if value == Bug.GROUP and not bug.assignments.exists():
+        return JsonResponse({"error": "Assign this exercise to a group first."}, status=400)
+    bug.audience = value
+    bug.save(update_fields=["audience"])
+    return JsonResponse({"exercise": _editor_dict(bug)})
+
+
 @require_http_methods(["GET"])
 @professor_required_json
 def groups(request):
@@ -283,7 +300,10 @@ def unassign(request, slug, assignment_id):
     if bug is None:
         return JsonResponse({"error": "Exercise not found."}, status=404)
     Assignment.objects.filter(id=assignment_id, bug=bug, group__teacher=request.user).delete()
-    return JsonResponse({"assignments": _assignment_rows(bug)})
+    if bug.audience == Bug.GROUP and not bug.assignments.exists():
+        bug.audience = Bug.PRIVATE
+        bug.save(update_fields=["audience"])
+    return JsonResponse({"assignments": _assignment_rows(bug), "audience": bug.audience})
 
 
 @require_http_methods(["GET"])
@@ -292,7 +312,9 @@ def my_assignments(request):
     """The logged-in student's group assignments, earliest deadline first."""
     today = datetime.date.today()
     items = []
-    assignments = Assignment.objects.filter(group__memberships__student=request.user).select_related("bug", "group__teacher")
+    assignments = Assignment.objects.filter(
+        group__memberships__student=request.user, bug__audience=Bug.GROUP
+    ).select_related("bug", "group__teacher")
     for assignment in assignments:
         bug = assignment.bug
         progress = student_status(request.user, bug)

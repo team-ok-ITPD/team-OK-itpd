@@ -9,6 +9,7 @@ from .models import Attempt, Bug, Draft, GroupMembership, TeachingGroup
 class BugAdmin(admin.ModelAdmin):
     list_display = ("slug", "title", "difficulty", "topic")
     prepopulated_fields = {"slug": ("title",)}
+    exclude = ("audience",)
 
 
 @admin.register(Draft)

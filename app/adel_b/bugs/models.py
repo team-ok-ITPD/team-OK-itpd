@@ -11,6 +11,11 @@ from accounts.models import Profile, role_of
 class Bug(models.Model):
     """A prepared debugging exercise a learner can practise on."""
 
+    PRIVATE = "private"
+    PUBLIC = "public"
+    GROUP = "group"
+    AUDIENCES = [(PRIVATE, "Private"), (PUBLIC, "Public"), (GROUP, "Group")]
+
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=200)
     language = models.CharField(max_length=50, default="Python 3")
@@ -26,6 +31,7 @@ class Bug(models.Model):
     symptom = models.CharField(max_length=200, blank=True)
     explanation = models.TextField(blank=True)
     has_workspace = models.BooleanField(default=False)
+    audience = models.CharField(max_length=10, choices=AUDIENCES, default=PRIVATE)
     # The professor who wrote it; empty for the built-in catalog every learner can open.
     # PROTECT: deleting the professor must not turn their private exercises into catalog ones.
     created_by = models.ForeignKey(
@@ -42,14 +48,41 @@ class Bug(models.Model):
 
     @classmethod
     def visible_to(cls, user):
-        """The catalog, plus a professor's own exercises or a student's assigned ones."""
-        visible = models.Q(created_by__isnull=True)
-        if user.is_authenticated:
-            visible |= models.Q(created_by=user) | models.Q(assignments__group__memberships__student=user)
+        """Exercises the signed-in user may open, independent of list filters."""
+        if not user.is_authenticated:
+            return cls.objects.none()
+        visible = (
+            models.Q(created_by=user)
+            | models.Q(audience=cls.PUBLIC)
+            | models.Q(audience=cls.GROUP, assignments__group__memberships__student=user)
+        )
         return cls.objects.filter(visible).distinct()
+
+    @classmethod
+    def filtered_for(cls, user, audience_filter):
+        visible = cls.visible_to(user)
+        if audience_filter == "my":
+            return visible.filter(created_by=user)
+        if audience_filter == "public":
+            return visible.filter(audience=cls.PUBLIC)
+        if audience_filter == "group":
+            return visible.filter(
+                audience=cls.GROUP, assignments__group__memberships__student=user
+            ).distinct()
+        if audience_filter == "all":
+            return visible
+        raise ValueError("Unknown audience filter.")
 
     def __str__(self) -> str:
         return self.title
+
+    def clean(self):
+        if (
+            self.created_by_id
+            and self.audience != self.PRIVATE
+            and role_of(self.created_by) != Profile.PROFESSOR
+        ):
+            raise ValidationError({"audience": "Only a teacher can share or publish an exercise."})
 
     def to_dict(self) -> dict:
         return {
@@ -68,6 +101,7 @@ class Bug(models.Model):
             "symptom": self.symptom,
             "explanation": self.explanation,
             "workspace": self.has_workspace,
+            "audience": self.audience,
             "workspaceUrl": settings.DEBUG_GYM_WORKSPACE_URL if self.has_workspace else None,
             "createdBy": self.created_by.username if self.created_by else None,
         }

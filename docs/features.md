@@ -7,11 +7,20 @@ learner meets them. Project-specific words use the definitions in the
 ## Find A Prepared Exercise
 
 A learner can search for a prepared [exercise](glossary.md#exercise) and open
-one that matches the kind of Python bug they want to practise.
+one that matches the kind of Python bug they want to practise. My, Public,
+Group and All views remain limited to exercises the signed-in learner may open.
 
 - **Stories:** [US-01](https://github.com/team-ok-ITPD/team-OK-itpd/issues/28), [US-08](https://github.com/team-ok-ITPD/team-OK-itpd/issues/110)
 - **Behavior:** [FR-001](functional-requirements/fr/FR-001.md)
 - **Decisions:** [ADR-001](architecture/adr/ADR-001.md)
+
+Teachers can keep their exercises private, publish them to signed-in users or
+share them with members of assigned teaching groups. A copied link does not
+grant access.
+
+- **Story:** [US-09](https://github.com/team-ok-ITPD/team-OK-itpd/issues/111)
+- **Access model:** [Roles and access](roles-and-access.md#exercise-audience)
+- **Decisions:** [DEC-017](decisions.md#dec-017), [DEC-019](decisions.md#dec-019), [DEC-020](decisions.md#dec-020)
 
 ## Open A Ready Workspace
 

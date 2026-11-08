@@ -60,6 +60,11 @@ class TeachingTestCase(TestCase):
         )
         return group
 
+    def assign(self, bug, group, **fields):
+        bug.audience = Bug.GROUP
+        bug.save(update_fields=["audience"])
+        return Assignment.objects.create(bug=bug, group=group, **fields)
+
 
 class ExerciseApiTests(TeachingTestCase):
     def test_professor_creates_an_exercise(self):
@@ -109,7 +114,7 @@ class ExerciseApiTests(TeachingTestCase):
     def test_list_shows_only_own_exercises_with_counts(self):
         slug = self.create()["id"]
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=Bug.objects.get(slug=slug), group=group)
+        self.assign(Bug.objects.get(slug=slug), group)
         Attempt.objects.create(user=self.alice, bug=Bug.objects.get(slug=slug), code="", passed_count=2, total_count=2)
         items = self.client.get("/api/teach/exercises/").json()["exercises"]
         self.assertEqual([(item["id"], item["assigned"], item["solved"]) for item in items], [(slug, 1, 1)])
@@ -201,6 +206,131 @@ class AssignmentApiTests(TeachingTestCase):
         self.assertEqual(self.client.get(self.url).status_code, 403)
 
 
+class AudienceApiTests(TeachingTestCase):
+    def setUp(self):
+        super().setUp()
+        self.slug = self.create(audience="public")["id"]
+        self.bug = Bug.objects.get(slug=self.slug)
+        self.url = f"/api/teach/exercises/{self.slug}/audience/"
+
+    def set_audience(self, value):
+        self.as_user(self.prof)
+        return self.send("put", self.url, {"audience": value})
+
+    def ids(self, user, audience_filter="all"):
+        self.as_user(user)
+        response = self.client.get(f"/api/bugs/?filter={audience_filter}")
+        self.assertEqual(response.status_code, 200)
+        return [bug["id"] for bug in response.json()["bugs"]]
+
+    def test_new_exercise_is_private_even_when_payload_requests_public(self):
+        self.assertEqual(self.bug.audience, Bug.PRIVATE)
+        self.assertIn(self.slug, self.ids(self.prof))
+        self.assertNotIn(self.slug, self.ids(self.alice))
+
+    def test_teacher_publishes_and_unpublishes_for_signed_in_users(self):
+        self.assertEqual(self.set_audience("public").status_code, 200)
+        self.assertIn(self.slug, self.ids(self.alice, "public"))
+        self.as_user(self.alice)
+        self.assertEqual(self.client.get(f"/api/bugs/{self.slug}/").status_code, 200)
+        self.assertEqual(self.set_audience("private").status_code, 200)
+        self.as_user(self.alice)
+        self.assertEqual(self.client.get(f"/api/bugs/{self.slug}/").status_code, 404)
+
+    def test_group_audience_requires_assignment_and_current_membership(self):
+        self.assertEqual(self.set_audience("group").status_code, 400)
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=self.bug, group=group)
+        self.assertEqual(self.set_audience("group").status_code, 200)
+        self.assertIn(self.slug, self.ids(self.alice, "group"))
+        self.assertNotIn(self.slug, self.ids(self.bob, "group"))
+
+    def test_only_owner_teacher_can_change_audience(self):
+        self.as_user(self.other_prof)
+        self.assertEqual(self.send("put", self.url, {"audience": "public"}).status_code, 404)
+        self.as_user(self.alice)
+        self.assertEqual(self.send("put", self.url, {"audience": "public"}).status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.send("put", self.url, {"audience": "public"}).status_code, 401)
+        self.bug.refresh_from_db()
+        self.assertEqual(self.bug.audience, Bug.PRIVATE)
+
+    def test_student_owned_exercise_cannot_be_published(self):
+        from django.core.exceptions import ValidationError
+
+        bug = Bug(
+            slug="student-private",
+            title="Student private",
+            description="Private",
+            created_by=self.alice,
+            audience=Bug.PUBLIC,
+        )
+        with self.assertRaises(ValidationError):
+            bug.full_clean()
+
+    def test_filters_never_broaden_access(self):
+        public = Bug.objects.create(
+            slug="public-owned", title="Public", description="Public", created_by=self.prof, audience=Bug.PUBLIC
+        )
+        group_bug = Bug.objects.create(
+            slug="group-owned", title="Group", description="Group", created_by=self.prof, audience=Bug.GROUP
+        )
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=group_bug, group=group)
+        self.assertEqual(set(self.ids(self.prof, "my")), {self.slug, public.slug, group_bug.slug})
+        self.assertIn(public.slug, self.ids(self.alice, "public"))
+        self.assertEqual(self.ids(self.alice, "group"), [group_bug.slug])
+        self.assertNotIn(self.slug, self.ids(self.alice, "all"))
+        self.as_user(self.alice)
+        self.assertEqual(self.client.get("/api/bugs/?filter=secret").status_code, 400)
+
+    def test_last_group_removal_falls_back_to_private(self):
+        group = self.group(students=[self.alice])
+        assignment = Assignment.objects.create(bug=self.bug, group=group)
+        self.set_audience("group")
+        response = self.client.delete(f"/api/teach/exercises/{self.slug}/assignments/{assignment.id}/")
+        self.assertEqual(response.json()["audience"], Bug.PRIVATE)
+        self.bug.refresh_from_db()
+        self.assertEqual(self.bug.audience, Bug.PRIVATE)
+
+    def test_private_transition_hides_progress_history_search_and_group_assignment(self):
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=self.bug, group=group)
+        self.set_audience("group")
+        Draft.objects.create(user=self.alice, bug=self.bug, code="work")
+        self.set_audience("private")
+        self.as_user(self.alice)
+        self.assertEqual(self.client.get(f"/api/bugs/{self.slug}/progress/").status_code, 404)
+        self.assertEqual(self.client.get("/api/history/").json()["items"], [])
+        response = self.send("post", "/api/exercises", {"query": "forgotten zero"})
+        self.assertNotIn(self.slug, [row["id"] for row in response.json().get("exercises", [])])
+        self.assertEqual(self.client.get("/api/assignments/").json()["assignments"], [])
+
+    def test_private_transition_revokes_existing_group_ide_token(self):
+        group = self.group(students=[self.alice])
+        Assignment.objects.create(bug=self.bug, group=group)
+        self.set_audience("group")
+        key = IdeToken.issue(self.alice, self.bug)
+        self.set_audience("private")
+        with mock.patch("bugs.verification.verify_submission") as verify:
+            response = Client(enforce_csrf_checks=True).post(
+                "/api/ide/submit/",
+                data=json.dumps({"bug": self.slug, "code": "def count_zeros(numbers): return 0"}),
+                content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {key}",
+            )
+        self.assertEqual(response.status_code, 403)
+        verify.assert_not_called()
+        self.assertFalse(IdeToken.objects.filter(pk__isnull=False).exists())
+
+    def test_anonymous_catalog_detail_and_search_require_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.get("/").status_code, 200)
+        self.assertEqual(self.client.get("/api/bugs/").status_code, 401)
+        self.assertEqual(self.client.get(f"/api/bugs/{self.slug}/").status_code, 401)
+        self.assertEqual(self.send("post", "/api/exercises", {"query": "forgotten"}).status_code, 401)
+
+
 class StudentVisibilityTests(TeachingTestCase):
     def setUp(self):
         super().setUp()
@@ -228,7 +358,7 @@ class StudentVisibilityTests(TeachingTestCase):
 
     def test_assigned_student_sees_and_submits(self):
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=Bug.objects.get(slug=self.slug), group=group)
+        self.assign(Bug.objects.get(slug=self.slug), group)
         self.as_user(self.alice)
         self.assertIn(self.slug, self.bug_ids())
         with mock.patch("bugs.verification.verify_submission", return_value=(2, 2)):
@@ -246,7 +376,7 @@ class StudentVisibilityTests(TeachingTestCase):
     def test_membership_removal_revokes_access_without_deleting_work(self):
         bug = Bug.objects.get(slug=self.slug)
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=bug, group=group)
+        self.assign(bug, group)
         Attempt.objects.create(user=self.alice, bug=bug, code="work", passed_count=1, total_count=2)
         GroupMembership.objects.get(group=group, student=self.alice).delete()
         self.as_user(self.alice)
@@ -256,7 +386,7 @@ class StudentVisibilityTests(TeachingTestCase):
     def test_membership_removal_revokes_an_existing_ide_token(self):
         bug = Bug.objects.get(slug=self.slug)
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=bug, group=group)
+        self.assign(bug, group)
         key = IdeToken.issue(self.alice, bug)
         GroupMembership.objects.get(group=group, student=self.alice).delete()
         with mock.patch("bugs.verification.verify_submission") as verify:
@@ -276,9 +406,9 @@ class StudentVisibilityTests(TeachingTestCase):
             HTTP_AUTHORIZATION=f"Bearer {key}",
         )
 
-    def test_logged_out_sees_only_the_catalog(self):
+    def test_logged_out_cannot_read_the_catalog(self):
         self.client.logout()
-        self.assertEqual(len(self.bug_ids()), 5)
+        self.assertEqual(self.client.get("/api/bugs/").status_code, 401)
 
 
 class MyAssignmentsTests(TeachingTestCase):
@@ -287,7 +417,7 @@ class MyAssignmentsTests(TeachingTestCase):
         bug = Bug.objects.get(slug=slug)
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=bug, group=group, deadline=yesterday)
+        self.assign(bug, group, deadline=yesterday)
         self.as_user(self.alice)
         item = self.client.get("/api/assignments/").json()["assignments"][0]
         self.assertEqual(
@@ -300,7 +430,7 @@ class MyAssignmentsTests(TeachingTestCase):
 
     def test_others_assignments_are_not_listed(self):
         group = self.group(students=[self.bob])
-        Assignment.objects.create(bug=Bug.objects.get(slug=self.create()["id"]), group=group)
+        self.assign(Bug.objects.get(slug=self.create()["id"]), group)
         self.as_user(self.alice)
         self.assertEqual(self.client.get("/api/assignments/").json()["assignments"], [])
 
@@ -311,8 +441,8 @@ class MyAssignmentsTests(TeachingTestCase):
         bug = Bug.objects.get(slug=self.create()["id"])
         first = self.group("First", students=[self.alice])
         second = self.group("Second", students=[self.alice])
-        Assignment.objects.create(bug=bug, group=first, deadline="2026-12-01")
-        Assignment.objects.create(bug=bug, group=second, deadline="2026-12-10")
+        self.assign(bug, first, deadline="2026-12-01")
+        self.assign(bug, second, deadline="2026-12-10")
         self.as_user(self.alice)
         rows = self.client.get("/api/assignments/").json()["assignments"]
         self.assertEqual([(row["groupName"], row["deadline"]) for row in rows], [
@@ -390,7 +520,7 @@ class DeletingProfessorsTests(TeachingTestCase):
     def test_students_are_still_deleted_normally(self):
         slug = self.create()["id"]
         group = self.group(students=[self.alice])
-        Assignment.objects.create(bug=Bug.objects.get(slug=slug), group=group)
+        self.assign(Bug.objects.get(slug=slug), group)
         self.alice.delete()
         self.assertTrue(Assignment.objects.exists())
         self.assertFalse(GroupMembership.objects.exists())
