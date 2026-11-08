@@ -11,7 +11,6 @@
   groups, update the teaching interface and verify access and deadline behavior.
 - OpenCode helped implement and test private, signed-in public and group exercise
   audiences, catalog filters and consistent server-side access checks.
-- Codex helped implement and verify prepared exercise title search (DEC-023).
 
 ## Review And Use
 
