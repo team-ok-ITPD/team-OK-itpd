@@ -35,6 +35,8 @@ roles determine who may publish an exercise and which prepared exercises each
 learner may open. Group assignment, deadlines and result export build on this
 access model in later increments.
 
+The increment also makes the product's use and operation visible: the analytics and observability pipelines run in staging and production, with four dashboards the team and the Customer can read.
+
 ## Sprints
 
 ### SPRINT-03
@@ -86,9 +88,11 @@ production deployment evidence.
 
 ### SPRINT-06
 
-Provisional: learners can request bounded assistance without the product applying the fix for them.
+The product tells its team how it is used and how it operates, through an analytics pipeline, an observability pipeline and four dashboards, while teachers and students get the first role-based sharing increment.
 
-- **Due:** 2026-11-07
+- **Due:** 2026-11-08
+- **Sprint Backlog:** [the issues scheduled into SPRINT-06](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/3)
+- **Planned Velocity:** 10
 
 #### REL-06
 

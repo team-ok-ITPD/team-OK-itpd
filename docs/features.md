@@ -58,3 +58,19 @@ deadline for that group/exercise pair and inspect each member's progress.
 - **Story:** [US-09](https://github.com/team-ok-ITPD/team-OK-itpd/issues/111)
 - **Access model:** [Roles and access](roles-and-access.md#groups-and-assignments)
 - **Decisions:** [DEC-033](decisions.md#dec-033), [DEC-035](decisions.md#dec-035)
+
+## Sign In And Teach
+
+Learners and professors sign in with a role. Professors set an exercise's
+audience and assign it to their groups with a deadline per group.
+
+- **Behavior:** [FR-008](functional-requirements/fr/FR-008.md), [FR-009](functional-requirements/fr/FR-009.md), [FR-010](functional-requirements/fr/FR-010.md)
+- **Decisions:** [DEC-017](decisions.md#dec-017), [DEC-020](decisions.md#dec-020), [DEC-033](decisions.md#dec-033), [DEC-035](decisions.md#dec-035)
+
+## Trusted Submission From VS Code
+
+A connected VS Code folder submits the learner's solution, and the server
+verifies it in a fresh container before recording the result.
+
+- **Behavior:** [FR-011](functional-requirements/fr/FR-011.md), [FR-012](functional-requirements/fr/FR-012.md)
+- **Decisions:** [ADR-004](architecture/adr/ADR-004.md), [DEC-037](decisions.md#dec-037)
