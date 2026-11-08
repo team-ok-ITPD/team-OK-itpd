@@ -24,6 +24,9 @@ def make_user(username="learner", **extra):
 
 
 class BugApiTests(TestCase):
+    def setUp(self):
+        self.client.force_login(make_user())
+
     def test_health(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
@@ -61,12 +64,17 @@ class BugApiTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_creating_bugs_through_this_api_is_gone(self):
-        self.client.force_login(make_user(is_staff=True))
+        user = get_user_model().objects.get(username="learner")
+        user.is_staff = True
+        user.save(update_fields=["is_staff"])
         response = self.client.post("/api/bugs/", data="{}", content_type="application/json")
         self.assertEqual(response.status_code, 405)
 
 
 class PageAndMatchTests(TestCase):
+    def setUp(self):
+        self.client.force_login(make_user())
+
     def test_index_page_loads_the_two_screens(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)

@@ -28,6 +28,29 @@ A response requested by the learner in VS Code that leaves source files unchange
 
 **Defined by:** [`FR-006`](functional-requirements/fr/FR-006.md).
 
+## Teaching
+
+### Teaching group
+
+A named set of students with exactly one teacher. An administrator maintains
+membership independently from account roles and exercise assignments.
+
+**Defined by:** [`DEC-033`](decisions.md#dec-033).
+
+### Group assignment
+
+The relationship that makes one exercise available to one teaching group and
+stores that group's independent deadline for the exercise.
+
+**Defined by:** [`DEC-033`](decisions.md#dec-033), [`DEC-035`](decisions.md#dec-035).
+
+### Exercise audience
+
+The access level of an exercise: private to its author, public to signed-in
+users or available to current members of its assigned teaching groups.
+
+**Defined by:** [`DEC-019`](decisions.md#dec-019), [`DEC-020`](decisions.md#dec-020).
+
 ## Execution Environment
 
 ### Workspace

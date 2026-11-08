@@ -7,6 +7,10 @@
   Assignment 6, then helped structure the report, notes and decision records.
 - OpenCode reviewed the merged teaching workflow and helped implement and test
   isolated server-side submission verification.
+- OpenCode helped migrate individual exercise assignments to administrator-managed
+  groups, update the teaching interface and verify access and deadline behavior.
+- OpenCode helped implement and test private, signed-in public and group exercise
+  audiences, catalog filters and consistent server-side access checks.
 
 ## Review And Use
 

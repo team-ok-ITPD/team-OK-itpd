@@ -61,13 +61,15 @@ function fromApi(bug) {
   };
 }
 
-async function loadExercises() {
-  const response = await apiFetch("/api/bugs/");
+async function loadExercises(audienceFilter = state.audienceFilter) {
+  const response = await apiFetch(`/api/bugs/?filter=${encodeURIComponent(audienceFilter)}`);
   if (!response.ok) {
     throw new Error(`The catalog answered with HTTP ${response.status}.`);
   }
   const payload = await response.json();
   EXERCISES = payload.bugs.map(fromApi);
+  state.audienceFilter = payload.filter;
+  $("#filter-audience").value = payload.filter;
 }
 
 const STATUS_ICONS = {
@@ -95,8 +97,9 @@ const state = {
   tests: {},
   editingTest: null,
   busy: false,
-  teach: { editing: null, assigning: null, students: [], total: 0 },
+  teach: { editing: null, assigning: null, groups: [], total: 0 },
   assignments: [],
+  audienceFilter: "all",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -430,7 +433,7 @@ function renderExerciseList() {
       const best = state.matches && index === 0 ? '<span class="badge accent small">Best match</span>' : "";
       const assignment = assignmentFor(exercise.id);
       const assignedBadge = assignment
-        ? `<span class="badge accent small">${assignment.dueDate ? `Assigned · due ${escapeHtml(shortDate(assignment.dueDate))}` : "Assigned"}</span>`
+        ? `<span class="badge accent small">${assignment.deadline ? `Assigned · due ${escapeHtml(shortDate(assignment.deadline))}` : "Assigned"}</span>`
         : "";
       return `
         <label class="exercise-card">
@@ -442,9 +445,9 @@ function renderExerciseList() {
           <span class="exercise-meta">
             ${best}
             ${assignedBadge}
+            <span class="badge small">${escapeHtml(exercise.audience)}</span>
             ${status ? `<span class="badge ${status.badge} small">${status.label}</span>` : ""}
             <span class="badge">${escapeHtml(exercise.difficulty)}</span>
-            <span class="badge">${escapeHtml(exercise.duration)}</span>
           </span>
         </label>`;
     })
@@ -473,7 +476,6 @@ function renderPreview() {
     <div class="preview-meta">
       <span class="badge">${escapeHtml(exercise.difficulty)}</span>
       <span class="badge">${escapeHtml(exercise.language)}</span>
-      <span class="badge">${icon("i-clock")} ${escapeHtml(exercise.duration)}</span>
     </div>
     <p class="preview-description">${escapeHtml(exercise.description)}</p>
     <div>
@@ -1248,6 +1250,7 @@ function resetUserState() {
     practiceId: null,
     lastPracticeId: "remove-negatives",
     instructions: "",
+    audienceFilter: "all",
   });
 }
 
@@ -1259,12 +1262,13 @@ function goTo(hash) {
   }
 }
 
-function signedIn(user) {
+async function signedIn(user) {
   resetUserState();
   setUser(user);
   for (const form of document.querySelectorAll(".auth-form")) {
     form.reset();
   }
+  await loadExercises();
   goTo(state.afterLogin === "#/new" && user.role === "professor" ? "#/teach" : state.afterLogin);
   state.afterLogin = "#/new";
   loadHistory();
@@ -1272,6 +1276,7 @@ function signedIn(user) {
 
 function signedOut() {
   resetUserState();
+  EXERCISES = [];
   setUser(null);
   goTo("#/login");
 }
@@ -1322,7 +1327,7 @@ async function handleAuthSubmit(event, url) {
       }
       return;
     }
-    signedIn(payload.user);
+    await signedIn(payload.user);
   } catch {
     showAuthError(form, "form", "The server could not be reached. Try again in a moment.");
   } finally {
@@ -1401,7 +1406,7 @@ async function renderTeachList() {
               </div>
             </div>
             <div class="teach-stats">
-              <span><strong>${exercise.assigned}</strong> assigned</span>
+              <span><strong>${exercise.assigned}</strong> ${exercise.assigned === 1 ? "group" : "groups"} · ${exercise.assignedStudents} students</span>
               <span><strong>${exercise.solved}</strong> solved</span>
             </div>
             <div class="row-actions">
@@ -1459,7 +1464,7 @@ function fillExerciseForm(exercise) {
   clearAuthErrors(form);
   $("#check-result").hidden = true;
   const values = exercise || {};
-  for (const name of ["title", "summary", "description", "duration", "functionName", "file", "buggyCode", "symptom", "explanation"]) {
+  for (const name of ["title", "summary", "description", "functionName", "file", "buggyCode", "symptom", "explanation"]) {
     form.elements[name].value = values[name] || "";
   }
   form.elements.difficulty.value = values.difficulty || "Easy";
@@ -1476,7 +1481,6 @@ function readExerciseForm() {
     description: value("description"),
     difficulty: value("difficulty"),
     topic: value("topic"),
-    duration: value("duration"),
     functionName: value("functionName").trim(),
     file: value("file").trim(),
     buggyCode: value("buggyCode"),
@@ -1605,18 +1609,23 @@ function dueText(date) {
 function renderResults(rows, total) {
   const results = $("#results");
   if (rows.length === 0) {
-    results.innerHTML = '<div class="empty"><strong>Not assigned yet.</strong><span>Pick students on the left and press Assign.</span></div>';
+    results.innerHTML = '<div class="empty"><strong>Not assigned yet.</strong><span>Pick groups on the left and press Assign.</span></div>';
     return;
   }
   const today = new Date().toISOString().slice(0, 10);
-  results.innerHTML = `
-    <table class="results-table">
-      <thead><tr><th>Student</th><th>Status</th><th>Best</th><th>Submissions</th><th>Due</th><th></th></tr></thead>
-      <tbody>
-        ${rows
-          .map((row) => {
+  results.innerHTML = rows
+    .map((assignment) => `
+      <section class="assignment-results">
+        <div class="card-head">
+          <h3>${escapeHtml(assignment.groupName)}</h3>
+          <span>${assignment.deadline ? `Deadline ${escapeHtml(dueText(assignment.deadline))}` : "No deadline"}</span>
+          <button class="button ghost small" type="button" data-unassign="${assignment.assignmentId}">Unassign group</button>
+        </div>
+        ${assignment.members.length ? `<table class="results-table">
+          <thead><tr><th>Student</th><th>Status</th><th>Best</th><th>Submissions</th><th>Deadline</th></tr></thead>
+          <tbody>${assignment.members.map((row) => {
             const status = STUDENT_STATUS[row.status];
-            const overdue = row.dueDate && row.dueDate < today && row.status !== "solved";
+            const overdue = assignment.deadline && assignment.deadline < today && row.status !== "solved";
             const last = row.lastActivity ? new Date(row.lastActivity).toLocaleString() : "No activity yet";
             return `
               <tr>
@@ -1624,29 +1633,28 @@ function renderResults(rows, total) {
                 <td><span class="badge small ${status.badge}">${status.label}</span><small>${escapeHtml(last)}</small></td>
                 <td>${row.bestPassed === null ? "—" : `${row.bestPassed} / ${total}`}</td>
                 <td>${row.attempts}</td>
-                <td class="${overdue ? "overdue" : ""}">${dueText(row.dueDate)}${overdue ? "<small>Overdue</small>" : ""}</td>
-                <td><button class="button ghost small" type="button" data-unassign="${row.studentId}">Unassign</button></td>
+                <td class="${overdue ? "overdue" : ""}">${dueText(assignment.deadline)}${overdue ? "<small>Overdue</small>" : ""}</td>
               </tr>`;
-          })
-          .join("")}
-      </tbody>
-    </table>`;
+          }).join("")}</tbody>
+        </table>` : '<p class="field-hint">This group has no students.</p>'}
+      </section>`)
+    .join("");
 }
 
-function renderStudentChoices(students, rows) {
-  const assigned = new Set(rows.map((row) => row.studentId));
-  $("#student-list").innerHTML = students.length
-    ? students
+function renderGroupChoices(groups, rows) {
+  const assigned = new Set(rows.map((row) => row.groupId));
+  $("#student-list").innerHTML = groups.length
+    ? groups
         .map(
-          (student) => `
+          (group) => `
             <label class="student-option">
-              <input type="checkbox" name="students" value="${student.id}">
-              ${escapeHtml(student.username)}
-              ${assigned.has(student.id) ? "<small>Assigned</small>" : ""}
+              <input type="checkbox" name="groups" value="${group.id}">
+              ${escapeHtml(group.name)}
+              <small>${group.memberCount} ${group.memberCount === 1 ? "student" : "students"}${assigned.has(group.id) ? " · Assigned" : ""}</small>
             </label>`,
         )
         .join("")
-    : '<p class="field-hint">No student accounts yet. Students appear here once they register.</p>';
+    : '<p class="field-hint">No groups yet. Ask an administrator to create a group and maintain its membership.</p>';
 }
 
 async function renderTeachAssign(slug) {
@@ -1655,27 +1663,51 @@ async function renderTeachAssign(slug) {
   $("#assign-edit-link").href = `#/teach/${encodeURIComponent(slug)}/edit`;
   $("#assign-try-link").href = `#/practice/${encodeURIComponent(slug)}`;
   $("#assign-message").hidden = true;
+  $("#audience-message").hidden = true;
   $("#assign-form").reset();
   $("#results").innerHTML = "";
   try {
     const base = `/api/teach/exercises/${encodeURIComponent(slug)}/`;
-    const [{ exercise }, { assignments }, { students }] = await Promise.all([
+    const [{ exercise }, { assignments }, { groups }] = await Promise.all([
       teachFetch(base),
       teachFetch(`${base}assignments/`),
-      teachFetch("/api/teach/students/"),
+      teachFetch("/api/teach/groups/"),
     ]);
     if (state.teach.assigning !== slug) {
       return;
     }
     state.teach.total = exercise.tests.length;
-    state.teach.students = students;
+    state.teach.groups = groups;
+    $("#audience-form").elements.audience.value = exercise.audience;
     $("#assign-title").textContent = exercise.title;
     document.title = `Debug GYM | ${exercise.title}`;
-    renderStudentChoices(students, assignments);
+    renderGroupChoices(groups, assignments);
     renderResults(assignments, exercise.tests.length);
   } catch (error) {
     toast(error.status === 404 ? "That exercise was not found." : failureText(error));
     goTo("#/teach");
+  }
+}
+
+async function saveAudience(event) {
+  event.preventDefault();
+  const form = event.target;
+  const message = $("#audience-message");
+  message.hidden = true;
+  try {
+    const { exercise } = await teachFetch(
+      `/api/teach/exercises/${encodeURIComponent(state.teach.assigning)}/audience/`,
+      { method: "PUT", body: JSON.stringify({ audience: form.elements.audience.value }) },
+    );
+    form.elements.audience.value = exercise.audience;
+    message.className = "ask-result success";
+    message.textContent = `Access changed to ${exercise.audience}.`;
+    message.hidden = false;
+    await loadExercises();
+  } catch (error) {
+    message.className = "ask-result error";
+    message.textContent = failureText(error);
+    message.hidden = false;
   }
 }
 
@@ -1686,37 +1718,38 @@ function showAssignMessage(kind, text) {
   message.textContent = text;
 }
 
-async function assignStudents(event) {
+async function assignGroups(event) {
   event.preventDefault();
   const form = event.target;
-  const ids = [...form.querySelectorAll('input[name="students"]:checked')].map((input) => Number(input.value));
+  const ids = [...form.querySelectorAll('input[name="groups"]:checked')].map((input) => Number(input.value));
   if (ids.length === 0) {
-    showAssignMessage("error", "Choose at least one student.");
+    showAssignMessage("error", "Choose at least one group.");
     return;
   }
   const slug = state.teach.assigning;
   try {
     const { assignments } = await teachFetch(`/api/teach/exercises/${encodeURIComponent(slug)}/assignments/`, {
       method: "POST",
-      body: JSON.stringify({ students: ids, dueDate: form.elements.dueDate.value || null }),
+      body: JSON.stringify({ groups: ids, deadline: form.elements.deadline.value || null }),
     });
-    renderStudentChoices(state.teach.students, assignments);
+    renderGroupChoices(state.teach.groups, assignments);
     renderResults(assignments, state.teach.total);
-    showAssignMessage("success", `Assigned to ${ids.length} ${ids.length === 1 ? "student" : "students"}.`);
+    showAssignMessage("success", `Assigned to ${ids.length} ${ids.length === 1 ? "group" : "groups"}.`);
   } catch (error) {
     showAssignMessage("error", failureText(error));
   }
 }
 
-async function unassignStudent(studentId) {
+async function unassignGroup(assignmentId) {
   const slug = state.teach.assigning;
   try {
-    const { assignments } = await teachFetch(
-      `/api/teach/exercises/${encodeURIComponent(slug)}/assignments/${studentId}/`,
+    const { assignments, audience } = await teachFetch(
+      `/api/teach/exercises/${encodeURIComponent(slug)}/assignments/${assignmentId}/`,
       { method: "DELETE" },
     );
-    renderStudentChoices(state.teach.students, assignments);
+    renderGroupChoices(state.teach.groups, assignments);
     renderResults(assignments, state.teach.total);
+    $("#audience-form").elements.audience.value = audience;
   } catch (error) {
     toast(failureText(error));
   }
@@ -1728,13 +1761,17 @@ function assignmentFor(id) {
   return state.assignments.find((item) => item.bugId === id) || null;
 }
 
+function assignmentsFor(id) {
+  return state.assignments.filter((item) => item.bugId === id);
+}
+
 function shortDate(date) {
   return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-// Open work first, then the earliest due date; no due date last.
+// Open work first, then the earliest deadline; no deadline last.
 function sortAssignments(items) {
-  const rank = (item) => [item.status === "solved" ? 1 : 0, item.dueDate || "9999-12-31", item.title];
+  const rank = (item) => [item.status === "solved" ? 1 : 0, item.deadline || "9999-12-31", item.title];
   return [...items].sort((a, b) => {
     const [x, y] = [rank(a), rank(b)];
     return x[0] - y[0] || x[1].localeCompare(y[1]) || x[2].localeCompare(y[2]);
@@ -1766,19 +1803,24 @@ async function loadAssignments() {
 
 function renderAssignedNote(id) {
   const note = $("#practice-assigned");
-  const assignment = assignmentFor(id);
-  note.hidden = !assignment;
+  const assignments = assignmentsFor(id);
+  const assignment = assignments[0];
+  note.hidden = assignments.length === 0;
   if (!assignment) {
     return;
   }
-  const parts = [assignment.assignedBy ? `Assigned by ${assignment.assignedBy}` : "Assigned to you"];
-  if (assignment.dueDate) {
-    parts.push(`due ${dueText(assignment.dueDate)}`);
+  const parts = [`Assigned to ${assignments.map((item) => item.groupName).join(", ")}`];
+  if (assignment.assignedBy) parts.push(`by ${assignment.assignedBy}`);
+  if (assignment.deadline) {
+    parts.push(`due ${dueText(assignment.deadline)}`);
   }
   note.textContent = parts.join(" · ");
   note.classList.toggle("overdue", assignment.overdue);
   if (assignment.overdue) {
     note.textContent += " · overdue";
+  }
+  if (assignments.length > 1) {
+    note.textContent += " · earliest deadline shown";
   }
 }
 
@@ -1796,9 +1838,9 @@ function renderAssignments() {
   list.innerHTML = state.assignments
     .map((item) => {
       const status = STUDENT_STATUS[item.status];
-      const due = item.dueDate
-        ? `<span class="${item.overdue ? "overdue" : ""}">Due ${escapeHtml(dueText(item.dueDate))}${item.overdue ? " · overdue" : ""}</span>`
-        : "<span>No due date</span>";
+      const due = item.deadline
+        ? `<span class="${item.overdue ? "overdue" : ""}">Due ${escapeHtml(dueText(item.deadline))}${item.overdue ? " · overdue" : ""}</span>`
+        : "<span>No deadline</span>";
       const score = item.bestPassed === null ? "" : `<span>Best ${item.bestPassed} / ${item.total}</span>`;
       const action = item.status === "solved" ? "Review" : item.status === "not-started" ? "Start" : "Continue";
       return `
@@ -1809,6 +1851,7 @@ function renderAssignments() {
             <div class="badges">
               <span class="badge small ${status.badge}">${status.label}</span>
               <span class="badge small">${escapeHtml(item.difficulty)}</span>
+              <span class="badge small">${escapeHtml(item.groupName)}</span>
             </div>
           </div>
           <div class="teach-stats">
@@ -1911,11 +1954,12 @@ $("#test-rows").addEventListener("click", (event) => {
     renderTestRows(tests);
   }
 });
-$("#assign-form").addEventListener("submit", assignStudents);
+$("#assign-form").addEventListener("submit", assignGroups);
+$("#audience-form").addEventListener("submit", saveAudience);
 $("#results").addEventListener("click", (event) => {
   const button = event.target.closest("[data-unassign]");
   if (button) {
-    unassignStudent(Number(button.dataset.unassign));
+    unassignGroup(Number(button.dataset.unassign));
   }
 });
 $("#login-form").addEventListener("submit", (event) => handleAuthSubmit(event, "/api/auth/login/"));
@@ -1931,6 +1975,16 @@ document.querySelectorAll('input[name="source"]').forEach((input) => {
 
 ["#filter-topic", "#filter-difficulty", "#filter-language"].forEach((selector) => {
   $(selector).addEventListener("change", renderNewChallenge);
+});
+$("#filter-audience").addEventListener("change", async (event) => {
+  try {
+    await loadExercises(event.target.value);
+    state.matches = null;
+    renderExerciseList();
+    renderPreview();
+  } catch (error) {
+    toast(failureText(error));
+  }
 });
 
 $("#exercise-list").addEventListener("click", (event) => {
@@ -2077,7 +2131,9 @@ async function start() {
   try {
     const response = await apiFetch("/api/auth/me/");
     setUser((await response.json()).user);
-    await loadExercises();
+    if (state.user) {
+      await loadExercises();
+    }
   } catch (error) {
     toast(error instanceof TypeError ? "The catalog could not be reached." : error.message);
   }
