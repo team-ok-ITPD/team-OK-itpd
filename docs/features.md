@@ -87,4 +87,3 @@ metric on a token-protected endpoint.
 - **Behavior:** [FR-014](functional-requirements/fr/FR-014.md)
 - **Decisions:** [ADR-006](architecture/adr/ADR-006.md)
 - **Plan:** [Analytics](analytics.md), [Observability](observability.md)
-
