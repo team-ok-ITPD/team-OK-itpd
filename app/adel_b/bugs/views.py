@@ -349,7 +349,7 @@ def _title_hits(wanted, title):
     )
 
 
-def rank_bugs(query, user):
+def rank_bugs(query, user, *, title_only=False):
     """Return (bugs, "title" | "description"): title matches first, else description matches.
 
     Bugs whose title matches are ranked by matched words, an exact phrase from the title
@@ -371,7 +371,7 @@ def rank_bugs(query, user):
             score += 100
         if score:
             by_title.append((score, bug))
-    if by_title:
+    if by_title or title_only:
         return [bug for _, bug in sorted(by_title, key=order)], "title"
 
     by_text = []
@@ -394,7 +394,8 @@ def exercise_match(request):
     except (json.JSONDecodeError, AttributeError, ValueError):
         return JsonResponse({"error": "Send a text query."}, status=400)
 
-    ranked, matched_by = rank_bugs(query, request.user)
+    title_only = payload.get("titleOnly") is True
+    ranked, matched_by = rank_bugs(query, request.user, title_only=title_only)
     if not ranked:
         return JsonResponse(
             {"error": "No prepared exercise matches that request. Try a Python list, loop, or dictionary bug."},

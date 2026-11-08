@@ -13,6 +13,7 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Prepared exercise search matches titles and sits above the exercise list.
 - Prepared exercises enforce private, signed-in public and assigned-group access,
   with server-filtered My, Public, Group and All catalog views.
 - Teachers assign exercises to administrator-managed groups with an independent

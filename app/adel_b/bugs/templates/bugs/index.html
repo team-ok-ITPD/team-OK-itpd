@@ -197,24 +197,6 @@
                 </div>
               </fieldset>
 
-              <form class="ask" id="request-form">
-                <label for="query">Describe the bug you want to practise</label>
-                <div class="ask-row">
-                  <input
-                    id="query"
-                    name="query"
-                    value="A Python list mutation bug with negative numbers"
-                    autocomplete="off"
-                    required
-                  >
-                  <button class="button primary" type="submit">
-                    <svg class="icon"><use href="#i-search"/></svg>
-                    Find exercise
-                  </button>
-                </div>
-                <p class="ask-result" id="ask-result" aria-live="polite" hidden></p>
-              </form>
-
               <div class="filters">
                 <label class="select">
                   <span>Access</span>
@@ -252,6 +234,18 @@
                   <svg class="icon"><use href="#i-chevron"/></svg>
                 </label>
               </div>
+
+              <form class="ask" id="request-form" role="search" aria-label="Prepared exercises">
+                <label for="query">Search prepared exercises by title</label>
+                <div class="ask-row">
+                  <input id="query" name="query" type="search" placeholder="e.g. surviving negative" autocomplete="off" required>
+                  <button class="button primary" type="submit">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    Search
+                  </button>
+                </div>
+                <p class="ask-result" id="ask-result" aria-live="polite" hidden></p>
+              </form>
 
               <fieldset class="group">
                 <legend>Exercises</legend>
