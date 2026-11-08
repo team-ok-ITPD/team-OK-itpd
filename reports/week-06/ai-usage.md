@@ -11,6 +11,12 @@
   groups, update the teaching interface and verify access and deadline behavior.
 - OpenCode helped implement and test private, signed-in public and group exercise
   audiences, catalog filters and consistent server-side access checks.
+- Claude drafted the analytics plan, FR-014 and ADR-006, the analytics event
+  emitter, its call sites, the smoke-event script and their tests, and the
+  observability requirement, decision record, quality requirement, test script
+  and container view update.
+- Claude drafted the issue and pull request texts and the Week 6 report
+  structure.
 
 ## Review And Use
 
@@ -23,3 +29,9 @@ open rather than being promoted to requirements.
 The public repository receives sanitized, decision-focused notes, not the
 recordings or a verbatim transcript. A team member must review the decisions,
 owners and due dates before merge.
+
+Claude could not run Django, Docker, the university VM or either telemetry
+backend. A team member ran the Django tests and sent real events to a temporary
+HTTPS request catcher, and must review every drafted record, status and claim
+before merge. The observability test script has not been run against an
+observability backend.
