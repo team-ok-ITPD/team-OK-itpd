@@ -159,3 +159,30 @@ adapted to the chosen backend's query language when it is deployed.
 | `exercise_opened` | A learner opens an exercise page. | `exercise_slug` (string, required) | `exercise catalog`, staging and production |
 | `workspace_opened` | A learner opens an exercise's VS Code workspace. | `exercise_slug` (string, required) | `exercise catalog`, staging and production |
 | `solution_verified` | The server finishes verifying a submitted solution ([FR-011](functional-requirements/fr/FR-011.md)). | `exercise_slug` (string, required), `passed_count` (integer, required), `total_count` (integer, required), `all_passed` (boolean, required) | `exercise catalog`, staging and production |
+
+## Pipeline
+
+The catalog server sends each event over HTTPS from a background queue to the
+self-hosted analytics backend ([ADR-006](architecture/adr/ADR-006.md)). Collection
+is off unless `DEBUG_GYM_ANALYTICS_URL` is set, and a failed send never affects
+the learner's request ([FR-014](functional-requirements/fr/FR-014.md)). Staging
+and production use separate backends and keys. Configuration is described in
+[Setup](setup.md) and [Deployment](deployment.md).
+
+To check the pipeline without counting as learner activity, run
+`python scripts/send_smoke_event.py --url <backend address>`. It sends one event
+of each kind with `source = smoke`, and every query on this page excludes that
+source.
+
+## Dashboard
+
+<!-- Fill in once the backend is deployed: the dashboard name per environment,
+which tree node each panel shows, and the query behind it. -->
+
+## Collected data
+
+Each event holds its name, a UTC timestamp, a random opaque `learner_id`, a
+`source` (`web`, `usability-test` or `smoke`) and the fields in the event table.
+It holds no name, email, username, exercise code or free-text search query. The
+`learner_id` is stored on the learner's profile and cannot be derived from
+account data.
