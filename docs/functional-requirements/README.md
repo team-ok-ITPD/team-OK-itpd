@@ -11,3 +11,8 @@ Active means required behavior, not implemented or Customer-accepted behavior. T
 | [FR-005](fr/FR-005.md) | Debug With VS Code Tools | `debug workspace` | Active |
 | [FR-006](fr/FR-006.md) | Assist Without Editing The Learner's Code | `debug workspace` | Active |
 | [FR-007](fr/FR-007.md) | Browse Bug Categories With Examples | `exercise catalog` | Active |
+| [FR-008](fr/FR-008.md) | Sign In With A Student Or Professor Role | `exercise catalog` | Active |
+| [FR-009](fr/FR-009.md) | Control An Exercise's Audience | `exercise catalog` | Active |
+| [FR-010](fr/FR-010.md) | Assign An Exercise To Groups With A Deadline | `exercise catalog` | Active |
+| [FR-011](fr/FR-011.md) | Verify A Submission In A Fresh Container | `exercise catalog` | Active |
+| [FR-012](fr/FR-012.md) | Submit From VS Code Without Signing In Again | `exercise catalog`, `debug workspace` | Active |
