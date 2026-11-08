@@ -40,6 +40,13 @@ the public description of their shape, choose different host ports for each
 deployment, and set each workspace URL to the corresponding campus-reachable
 address. Restrict both files to the deployment account.
 
+Set `DEBUG_GYM_METRICS_TOKEN`, `DEBUG_GYM_ANALYTICS_URL` and
+`DEBUG_GYM_ANALYTICS_KEY` in each file with values that are different for
+staging and production. Their meaning is in [Setup](setup.md), the events are
+in the [analytics plan](analytics.md) and the metric in
+[Observability](observability.md). With the URL empty the product still works
+and collects nothing.
+
 Do not put passwords, tokens, API keys, the VM address or environment-file
 contents in Git, command history, screenshots or CI logs.
 
