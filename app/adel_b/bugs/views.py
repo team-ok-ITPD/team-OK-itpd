@@ -11,6 +11,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
+from config.analytics import emit
+
 from .models import Attempt, Bug, Draft, IdeToken
 
 MAX_DRAFT_LENGTH = 50_000
@@ -48,6 +50,7 @@ def bug_detail(request, slug):
     bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
+    emit("exercise_opened", request.user, exercise_slug=bug.slug)
     return JsonResponse({"bug": {**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id}})
 
 
@@ -133,6 +136,15 @@ def _save_attempt(user, bug, payload):
         return JsonResponse({"error": str(error)}, status=503)
 
     attempt = Attempt.objects.create(user=user, bug=bug, code=code, passed_count=passed, total_count=total)
+    # The counts come from the verification container, never from the request body.
+    emit(
+        "solution_verified",
+        user,
+        exercise_slug=bug.slug,
+        passed_count=passed,
+        total_count=total,
+        all_passed=total > 0 and passed == total,
+    )
     return JsonResponse({"attempt": attempt.to_dict()}, status=201)
 
 
@@ -321,6 +333,7 @@ def bug_vscode(request, slug):
         port = start_ide(request.user, folder)
     except IdeError as error:
         return JsonResponse({"error": str(error)}, status=503)
+    emit("workspace_opened", request.user, exercise_slug=bug.slug)
     return JsonResponse({"url": f"http://localhost:{port}/?folder=/home/coder/project"})
 
 
@@ -396,6 +409,7 @@ def exercise_match(request):
 
     title_only = payload.get("titleOnly") is True
     ranked, matched_by = rank_bugs(query, request.user, title_only=title_only)
+    emit("exercise_searched", request.user, result_count=len(ranked))
     if not ranked:
         return JsonResponse(
             {"error": "No prepared exercise matches that request. Try a Python list, loop, or dictionary bug."},
