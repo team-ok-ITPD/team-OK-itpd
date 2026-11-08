@@ -2,8 +2,6 @@
 
 ## Tools
 
-- Codex drafted the observability plan and helped implement and test structured
-  catalog request logs and the latency histogram locally.
 - An online transcription service converted the two meeting recordings to text.
 - OpenCode compared the transcript with the previous meeting records and
   Assignment 6, then helped structure the report, notes and decision records.
