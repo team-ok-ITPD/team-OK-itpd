@@ -70,3 +70,14 @@ A C4 application or data-store responsibility, which need not correspond one-to-
 Deliberately deleting a selected local project's exercise volume and recreating the original buggy exercise, discarding learner edits.
 
 **Defined by:** [`ADR-003`](architecture/adr/ADR-003.md).
+
+## Observability
+
+| Term | Meaning in Debug GYM |
+| --- | --- |
+| Observability | Using emitted data to investigate the application's behavior. |
+| Telemetry | The data the application emits about its operation. |
+| Signal | A telemetry type, such as a metric, log or trace. |
+| Service level indicator (SLI) | A measured aspect of service behavior, such as catalog request duration. |
+
+See the [observability plan](observability.md) for the signals and their queries.
