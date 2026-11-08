@@ -1,11 +1,15 @@
 # Observability
 
 Use the Django catalog's request signals to diagnose slow or failed exercise
-searches. This page defines the signals emitted by the application and the
-queries to use when configuring OpenObserve. Staging and production verification
-is pending.
+searches. This page defines the signals emitted by the application, the service
+level indicator computed from them and the planned OpenObserve pipeline.
+Staging and production verification is pending.
 
 ## Signals
+
+Metric, log and trace are the three signal types. The product emits a metric
+and a structured log; it emits no distributed trace. An alert is a rule over a
+signal rather than a signal, and no alert is defined this week.
 
 | Signal | Application source | Collection |
 | --- | --- | --- |
@@ -45,9 +49,13 @@ Catalog request duration (P95)
   the server-side catalog portion of [QR-04](quality-requirements/qr/QR-04.md).
   Its browser and workspace timings still require separate measurements.
 - **Unit:** Seconds
-- **Window:** Rolling five minutes
-- **Source:** `debug_gym_http_request_duration_seconds_bucket` in the
-  environment's OpenObserve organization.
+- **Window:** Rolling five minutes. The target pipeline makes the per-request
+  log point queryable within five seconds and refreshes the aggregate within
+  one minute.
+- **Source:** The `exercise catalog` emits
+  `debug_gym_http_request_duration_seconds_bucket` at `/metrics` and one JSON
+  log line on standard output. The environment's scraper and log collector
+  export both to its OpenObserve organization.
 - **Query:**
 
   ```promql
@@ -75,3 +83,40 @@ its request ID and verify a numeric `client_error` P95 within the five-minute
 window. Use the same query in production and keep the smoke traffic on staging.
 
 The behavior is specified by [FR-013](functional-requirements/fr/FR-013.md), the decision by [ADR-005](architecture/adr/ADR-005.md) and the diagnosability test by [QR-06](quality-requirements/qr/QR-06.md#qrt-01).
+
+## Pipeline
+
+The target deployment is one OpenObserve instance on the university VM with
+separate `staging` and `production` organizations and credentials. Each
+environment scrapes the catalog histogram every ten seconds and ships JSON log
+lines in batches no longer than one second, meeting SLI-01's target windows.
+Retention is planned for 30 days. The staging organization receives test
+traffic; the production organization is configured with the same query and is
+not exercised with test traffic.
+
+Collection is enabled by setting `DEBUG_GYM_METRICS_TOKEN` and configuring the
+environment's external scraper and log collector. Leaving the token unset
+disables the metrics endpoint. The backend, collectors and organizations have
+not been deployed. Steps and configuration are owned by the
+[telemetry pipeline runbook](deployment.md#telemetry-pipelines).
+
+## Dashboard
+
+The planned dashboards are `Catalog health (staging)` and
+`Catalog health (production)`. Each contains a chart named
+`SLI-01 Catalog request duration (P95)` and runs SLI-01's query. The staging
+dashboard shows the `client_error` test series; the production dashboard carries
+the same query without test traffic.
+
+Neither dashboard exists yet, so no private address or sanitized screenshot is
+recorded.
+
+## Collected Data
+
+The signals collect `request_id`, `route`, `outcome`, `status` and
+`duration_ms` on each log point, and `route`, `outcome` and duration histogram
+buckets on the metric. They never collect query text, user identifiers,
+headers, request bodies or submitted code. The planned OpenObserve instance on
+the university VM stores each environment's data in its own organization.
+Collection is disabled by leaving `DEBUG_GYM_METRICS_TOKEN` unset and not
+running the environment's collectors.
