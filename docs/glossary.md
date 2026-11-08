@@ -79,6 +79,7 @@ Deliberately deleting a selected local project's exercise volume and recreating 
 | Telemetry | The data the application emits about its operation. |
 | Signal | A telemetry type, such as a metric, log or trace. |
 | Service level indicator (SLI) | A measured aspect of service behavior, such as catalog request duration. |
+| Observability backend | The self-hosted system that stores the product's metrics and logs and serves their dashboards. The team deploys it and does not build it. |
 
 See the [observability plan](observability.md) for the signals and their queries.
 
@@ -90,3 +91,7 @@ See the [observability plan](observability.md) for the signals and their queries
 | Input metric | A metric one level under another in the metric tree that explains movement in it. |
 | Counter-metric | A metric that guards the focus metric rather than feeding it, such as [attempts per solved exercise](analytics.md#attempts-per-solved-exercise). |
 | Metric tree | The nested list of the focus metric, its counter-metric and its input metrics in the [analytics plan](analytics.md#the-metric-tree). |
+| Event | One action the product records, such as `exercise_opened`, with the fields in the [event table](analytics.md#the-events). |
+| Instrumentation | The product code that emits an event or a signal. |
+| Analytics backend | The self-hosted system that receives the product's events and serves their dashboards. The team deploys it and does not build it. |
+| Dashboard | A page of charts in a telemetry backend, each running the query recorded in the plan. |

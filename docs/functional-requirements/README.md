@@ -16,4 +16,5 @@ Active means required behavior, not implemented or Customer-accepted behavior. T
 | [FR-010](fr/FR-010.md) | Assign An Exercise To Groups With A Deadline | `exercise catalog` | Active |
 | [FR-011](fr/FR-011.md) | Verify A Submission In A Fresh Container | `exercise catalog` | Active |
 | [FR-012](fr/FR-012.md) | Submit From VS Code Without Signing In Again | `exercise catalog`, `debug workspace` | Active |
+| [FR-013](fr/FR-013.md) | Expose The Quality Signal Of The Catalog Search | `exercise catalog` | Active |
 | [FR-014](fr/FR-014.md) | Record An Event For Each Core-Task Step | `exercise catalog` | Active |

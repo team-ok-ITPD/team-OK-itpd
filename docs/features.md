@@ -75,15 +75,19 @@ verifies it in a fresh container before recording the result.
 - **Behavior:** [FR-011](functional-requirements/fr/FR-011.md), [FR-012](functional-requirements/fr/FR-012.md)
 - **Decisions:** [ADR-004](architecture/adr/ADR-004.md), [DEC-037](decisions.md#dec-037)
 
-## Measure The Core Task
+## See How The Product Is Used
 
-The product records one event for each core-task step: searching for an
-exercise, opening it, opening its workspace and a server-verified submission.
-Each event carries a random learner identifier and no personal data, and
-nothing is collected unless an analytics backend is configured. A failed send
-never affects the learner's request. The product also exposes a request-duration
-metric on a token-protected endpoint.
+The product records one [event](glossary.md#analytics) for each core-task step: searching for an exercise, opening it, opening its workspace and a server-verified submission. Each event carries a random learner identifier and no personal data, and nothing is collected unless an [analytics backend](glossary.md#analytics) is configured. A failed send never affects the learner's request.
 
 - **Behavior:** [FR-014](functional-requirements/fr/FR-014.md)
 - **Decisions:** [ADR-006](architecture/adr/ADR-006.md)
-- **Plan:** [Analytics](analytics.md), [Observability](observability.md)
+- **Plan:** [Analytics](analytics.md)
+
+## Diagnose A Quality Problem From The Operating Signals
+
+An operator who is told a catalog search failed can find that request by its identifier and read the latency of failing searches, using the [signals](glossary.md#observability) the product emits to an [observability backend](glossary.md#observability). The metrics endpoint answers only a request that carries the environment's token.
+
+- **Behavior:** [FR-013](functional-requirements/fr/FR-013.md)
+- **Decisions:** [ADR-005](architecture/adr/ADR-005.md)
+- **Quality requirement:** [QR-06](quality-requirements/qr/QR-06.md)
+- **Plan:** [Observability](observability.md)

@@ -8,6 +8,12 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The product records an analytics event for each core-task step, with a random
+  learner identifier and no personal data, when an analytics backend is
+  configured.
+- The catalog search exposes a request-duration metric and a structured request
+  log, so an operator can find a failed request and read its latency.
+
 - A sourced administrator, teacher and student capability model, access constraints,
   proposed enforcement rules and unresolved policy questions.
 

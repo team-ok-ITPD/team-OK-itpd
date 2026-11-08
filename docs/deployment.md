@@ -50,6 +50,27 @@ and collects nothing.
 Do not put passwords, tokens, API keys, the VM address or environment-file
 contents in Git, command history, screenshots or CI logs.
 
+## Telemetry Pipelines
+
+The product sends analytics events and operating signals to two backends that the team self-hosts and does not build. The product works with both absent. Keep both backends' addresses and credentials out of Git, as described under [Configuration](#configuration). The plans are the [analytics plan](analytics.md) and the [observability plan](observability.md).
+
+### Analytics Backend
+
+1. Deploy an analytics backend on the university VM. OpenPanel is the course default; if another backend is used, name it here.
+2. Create one environment scope for staging and one for production, each with its own credential.
+3. Set `DEBUG_GYM_ANALYTICS_URL` and `DEBUG_GYM_ANALYTICS_KEY` in each environment's file to that scope's address and credential. The address must start with `https://`.
+4. Build a dashboard in each scope with a chart for the focus metric or its first input, running the query in [the metric's section](analytics.md#the-metric-tree).
+5. Send the smoke events to staging with `python scripts/send_smoke_event.py --url <staging address>`. The staging event list shows them, the metric chart excludes them, and production receives none.
+
+### Observability Backend
+
+1. Deploy an observability backend on the university VM. OpenObserve is the course default.
+2. Create one organization for staging and one for production.
+3. Set `DEBUG_GYM_METRICS_TOKEN` in each environment's file. Configure that environment's scraper with the same token, and remote-write its metrics to that environment's organization.
+4. Collect the catalog's JSON request lines into the `debug_gym_requests` stream of the same organization, and record the log exporter's batch interval and the metric exporter's interval here once chosen.
+5. Build a dashboard in each organization with a chart named after [SLI-01](observability.md#sli-01), running the query recorded there.
+6. Check staging with `python scripts/check_sli.py` ([QR-06 QRT-01](quality-requirements/qr/QR-06.md#qrt-01)). Leave production configured with the same query and send it no test traffic.
+
 ## Manual Deployment
 
 1. Choose the release commit from a green `main` run and record its full hash.

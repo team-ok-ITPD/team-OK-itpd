@@ -15,6 +15,8 @@ The product runs as two applications and one store in a learner-local Docker dep
 
 ![Container view](container.svg)
 
+The analytics backend and the observability backend are external systems the product sends telemetry to. The team self-hosts both and does not build them. They are outside the product boundary and the product works with collection off, so they are not containers ([ADR-005](adr/ADR-005.md), [ADR-006](adr/ADR-006.md)).
+
 ### Container Responsibilities
 
 | Container | Responsibilities |
@@ -29,7 +31,7 @@ The current deployment provides one local workspace, not a multi-user service. S
 
 ## Diagrams And Legends
 
-The container diagram's solid blue boxes are applications, the green cylinder is a data store, the dashed grey box is an external browser, and each arrow names the protocol and exchanged data. C4 containers are not Docker container count.
+The container diagram's solid blue boxes are applications, the green cylinder is a data store, the dashed grey boxes are external systems: the browser and the two telemetry backends, which the team self-hosts and does not build, and each arrow names the protocol and exchanged data. C4 containers are not Docker container count.
 
 The image is [container.svg](container.svg) and its Mermaid source is [container.mmd](container.mmd). Regenerate the image from its source when changing the diagram. The broader vision's context diagram includes intended SSH and AI interactions; it is not a deployment inventory of implemented integrations.
 
@@ -43,4 +45,5 @@ The [unfilled template](adr/TEMPLATE.md) defines the record shape. Accepted reco
 | [ADR-002](adr/ADR-002.md) | Accepted | [`FR-003`](../functional-requirements/fr/FR-003.md), [`FR-004`](../functional-requirements/fr/FR-004.md), [`QR-01`](../quality-requirements/qr/QR-01.md), [`QR-03`](../quality-requirements/qr/QR-03.md) | Validate Exercises With A Buggy Program And An Oracle |
 | [ADR-003](adr/ADR-003.md) | Accepted | [`FR-002`](../functional-requirements/fr/FR-002.md), [`FR-005`](../functional-requirements/fr/FR-005.md), [`QR-02`](../quality-requirements/qr/QR-02.md), [`QR-05`](../quality-requirements/qr/QR-05.md) | Keep The Prototype Learner-Local With Persistent State |
 | [ADR-004](adr/ADR-004.md) | Accepted | [`FR-011`](../functional-requirements/fr/FR-011.md), [`QR-02`](../quality-requirements/qr/QR-02.md) | Verify Submissions In Fresh Containers |
+| [ADR-005](adr/ADR-005.md) | Proposed | [`FR-013`](../functional-requirements/fr/FR-013.md), [`QR-04`](../quality-requirements/qr/QR-04.md), [`QR-06`](../quality-requirements/qr/QR-06.md) | Export Catalog Request Signals To An External Observability Backend |
 | [ADR-006](adr/ADR-006.md) | Proposed | [`FR-014`](../functional-requirements/fr/FR-014.md), [`QR-02`](../quality-requirements/qr/QR-02.md), [`QR-04`](../quality-requirements/qr/QR-04.md) | Send Analytics Events From The Catalog To An External Backend |
