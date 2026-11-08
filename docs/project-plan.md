@@ -26,7 +26,7 @@ the Customer's validation of the workflow.
 
 ### MLS-06
 
-- **Due:** 2026-11-07
+- **Due:** 2026-11-08
 - **Sprints:** [SPRINT-06](#sprint-06)
 - **Advances:** [TOS-03](threshold-of-success.md#tos-03)
 
@@ -93,8 +93,16 @@ The product tells its team how it is used and how it operates, through an analyt
 - **Due:** 2026-11-08
 - **Sprint Backlog:** [the issues scheduled into SPRINT-06](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/3)
 - **Planned Velocity:** 10
+- **Actual Velocity:** 0; the required product-analyst and system-operator
+  stories were not created, so no story points can be counted. The telemetry
+  deployment, dashboards and deployed QRT move to `SPRINT-07` because the
+  university VM was unavailable.
 
 #### REL-06
+
+Not released. The final production deployment, four dashboards and
+`QR-06 QRT-01` remain unavailable, so the Week 6 changes stay in
+`[Unreleased]` and no release tag is claimed.
 
 ### SPRINT-07
 
@@ -127,7 +135,7 @@ Provisional: the release candidate meets the agreed threshold measures available
 | [QR-01](quality-requirements/qr/QR-01.md) | [QR-01 QRT-01](quality-requirements/qr/QR-01.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
 | [QR-02](quality-requirements/qr/QR-02.md) | [QR-02 QRT-01](quality-requirements/qr/QR-02.md#qrt-01) | Not verified | None    | [SPRINT-07](#sprint-07) | None     |
 | [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
-| [QR-06](quality-requirements/qr/QR-06.md) | [QR-06 QRT-01](quality-requirements/qr/QR-06.md#qrt-01) | Not verified | None | [SPRINT-06](#sprint-06) | None |
+| [QR-06](quality-requirements/qr/QR-06.md) | [QR-06 QRT-01](quality-requirements/qr/QR-06.md#qrt-01) | Not verified | None | [SPRINT-07](#sprint-07) | University VM and staging OpenObserve organization unavailable in SPRINT-06 |
 
 ## Progress Monitoring
 

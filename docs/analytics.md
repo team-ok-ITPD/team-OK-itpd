@@ -58,7 +58,7 @@ and says nothing about whether anyone practises.
   distinct learners with an `exercise_opened` event, over the last seven days.
 - **Source:** [`solution_verified`](#the-events) and
   [`exercise_opened`](#the-events).
-- **Query:** Over the last seven days, with `source = 'web'`:
+- **Query:** Over the last seven days, excluding `source = 'smoke'`:
 
   ```sql
   SELECT
@@ -67,7 +67,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id)
       FILTER (WHERE name = 'exercise_opened'), 0) AS solved_per_active_learner
   FROM events
-  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
+  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Attempts per solved exercise
@@ -77,7 +77,7 @@ and says nothing about whether anyone practises.
   last seven days. A rising value while the focus metric rises suggests
   learners are guessing instead of investigating.
 - **Source:** [`solution_verified`](#the-events).
-- **Query:** Over the last seven days, with `source = 'web'`:
+- **Query:** Over the last seven days, excluding `source = 'smoke'`:
 
   ```sql
   SELECT
@@ -85,7 +85,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id || ':' || exercise_slug)
       FILTER (WHERE name = 'solution_verified' AND all_passed), 0) AS attempts_per_solve
   FROM events
-  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
+  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Started exercises per active learner per week
@@ -95,7 +95,7 @@ and says nothing about whether anyone practises.
   `exercise_opened` event, over the last seven days.
 - **Source:** [`workspace_opened`](#the-events) and
   [`exercise_opened`](#the-events).
-- **Query:** Over the last seven days, with `source = 'web'`:
+- **Query:** Over the last seven days, excluding `source = 'smoke'`:
 
   ```sql
   SELECT
@@ -104,7 +104,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id)
       FILTER (WHERE name = 'exercise_opened'), 0) AS started_per_active_learner
   FROM events
-  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
+  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Search match rate
@@ -112,7 +112,7 @@ and says nothing about whether anyone practises.
 - **Definition:** The number of `exercise_searched` events with at least one
   result divided by all `exercise_searched` events, over the last seven days.
 - **Source:** [`exercise_searched`](#the-events).
-- **Query:** Over the last seven days, with `source = 'web'`:
+- **Query:** Over the last seven days, excluding `source = 'smoke'`:
 
   ```sql
   SELECT
@@ -120,7 +120,7 @@ and says nothing about whether anyone practises.
     / nullif(count(*), 0) AS search_match_rate
   FROM events
   WHERE name = 'exercise_searched'
-    AND source = 'web' AND timestamp >= now() - interval '7 days';
+    AND source <> 'smoke' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Workspace open rate
@@ -130,7 +130,7 @@ and says nothing about whether anyone practises.
   event, over the last seven days.
 - **Source:** [`workspace_opened`](#the-events) and
   [`exercise_opened`](#the-events).
-- **Query:** Over the last seven days, with `source = 'web'`:
+- **Query:** Over the last seven days, excluding `source = 'smoke'`:
 
   ```sql
   SELECT
@@ -139,8 +139,10 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id || ':' || exercise_slug)
       FILTER (WHERE name = 'exercise_opened'), 0) AS workspace_open_rate
   FROM events
-  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
+  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
   ```
+
+This rate is computed by the query rather than by hand.
 
 ## The Events
 
@@ -155,19 +157,25 @@ adapted to the chosen backend's query language when it is deployed.
 
 | Event | Fires when | Fields | Collected at |
 | --- | --- | --- | --- |
-| `exercise_searched` | A learner searches the prepared exercises. | `result_count` (integer, required) | `exercise catalog`, staging and production |
-| `exercise_opened` | A learner opens an exercise page. | `exercise_slug` (string, required) | `exercise catalog`, staging and production |
-| `workspace_opened` | A learner opens an exercise's VS Code workspace. | `exercise_slug` (string, required) | `exercise catalog`, staging and production |
-| `solution_verified` | The server finishes verifying a submitted solution ([FR-011](functional-requirements/fr/FR-011.md)). | `exercise_slug` (string, required), `passed_count` (integer, required), `total_count` (integer, required), `all_passed` (boolean, required) | `exercise catalog`, staging and production |
+| `exercise_searched` | A learner searches the prepared exercises. | `learner_id` (UUID, required), `source` (`web`, `usability-test` or `smoke`, required), `result_count` (integer, required) | `exercise catalog`, staging and production |
+| `exercise_opened` | A learner opens an exercise page. | `learner_id` (UUID, required), `source` (`web`, `usability-test` or `smoke`, required), `exercise_slug` (string, required) | `exercise catalog`, staging and production |
+| `workspace_opened` | A learner opens an exercise's VS Code workspace. | `learner_id` (UUID, required), `source` (`web`, `usability-test` or `smoke`, required), `exercise_slug` (string, required) | `exercise catalog`, staging and production |
+| `solution_verified` | The server finishes verifying a submitted solution ([FR-011](functional-requirements/fr/FR-011.md)). | `learner_id` (UUID, required), `source` (`web`, `usability-test` or `smoke`, required), `exercise_slug` (string, required), `passed_count` (integer, required), `total_count` (integer, required), `all_passed` (boolean, required) | `exercise catalog`, staging and production |
 
 ## Pipeline
 
-The catalog server sends each event over HTTPS from a background queue to the
-self-hosted analytics backend ([ADR-006](architecture/adr/ADR-006.md)). Collection
-is off unless `DEBUG_GYM_ANALYTICS_URL` is set, and a failed send never affects
-the learner's request ([FR-014](functional-requirements/fr/FR-014.md)). Staging
-and production use separate backends and keys. Configuration is described in
-[Setup](setup.md) and [Deployment](deployment.md).
+The `exercise catalog` sends each event over HTTPS from a bounded background
+queue to the self-hosted analytics backend ([ADR-006](architecture/adr/ADR-006.md)).
+Collection is off unless `DEBUG_GYM_ANALYTICS_URL` is set, and a failed send
+never affects the learner's request
+([FR-014](functional-requirements/fr/FR-014.md)). The target deployment is one
+OpenPanel instance on the university VM with separate `staging` and `production`
+projects and credentials. Retention is planned for 90 days, which covers every
+seven-day metric window. The backend has not been deployed yet.
+
+The steps and configuration belong to the
+[telemetry pipeline runbook](deployment.md#telemetry-pipelines); `.env.example`
+records the configuration shape and no credential.
 
 To check the pipeline without counting as learner activity, run
 `python scripts/send_smoke_event.py --url <backend address>`. It sends one event
@@ -176,8 +184,15 @@ source.
 
 ## Dashboard
 
-<!-- Fill in once the backend is deployed: the dashboard name per environment,
-which tree node each panel shows, and the query behind it. -->
+The planned dashboards are `Debug GYM usage (staging)` and
+`Debug GYM usage (production)`. Each contains a chart named
+`Started exercises per active learner per week` that runs that metric's query.
+The staging dashboard also contains a recent-events panel that shows the
+`source=smoke` pipeline check while the metric chart excludes it. The production
+dashboard carries the same query and receives no test traffic.
+
+Neither dashboard exists yet. Their private addresses and the required
+sanitized screenshots therefore are not recorded as evidence.
 
 ## Collected data
 
@@ -186,3 +201,7 @@ Each event holds its name, a UTC timestamp, a random opaque `learner_id`, a
 It holds no name, email, username, exercise code or free-text search query. The
 `learner_id` is stored on the learner's profile and cannot be derived from
 account data.
+The planned OpenPanel instance on the university VM stores the events in the
+environment's project. Collection is disabled by leaving
+`DEBUG_GYM_ANALYTICS_URL` unset. No analytics backend currently stores the
+events outside temporary development checks.

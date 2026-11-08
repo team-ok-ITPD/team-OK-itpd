@@ -17,6 +17,9 @@
   and container view update.
 - Claude drafted the issue and pull request texts and the Week 6 report
   structure.
+- OpenCode audited the final Assignment 6 artifacts against the course rules,
+  reconciled the analytics and observability plans with the merged code, and
+  helped prepare the retrospective and final report corrections.
 
 ## Review And Use
 
@@ -35,3 +38,8 @@ backend. A team member ran the Django tests and sent real events to a temporary
 HTTPS request catcher, and must review every drafted record, status and claim
 before merge. The observability test script has not been run against an
 observability backend.
+
+OpenCode's closeout work retained every external blocker as `Not verified` and
+did not invent a VM deployment, dashboard, Customer verdict, QRT result or
+release. The team must review the final report and private Moodle wrapper before
+submission.
