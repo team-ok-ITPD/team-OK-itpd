@@ -131,6 +131,22 @@ class PageAndMatchTests(TestCase):
             self.search("sum of scores"), (["total-starts-late", "missing-last-element"], "description")
         )
 
+    def test_prepared_title_search_does_not_fall_back_to_descriptions(self):
+        def search_title(query):
+            return self.client.post(
+                "/api/exercises",
+                data=json.dumps({"query": query, "titleOnly": True}),
+                content_type="application/json",
+            )
+
+        matching = search_title("duplicate")
+        self.assertEqual(matching.status_code, 200)
+        self.assertEqual(
+            [exercise["id"] for exercise in matching.json()["exercises"]],
+            ["duplicated-result", "count-words"],
+        )
+        self.assertEqual(search_title("sum of scores").status_code, 404)
+
     def test_asset_links_change_with_the_files(self):
         response = self.client.get("/")
         self.assertRegex(response.content.decode(), r"bugs/app\.js\?v=\d+")

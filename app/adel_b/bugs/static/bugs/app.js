@@ -394,6 +394,7 @@ function matchBar() {
 
 function clearMatches() {
   state.matches = null;
+  $("#query").value = "";
   $("#ask-result").hidden = true;
   renderNewChallenge();
 }
@@ -405,7 +406,7 @@ function renderExerciseList() {
     list.innerHTML = `
       <div class="empty">
         <strong>AI-generated challenges are not available yet.</strong>
-        <span>Describe the bug you want below, and Debug GYM will match it to prepared exercises.</span>
+        <span>Switch to Prepared exercises to search the catalog by title.</span>
       </div>`;
     return;
   }
@@ -507,6 +508,7 @@ function renderPreview() {
 }
 
 function renderNewChallenge() {
+  $("#request-form").hidden = state.source !== "prepared";
   renderExerciseList();
   renderPreview();
 }
@@ -515,7 +517,7 @@ async function askForExercise(query) {
   const response = await apiFetch("/api/exercises", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, titleOnly: true }),
   });
   let payload;
   try {
@@ -524,12 +526,12 @@ async function askForExercise(query) {
     throw new Error(`The catalog answered with HTTP ${response.status}.`);
   }
   if (response.status === 404) {
-    return { exercises: [], matchedBy: null };
+    return [];
   }
   if (!response.ok) {
     throw new Error(payload.error || `The catalog answered with HTTP ${response.status}.`);
   }
-  return { exercises: payload.exercises || [payload.exercise], matchedBy: payload.matchedBy || "title" };
+  return payload.exercises || [payload.exercise];
 }
 
 function showAskResult(kind, message) {
@@ -542,11 +544,12 @@ function showAskResult(kind, message) {
 async function handleAsk(event) {
   event.preventDefault();
   const query = String(new FormData(event.target).get("query") || "").trim();
-  showAskResult("pending", "Finding related exercises...");
+  showAskResult("pending", "Searching exercise titles...");
 
   try {
     const found = await askForExercise(query);
-    const matches = found.exercises.filter((match) => findExercise(match.id));
+    if (state.source !== "prepared") return;
+    const matches = found.filter((match) => findExercise(match.id));
     if (matches.length === 0) {
       // An empty result empties the list too, instead of keeping the previous search.
       state.matches = { query, ids: [] };
@@ -557,19 +560,16 @@ async function handleAsk(event) {
 
     // Show every related exercise: clear the filters that could hide some of them.
     state.matches = { query, ids: matches.map((match) => match.id) };
-    state.source = "prepared";
     state.selectedId = matches[0].id;
-    document.querySelector('input[name="source"][value="prepared"]').checked = true;
     $("#filter-topic").value = "all";
     $("#filter-difficulty").value = "all";
     renderNewChallenge();
     const count = matches.length;
-    const where = found.matchedBy === "title" ? "" : " No titles matched, so these come from the descriptions.";
     showAskResult(
       "success",
-      (count === 1
+      count === 1
         ? `Found 1 exercise: “${matches[0].title}”.`
-        : `Found ${count} exercises. The best match, “${matches[0].title}”, is selected.`) + where,
+        : `Found ${count} exercises. The best match, “${matches[0].title}”, is selected.`,
     );
     $("#exercise-list").scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
