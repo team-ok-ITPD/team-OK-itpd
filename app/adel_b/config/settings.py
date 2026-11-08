@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'config.observability.catalog_request_telemetry',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,6 +57,26 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+DEBUG_GYM_METRICS_TOKEN = os.getenv("DEBUG_GYM_METRICS_TOKEN", "")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "request_telemetry": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "debug_gym.requests": {
+            "handlers": ["request_telemetry"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
 
 TEMPLATES = [
     {
