@@ -73,3 +73,5 @@ scrape, then send an authenticated search that returns 200 and one that returns
 404 because the catalog has no match. After the next scrape, look up the 404 by
 its request ID and verify a numeric `client_error` P95 within the five-minute
 window. Use the same query in production and keep the smoke traffic on staging.
+
+The behavior is specified by [FR-013](functional-requirements/fr/FR-013.md), the decision by [ADR-005](architecture/adr/ADR-005.md) and the diagnosability test by [QR-06](quality-requirements/qr/QR-06.md#qrt-01).
