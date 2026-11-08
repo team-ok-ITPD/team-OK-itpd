@@ -1609,7 +1609,7 @@ function dueText(date) {
 function renderResults(rows, total) {
   const results = $("#results");
   if (rows.length === 0) {
-    results.innerHTML = '<div class="empty"><strong>Not assigned yet.</strong><span>Pick groups on the left and press Assign.</span></div>';
+    results.innerHTML = '<div class="empty"><strong>Not assigned yet.</strong><span>Pick groups above and press Assign.</span></div>';
     return;
   }
   const today = new Date().toISOString().slice(0, 10);
@@ -1621,7 +1621,7 @@ function renderResults(rows, total) {
           <span>${assignment.deadline ? `Deadline ${escapeHtml(dueText(assignment.deadline))}` : "No deadline"}</span>
           <button class="button ghost small" type="button" data-unassign="${assignment.assignmentId}">Unassign group</button>
         </div>
-        ${assignment.members.length ? `<table class="results-table">
+        ${assignment.members.length ? `<div class="results-scroll" role="region" aria-label="Student progress for ${escapeHtml(assignment.groupName)}" tabindex="0"><table class="results-table">
           <thead><tr><th>Student</th><th>Status</th><th>Best</th><th>Submissions</th><th>Deadline</th></tr></thead>
           <tbody>${assignment.members.map((row) => {
             const status = STUDENT_STATUS[row.status];
@@ -1636,7 +1636,7 @@ function renderResults(rows, total) {
                 <td class="${overdue ? "overdue" : ""}">${dueText(assignment.deadline)}${overdue ? "<small>Overdue</small>" : ""}</td>
               </tr>`;
           }).join("")}</tbody>
-        </table>` : '<p class="field-hint">This group has no students.</p>'}
+        </table></div>` : '<p class="field-hint">This group has no students.</p>'}
       </section>`)
     .join("");
 }
