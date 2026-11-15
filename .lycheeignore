@@ -1,2 +1,6 @@
 .*static.*bugs/styles\.css.*
 https://www\.codewars\.com/kata\?tags=Debugging
+# Django resolves these template expressions at runtime; they are not file links.
+.*app/v2/debug_gym/.*%7B%%20static%20'css/main\.css'%20%%7D.*
+.*app/v2/debug_gym/.*%7B%%20url%20'accounts:(login|logout)'%20%%7D.*
+.*app/v2/debug_gym/.*%7B%7B%20(home_url|password_reset_url|register_url)%20%7D%7D.*
