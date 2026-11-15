@@ -1,1 +1,18 @@
 <!-- [Student Dev] Student dashboard with my groups, pending assignments and recent grades -->
+{% extends "base.html" %}
+
+{% block title %}Student dashboard · Debug Gym{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student</p>
+    <h1>My debugging practice</h1>
+  </div>
+</header>
+<p class="lede">Your accessible exercises and assignments will appear here.</p>
+<section class="card">
+  <h2 class="card-title">Next step</h2>
+  <p class="text-muted">Exercises and assignments are not available in this baseline yet.</p>
+</section>
+{% endblock %}
