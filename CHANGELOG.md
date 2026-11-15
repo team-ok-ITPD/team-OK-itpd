@@ -35,6 +35,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Successful registration and sign-in now open the learner or professor workspace
+  instead of reporting a false server-reachability error.
 - The teacher's student progress table fits its card and scrolls horizontally
   within the card on narrow screens.
 

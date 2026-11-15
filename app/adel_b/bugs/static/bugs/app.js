@@ -1233,7 +1233,6 @@ function setUser(user) {
 }
 
 function resetUserState() {
-  clearTimeout(saveTimer);
   // Nothing from the previous account stays in the page, even hidden.
   for (const selector of ["#assignment-list", "#teach-list", "#results", "#student-list", "#history"]) {
     $(selector).innerHTML = "";
