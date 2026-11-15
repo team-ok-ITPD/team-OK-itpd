@@ -6,8 +6,16 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.4.0) - 2026-11-15
+
 ### Added
 
+- The `UT-01` usability test is designed, with its surveys, consent template,
+  session template and the `QR-07` interaction-capability requirement; no
+  usability result exists yet.
+- Operators can set `DEBUG_GYM_ANALYTICS_SOURCE=usability-test` on staging so
+  that analytics events from a usability session are marked and excluded from
+  product metrics; production keeps `web`.
 - The product records an analytics event for each core-task step, with a random
   learner identifier and no personal data, when an analytics backend is
   configured.

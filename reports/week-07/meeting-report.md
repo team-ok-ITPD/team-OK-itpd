@@ -8,6 +8,7 @@
   assignment management; bug creation and selection; the VS Code workflow;
   student dashboards; submission review and result concepts
 - **Script:** [meeting-script.md](../week-07/meeting-script.md)
+- **UT-01 design review:** not held at this meeting. The agenda covered roles, the teacher-to-student workflow, VS Code and AI, submission review and architecture. The `UT-01` design was not shown, no `DEC-nnn` records feedback on it, and the Week 8 plan and results date were not agreed with the Customer. The team action below and the report's Deviations carry this forward.
 
 ## Previous action points
 
@@ -60,10 +61,11 @@
 
 | Action | Owner | Due |
 | --- | --- | --- |
-| Update the role, group-assignment and teacher-results stories and requirements to reflect DEC-039 and DEC-040; add the corresponding traceability links. | [Assign GitHub username] | End of Week 8 |
-| Specify the post-deadline suspicious-submission review scenario, including initiation, flagged-result review and false-positive handling, without assuming an unapproved provider or cost model. | [Assign GitHub username] | End of Week 8 |
-| Propose the teacher-facing configuration for tools in the student container and identify the container changes it requires. | [Assign GitHub username] | End of Week 8 |
-| Define a first CSV export schema for assignment results and check its suitability for the intended grading workflow. | [Assign GitHub username] | End of Week 9 |
+| Update the role, group-assignment and teacher-results stories and requirements to reflect DEC-039 and DEC-040; add the corresponding traceability links. | @adelazzi | End of Week 8 |
+| Specify the post-deadline suspicious-submission review scenario, including initiation, flagged-result review and false-positive handling, without assuming an unapproved provider or cost model. | @UTKANOS-RIBA | End of Week 8 |
+| Propose the teacher-facing configuration for tools in the student container and identify the container changes it requires. | @qwxiae | End of Week 8 |
+| Define a first CSV export schema for assignment results and check its suitability for the intended grading workflow. | @Danashi11 | End of Week 9 |
+| Team action added after the meeting: present the `UT-01` design (record, surveys, tasks, instrumentation, consent, private repository, recordings folder, session plan and `QR-07`) to the Customer, check that its main task still matches the core workflow of `DEC-040`, and agree the session plan and the results date. | @adelazzi | Week 8 |
 
 ## Open questions
 

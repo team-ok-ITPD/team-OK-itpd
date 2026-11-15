@@ -12,6 +12,8 @@ This repository is a work in progress for the ITPD course. It captures the proje
 
 ## Current Report
 
+- [Week 7: Usability Test Design and the Week 7 Release](reports/week-07/README.md)
+- [Week 6: Product Analytics and Observability](reports/week-06/README.md)
 - [Week 3: Planning and the Minimum Usable Product](reports/week-03/README.md)
 - [Week 2: Requirements and Prototyping](reports/week-02/README.md)
 - [Week 1: Research and Kickoff](reports/week-01/README.md)
