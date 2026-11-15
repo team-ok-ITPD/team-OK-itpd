@@ -23,6 +23,7 @@ The current minimum usable product contains one curated list-mutation exercise.
 
 ## Requirements and architecture
 
+- [Roles and access](roles-and-access.md)
 - [Functional requirements](functional-requirements/README.md)
 - [Quality requirements and priorities](quality-requirements/README.md)
 - [Architecture and decisions](architecture/README.md)

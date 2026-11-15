@@ -8,6 +8,7 @@ urlpatterns = [
     path("health", views.health, name="health"),
     path("api/bugs/", views.bug_list, name="bug-list"),
     path("api/bugs/<slug:slug>/", views.bug_detail, name="bug-detail"),
+    path("api/bugs/<slug:slug>/progress/", views.bug_progress, name="bug-progress"),
     path("api/bugs/<slug:slug>/draft/", views.bug_draft, name="bug-draft"),
     path("api/bugs/<slug:slug>/attempts/", views.bug_attempts, name="bug-attempts"),
     path("api/bugs/<slug:slug>/tests/<int:index>/", views.bug_test, name="bug-test"),
