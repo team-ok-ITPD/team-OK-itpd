@@ -1,1 +1,19 @@
 <!-- [Shared] Role-based navigation bar -->
+{% if user.is_authenticated %}
+  {% if user.is_admin %}
+    {% url "admin_panel:dashboard" as dashboard_url %}
+    {% with dashboard_label="Administration" %}
+      {% include "components/navbar_links.html" %}
+    {% endwith %}
+  {% elif user.is_professor %}
+    {% url "professor:dashboard" as dashboard_url %}
+    {% with dashboard_label="Teaching workspace" %}
+      {% include "components/navbar_links.html" %}
+    {% endwith %}
+  {% elif user.is_student %}
+    {% url "student:dashboard" as dashboard_url %}
+    {% with dashboard_label="My practice" %}
+      {% include "components/navbar_links.html" %}
+    {% endwith %}
+  {% endif %}
+{% endif %}

@@ -66,6 +66,15 @@ class LoginTests(TestCase):
         self.client.force_login(self.student)
         self.assertEqual(self.client.get("/professor/").status_code, 403)
 
+    def test_student_navigation_has_only_the_student_dashboard(self):
+        self.client.force_login(self.student)
+        response = self.client.get("/student/")
+        self.assertContains(response, 'href="/student/"')
+        self.assertContains(response, "My practice")
+        self.assertContains(response, "Sign out")
+        self.assertNotContains(response, 'href="/professor/"')
+        self.assertNotContains(response, 'href="/admin-panel/"')
+
     def test_safe_next_link_is_followed(self):
         response = self.login(next="/django-admin/")
         self.assertEqual(response["Location"], "/django-admin/")

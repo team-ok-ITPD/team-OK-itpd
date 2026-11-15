@@ -1,0 +1,13 @@
+<!-- [Shared] Authenticated navigation links for one product role -->
+<nav class="site-nav" aria-label="Primary navigation">
+  <div class="site-nav-inner">
+    <a class="brand" href="{{ dashboard_url }}">Debug Gym</a>
+    <div class="site-nav-actions">
+      <a class="button ghost small" href="{{ dashboard_url }}">{{ dashboard_label }}</a>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="button ghost small" type="submit">Sign out</button>
+      </form>
+    </div>
+  </div>
+</nav>
