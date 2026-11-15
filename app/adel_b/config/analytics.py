@@ -115,7 +115,7 @@ def _ensure_worker():
             _worker.start()
 
 
-def emit(name, user, *, source="web", **fields):
+def emit(name, user, *, source=None, **fields):
     """Queue one event for delivery; return whether it was queued.
 
     Returns False without raising when collection is off, the event breaks the
@@ -125,6 +125,7 @@ def emit(name, user, *, source="web", **fields):
         target = _target()
         if target is None:
             return False
+        source = source if source is not None else settings.DEBUG_GYM_ANALYTICS_SOURCE
         event = build_event(name, user, source, **fields)
         _queue.put_nowait((*target, event))
         _ensure_worker()

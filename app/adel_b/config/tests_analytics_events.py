@@ -158,6 +158,15 @@ class EndToEndEventTests(TestCase):
         self.assertEqual(event["learner_id"], analytics.learner_id(self.user))
         self.assertNotIn(self.user.email, str(event))
 
+    @override_settings(DEBUG_GYM_ANALYTICS_SOURCE="usability-test")
+    @patch("config.analytics._ensure_worker")
+    def test_a_view_uses_the_staging_usability_source(self, _worker):
+        while not analytics._queue.empty():
+            analytics._queue.get_nowait()
+        self.assertEqual(self.client.get("/api/bugs/remove-negatives/").status_code, 200)
+        _url, _key, event = analytics._queue.get_nowait()
+        self.assertEqual(event["source"], "usability-test")
+
     @patch("config.analytics._post", side_effect=OSError("backend down"))
     def test_a_dead_backend_does_not_break_the_request(self, _post):
         with self.assertLogs("debug_gym.analytics", "WARNING"):
@@ -199,12 +208,12 @@ class SmokeScriptTests(TestCase):
         send.assert_not_called()
 
 
-class MetricQueriesExcludeSmokeTests(TestCase):
-    def test_every_query_in_the_analytics_plan_excludes_smoke_events(self):
+class MetricQueriesExcludeTestTrafficTests(TestCase):
+    def test_every_query_in_the_analytics_plan_selects_only_product_traffic(self):
         plan = REPO / "docs" / "analytics.md"
         if not plan.exists():
             self.skipTest("docs/analytics.md is not part of this checkout")
         queries = re.findall(r"```sql\n(.*?)```", plan.read_text(encoding="utf-8"), re.S)
         self.assertTrue(queries, "the plan has no SQL queries to check")
         for query in queries:
-            self.assertRegex(query, r"source\s*(=\s*'web'|(<>|!=)\s*'smoke')", query[:60])
+            self.assertRegex(query, r"source\s*=\s*'web'", query[:60])

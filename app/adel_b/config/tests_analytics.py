@@ -101,6 +101,19 @@ class EmitTests(TestCase):
         self.assertIs(event["all_passed"], True)
         self.assertEqual(event["learner_id"], analytics.learner_id(self.user))
 
+    @override_settings(DEBUG_GYM_ANALYTICS_SOURCE="usability-test")
+    def test_configured_usability_source_is_used_when_the_caller_does_not_set_one(self):
+        with patch.object(analytics, "_post") as post:
+            self.assertTrue(analytics.emit("exercise_searched", self.user, result_count=1))
+            analytics.flush()
+
+        self.assertEqual(post.call_args.args[2]["source"], "usability-test")
+
+    @override_settings(DEBUG_GYM_ANALYTICS_SOURCE="invalid")
+    def test_invalid_configured_source_does_not_record_an_event(self):
+        with self.assertLogs("debug_gym.analytics", level="WARNING"):
+            self.assertFalse(analytics.emit("exercise_searched", self.user, result_count=1))
+
     def test_the_post_is_json_with_a_bearer_key_and_a_timeout(self):
         event = {"name": "exercise_searched", "result_count": 1}
         with patch("config.analytics.urllib.request.urlopen") as urlopen:

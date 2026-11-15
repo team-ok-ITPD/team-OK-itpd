@@ -63,6 +63,8 @@ DEBUG_GYM_METRICS_TOKEN = os.getenv("DEBUG_GYM_METRICS_TOKEN", "")
 # Analytics collection is off unless the backend address is an https URL.
 DEBUG_GYM_ANALYTICS_URL = os.getenv("DEBUG_GYM_ANALYTICS_URL", "")
 DEBUG_GYM_ANALYTICS_KEY = os.getenv("DEBUG_GYM_ANALYTICS_KEY", "")
+# Set to usability-test only for a staging dry run or counted usability session.
+DEBUG_GYM_ANALYTICS_SOURCE = os.getenv("DEBUG_GYM_ANALYTICS_SOURCE", "web")
 
 LOGGING = {
     "version": 1,

@@ -67,7 +67,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id)
       FILTER (WHERE name = 'exercise_opened'), 0) AS solved_per_active_learner
   FROM events
-  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
+  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Attempts per solved exercise
@@ -85,7 +85,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id || ':' || exercise_slug)
       FILTER (WHERE name = 'solution_verified' AND all_passed), 0) AS attempts_per_solve
   FROM events
-  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
+  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Started exercises per active learner per week
@@ -104,7 +104,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id)
       FILTER (WHERE name = 'exercise_opened'), 0) AS started_per_active_learner
   FROM events
-  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
+  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Search match rate
@@ -120,7 +120,7 @@ and says nothing about whether anyone practises.
     / nullif(count(*), 0) AS search_match_rate
   FROM events
   WHERE name = 'exercise_searched'
-    AND source <> 'smoke' AND timestamp >= now() - interval '7 days';
+    AND source = 'web' AND timestamp >= now() - interval '7 days';
   ```
 
 ### Workspace open rate
@@ -139,7 +139,7 @@ and says nothing about whether anyone practises.
     / nullif(count(DISTINCT learner_id || ':' || exercise_slug)
       FILTER (WHERE name = 'exercise_opened'), 0) AS workspace_open_rate
   FROM events
-  WHERE source <> 'smoke' AND timestamp >= now() - interval '7 days';
+  WHERE source = 'web' AND timestamp >= now() - interval '7 days';
   ```
 
 This rate is computed by the query rather than by hand.
@@ -168,10 +168,15 @@ The `exercise catalog` sends each event over HTTPS from a bounded background
 queue to the self-hosted analytics backend ([ADR-006](architecture/adr/ADR-006.md)).
 Collection is off unless `DEBUG_GYM_ANALYTICS_URL` is set, and a failed send
 never affects the learner's request
-([FR-014](functional-requirements/fr/FR-014.md)). The target deployment is one
-OpenPanel instance on the university VM with separate `staging` and `production`
-projects and credentials. Retention is planned for 90 days, which covers every
-seven-day metric window. The backend has not been deployed yet.
+([FR-014](functional-requirements/fr/FR-014.md)).
+`DEBUG_GYM_ANALYTICS_SOURCE` defaults to `web`; staging sets it to
+`usability-test` only for a scheduled dry run or usability session, then returns
+it to `web`. Production always uses `web`. Product metrics select only
+`source = 'web'`, so neither smoke nor usability-test traffic changes them. The
+target deployment is one OpenPanel instance on the university VM with separate
+`staging` and `production` projects and credentials. Retention is planned for
+90 days, which covers every seven-day metric window. The backend has not been
+deployed yet.
 
 The steps and configuration belong to the
 [telemetry pipeline runbook](deployment.md#telemetry-pipelines); `.env.example`

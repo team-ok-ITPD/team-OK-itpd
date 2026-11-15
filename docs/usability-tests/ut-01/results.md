@@ -1,6 +1,6 @@
 # UT-01 Results
 
-> Pending: do not add findings or claim results in the Week 7 report. Complete this file with the Week 8 results submission.
+> Pending: no counted-session result or finding is claimed before SPRINT-08 analysis.
 
 ## Results Table
 
@@ -8,7 +8,13 @@ _To be completed after the counted sessions._
 
 ## Findings
 
-_No findings recorded yet._
+### Finding 1
+
+- **Severity:** Pending
+- **Tasks:** Pending
+- **Evidence:** Pending
+- **Recommendation:** Pending
+- **Task issue:** Pending
 
 ## Limitations
 

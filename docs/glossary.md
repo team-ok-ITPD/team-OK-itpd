@@ -95,3 +95,18 @@ See the [observability plan](observability.md) for the signals and their queries
 | Instrumentation | The product code that emits an event or a signal. |
 | Analytics backend | The self-hosted system that receives the product's events and serves their dashboards. The team deploys it and does not build it. |
 | Dashboard | A page of charts in a telemetry backend, each running the query recorded in the plan. |
+
+## Usability Testing
+
+| Term | Meaning in Debug GYM |
+| --- | --- |
+| Usability test | A planned study in which representative people attempt realistic product tasks while the team records predefined measures. |
+| Participant | An eligible adult who consents to a counted usability session; their identity is private and represented publicly only by a `P-nn` code. |
+| Usability session | One consented, recorded execution of the UT-01 protocol by one participant. |
+| Consent | A participant's durable agreement to the session's recording, private handling and sanitized public results, with a withdrawal path. |
+| Recording | Private screen/audio evidence of a consented session, deleted after course grading. |
+| Measure | A directly recorded observation, such as a task's SEQ answer or time on task. |
+| Metric | A defined quantitative value derived from measures, such as median main-task SEQ. |
+| Statistic | A numerical summary calculated from the collected sample, such as a median or mean. |
+| SUS | System Usability Scale: the prescribed ten-item, five-point post-test questionnaire and score. |
+| SEQ | Single Ease Question: the seven-point ease rating asked after each task. |
