@@ -506,7 +506,6 @@ browser code editor and debug controls.
 - **Why:** VS Code is the editing and debugging environment, but learners still
   need to see their current verification state when they return to the product.
 
-
 ## DEC-039
 
 Keep assignment creation and editing in the professor workflow; administrators
