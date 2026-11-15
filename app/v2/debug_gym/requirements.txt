@@ -1,0 +1,2 @@
+# [Backend Dev] Python dependencies required to run Debug Gym
+Django>=5.2,<6.0

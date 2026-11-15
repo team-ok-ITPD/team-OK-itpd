@@ -1,0 +1,142 @@
+<!-- [Shared] Style preview: every shared component, built from main.css. Open /static/style-preview.html
+     The inline styles here only display tokens; real pages must not use inline styles. -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Debug Gym | Style preview</title>
+    <link rel="stylesheet" href="css/main.css">
+  </head>
+  <body>
+    <main class="container stack">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Shared / Style preview</p>
+          <h1>Debug Gym style</h1>
+        </div>
+        <a class="brand" href="#"><span class="brand-mark">DG</span>Debug Gym</a>
+      </header>
+      <p class="lede">Every shared component in one place. Rules and tokens: docs/style-guide.md.</p>
+
+      <section class="card">
+        <h2 class="card-title">Colours</h2>
+        <div class="grid-cards" id="swatches"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Text sizes</h2>
+        <p style="font-size: var(--text-2xl)">--text-2xl · Page title</p>
+        <p style="font-size: var(--text-xl)">--text-xl · Stat numbers</p>
+        <p style="font-size: var(--text-lg)">--text-lg · Card titles</p>
+        <p style="font-size: var(--text-md)">--text-md · Body text</p>
+        <p style="font-size: var(--text-sm)">--text-sm · Secondary text, labels</p>
+        <p style="font-size: var(--text-xs)">--text-xs · Badges, hints, table headers</p>
+        <p style="font-size: var(--text-2xs)">--text-2xs · Small badges</p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Buttons</h2>
+        <div class="row">
+          <button class="button primary">Primary</button>
+          <button class="button secondary">Secondary</button>
+          <button class="button ghost">Ghost</button>
+          <button class="button danger">Danger</button>
+          <button class="button brand">Brand</button>
+          <button class="button primary small">Small</button>
+          <button class="button primary" disabled>Disabled</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Badges</h2>
+        <div class="row">
+          <span class="badge">Todo</span>
+          <span class="badge warning">Submitted</span>
+          <span class="badge success">Graded</span>
+          <span class="badge danger">Overdue</span>
+          <span class="badge accent">Public</span>
+          <span class="badge small">Python</span>
+        </div>
+      </section>
+
+      <div class="grid-cards">
+        <div class="card stat"><span class="stat-value">128</span><span class="stat-label">Students</span></div>
+        <div class="card stat"><span class="stat-value">12</span><span class="stat-label">Groups</span></div>
+        <div class="card stat"><span class="stat-value">34</span><span class="stat-label">Bugs</span></div>
+        <div class="card stat"><span class="stat-value">9</span><span class="stat-label">Active assignments</span></div>
+      </div>
+
+      <section class="card">
+        <h2 class="card-title">Alerts</h2>
+        <p class="alert success">Assignment created.</p>
+        <p class="alert error">The deadline has passed; submissions are closed.</p>
+        <p class="alert warning">Due tomorrow at 23:59.</p>
+        <p class="alert info">Practice bugs are not graded.</p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Form</h2>
+        <form class="form" onsubmit="return false">
+          <label class="field">
+            Email
+            <input type="email" value="student@example.com">
+            <small class="field-hint">Use your university email.</small>
+          </label>
+          <label class="field has-error">
+            Password
+            <input type="password" aria-invalid="true">
+            <small class="field-error">This password is too short.</small>
+          </label>
+          <label class="field">
+            Difficulty
+            <select><option>Easy</option><option>Medium</option><option>Hard</option></select>
+          </label>
+          <label class="field">
+            Description
+            <textarea rows="3">What should the function do?</textarea>
+          </label>
+          <div class="row"><button class="button primary">Save</button><button class="button ghost" type="button">Cancel</button></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Table</h2>
+        <table class="table">
+          <thead><tr><th>Student</th><th>Status</th><th>Grade</th><th>Submitted</th></tr></thead>
+          <tbody>
+            <tr><td>Ali</td><td><span class="badge small success">Graded</span></td><td>9.5</td><td class="text-subtle">Nov 14, 18:20</td></tr>
+            <tr><td>Maria</td><td><span class="badge small warning">Submitted</span></td><td>—</td><td class="text-subtle">Nov 15, 09:02</td></tr>
+            <tr><td>Omar</td><td><span class="badge small danger">Overdue</span></td><td>—</td><td class="text-subtle">—</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Code</h2>
+        <pre class="code"><span class="tok-keyword">def</span> <span class="tok-function">remove_negatives</span>(numbers):
+    <span class="tok-comment"># Bug: removing while iterating skips items</span>
+    <span class="tok-keyword">for</span> number <span class="tok-keyword">in</span> numbers:
+        <span class="tok-keyword">if</span> number &lt; <span class="tok-number">0</span>:
+            numbers.remove(number)
+    <span class="tok-keyword">return</span> <span class="tok-builtin">list</span>(numbers)  <span class="tok-comment"># "done"</span></pre>
+      </section>
+
+      <div class="empty"><strong>No assignments yet.</strong><span>Create one from a bug in your library.</span></div>
+    </main>
+
+    <script>
+      // Draw a swatch for each colour token, reading the values from tokens.css.
+      const names = ["bg", "surface", "surface-2", "surface-3", "border", "border-soft", "text", "text-muted",
+        "text-subtle", "accent", "accent-strong", "accent-2", "link", "success", "danger", "warning"];
+      const styles = getComputedStyle(document.documentElement);
+      document.querySelector("#swatches").innerHTML = names
+        .map((name) => `
+          <div class="stat">
+            <span style="background: var(--color-${name}); border: 1px solid var(--color-border); border-radius: var(--radius-sm); height: 2.5rem"></span>
+            <span class="text-subtle">--color-${name}<br><code>${styles.getPropertyValue(`--color-${name}`).trim()}</code></span>
+          </div>`)
+        .join("");
+    </script>
+  </body>
+</html>

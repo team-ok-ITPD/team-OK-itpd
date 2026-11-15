@@ -1,0 +1,119 @@
+/* [Shared] Design tokens: every colour, text size, spacing, radius and shadow of Debug Gym.
+   This is the only file that may contain raw colour or size values.
+   Everything else uses var(--token). See docs/style-guide.md. */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: page background, then raised layers */
+  --color-bg: #0b0f17;
+  --color-surface: #111827;
+  --color-surface-2: #1f2937;
+  --color-surface-3: #273244;
+
+  /* Borders */
+  --color-border: #374151;
+  --color-border-soft: #263041;
+
+  /* Text */
+  --color-text: #f9fafb;
+  --color-text-muted: #9ca3af;
+  --color-text-subtle: #6b7280;
+  --color-on-accent: #ffffff;
+
+  /* Brand */
+  --color-accent: #6366f1;
+  --color-accent-strong: #4f46e5;
+  --color-accent-2: #8b5cf6;
+  --color-accent-soft: rgb(99 102 241 / 14%);
+  --color-accent-border: rgb(99 102 241 / 35%);
+  --color-accent-text: #c7d2fe;
+  --color-link: #a5b4fc;
+  --gradient-brand: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+
+  /* Status: solid, soft background, border, readable text on dark */
+  --color-success: #10b981;
+  --color-success-soft: rgb(16 185 129 / 12%);
+  --color-success-border: rgb(16 185 129 / 35%);
+  --color-success-text: #6ee7b7;
+
+  --color-danger: #ef4444;
+  --color-danger-soft: rgb(239 68 68 / 12%);
+  --color-danger-border: rgb(239 68 68 / 35%);
+  --color-danger-text: #fca5a5;
+
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgb(245 158 11 / 12%);
+  --color-warning-border: rgb(245 158 11 / 35%);
+  --color-warning-text: #fcd34d;
+
+  /* Difficulty ladder (LeetCode-style): reuse the status colours */
+  --color-easy: var(--color-success-text);
+  --color-medium: var(--color-warning-text);
+  --color-hard: var(--color-danger-text);
+
+  /* Atmosphere: hero backgrounds, glass panels, gradient headings */
+  --color-surface-glass: rgb(17 24 39 / 72%);
+  --color-grid-line: rgb(148 163 184 / 6%);
+  --glow-accent: radial-gradient(circle at 15% 20%, rgb(99 102 241 / 28%), transparent 55%);
+  --glow-accent-2: radial-gradient(circle at 85% 85%, rgb(139 92 246 / 22%), transparent 50%);
+  --gradient-text: linear-gradient(90deg, #a5b4fc, #c4b5fd 45%, #67e8f9);
+  --grid-size: 32px;
+
+  /* Code syntax colours */
+  --code-keyword: #c4b5fd;
+  --code-builtin: #67e8f9;
+  --code-function: #93c5fd;
+  --code-number: #fdba74;
+  --code-string: #86efac;
+  --code-comment: var(--color-text-subtle);
+
+  /* Typography */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  --font-size-root: 15px;
+
+  --text-2xs: 0.7rem;    /* small badges, tiny labels */
+  --text-xs: 0.78rem;    /* badges, table headers, eyebrows */
+  --text-sm: 0.85rem;    /* secondary text, form labels, hints, small buttons */
+  --text-md: 1rem;       /* body text */
+  --text-lg: 1.1rem;     /* card and section titles */
+  --text-xl: 1.5rem;     /* large headings, stat numbers */
+  --text-2xl: clamp(1.6rem, 3vw, 2.1rem); /* page title (h1) */
+  --text-display: clamp(2.2rem, 4.5vw, 3.4rem); /* hero headline, landing and login only */
+
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 800; /* hero headline only */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-code: 1.7;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.08em;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* Shape and depth */
+  --radius-sm: 0.5rem;
+  --radius: 0.75rem;
+  --radius-pill: 999px;
+  --shadow-accent: 0 8px 24px rgb(79 70 229 / 30%);
+  --shadow-overlay: 0 16px 40px rgb(0 0 0 / 45%);
+  --transition-fast: 120ms;
+
+  /* Layout */
+  --sidebar-width: 17rem;
+  --content-max: 76rem;
+  --content-narrow: 42rem;
+  --control-height: 2.5rem;
+}
