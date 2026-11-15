@@ -53,6 +53,7 @@ The current configuration is:
 | `DEBUG_GYM_METRICS_TOKEN` | empty | Bearer token for the metrics endpoint described in [Observability](observability.md). Empty keeps the endpoint off (404). |
 | `DEBUG_GYM_ANALYTICS_URL` | empty | `https://` address of the analytics backend. Empty, or an address that is not `https://`, turns event collection off. |
 | `DEBUG_GYM_ANALYTICS_KEY` | empty | Key sent as a bearer token with each analytics event. |
+| `DEBUG_GYM_ANALYTICS_SOURCE` | `web` | Event source. Keep `web` for normal local and production use; set `usability-test` only on staging during an approved dry run or usability session, then restore `web`. |
 
 The three telemetry variables stay empty on a local run. No API key is required for the prepared exercise. Keep `.env` local; it is
 ignored by Git. If port 3000 is occupied, stop the conflicting service before

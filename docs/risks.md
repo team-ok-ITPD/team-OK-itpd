@@ -6,6 +6,58 @@
 | [RISK-02](#risk-02) | Open | High | Medium | The browser IDE depends on Docker images and extension downloads, so an unavailable dependency may prevent the environment from starting, which would block the core task. |
 | [RISK-03](#risk-03) | Open | High | Medium | Learner code runs in a shared service without a settled isolation architecture, so unsafe code may affect other users or infrastructure, which would prevent a public pilot. |
 | [RISK-04](#risk-04) | Open | Medium | High | The draft threshold has not been reviewed by the Customer, so its measures may not reflect Customer priorities, which would make progress evidence irrelevant. |
+| [RISK-05](#risk-05) | Open | High | Medium | The team may not recruit three representative adults in time for UT-01. |
+| [RISK-06](#risk-06) | Open | High | Medium | A participant may withdraw or refuse recording, leaving a session unusable. |
+| [RISK-07](#risk-07) | Open | High | Medium | Instructors may not be able to access private usability evidence. |
+| [RISK-08](#risk-08) | Open | High | Medium | Staging or session scheduling may prevent UT-01 from finishing in SPRINT-08. |
+
+## RISK-05
+
+The team may not recruit three representative adults in time for UT-01.
+
+- **Status:** Open
+- **Impact:** High
+- **Likelihood:** Medium
+- **Trigger:** fewer than three eligible, consented sessions are arranged.
+- **Window:** [SPRINT-07](project-plan.md#sprint-07) to [SPRINT-08](project-plan.md#sprint-08).
+- **Mitigation:** recruit five eligible adults through the documented profile and arrange replacements early.
+- **Contingency:** recruit replacements; if three remain unavailable, keep QR-07 `Not verified` or move it to SPRINT-09, declare the shortfall and claim no result.
+
+## RISK-06
+
+A participant may withdraw or refuse recording, leaving a session unusable.
+
+- **Status:** Open
+- **Impact:** High
+- **Likelihood:** Medium
+- **Trigger:** consent, recording permission or continued participation is withdrawn.
+- **Window:** every UT-01 session.
+- **Mitigation:** explain consent and withdrawal before recording and confirm it at session start.
+- **Contingency:** do not count the session, remove its raw text and recording, retire the code and recruit a replacement under the next code.
+
+## RISK-07
+
+Instructors may not be able to access private usability evidence.
+
+- **Status:** Open
+- **Impact:** High
+- **Likelihood:** Medium
+- **Trigger:** an instructor cannot open the private repository or recordings folder.
+- **Window:** before the first counted session through grading.
+- **Mitigation:** grant team and instructor reader access before collecting data and check it before sessions.
+- **Contingency:** recreate access with the team and instructors; if GitHub access is unavailable, provide private text through a Moodle-only archive and declare the deviation.
+
+## RISK-08
+
+Staging or session scheduling may prevent UT-01 from finishing in SPRINT-08.
+
+- **Status:** Open
+- **Impact:** High
+- **Likelihood:** Medium
+- **Trigger:** staging is unavailable, instrumentation is unverified or sessions cannot finish by the sprint end.
+- **Window:** SPRINT-07 through SPRINT-08.
+- **Mitigation:** verify staging and instrumentation before the first counted session and schedule sessions early.
+- **Contingency:** move the QR-07 row to SPRINT-09 with a reason, declare it in the report and claim no result.
 
 ## RISK-01
 

@@ -1,5 +1,7 @@
 .*static.*bugs/styles\.css.*
 https://www\.codewars\.com/kata\?tags=Debugging
+# Private usability-data repository; checking it needs authenticated course access.
+https://github\.com/team-ok-ITPD/team-OK-itpd-usability-data
 # Django resolves these template expressions at runtime; they are not file links.
 .*app/v2/debug_gym/.*%7B%%20static%20'css/main\.css'%20%%7D.*
 .*app/v2/debug_gym/.*%7B%%20url%20'accounts:(login|logout)'%20%%7D.*

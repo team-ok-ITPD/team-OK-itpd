@@ -106,17 +106,22 @@ Not released. The final production deployment, four dashboards and
 
 ### SPRINT-07
 
-Provisional: learners can choose from a small verified library of Python bug categories.
+Design UT-01, implement its staging-only telemetry marking, and prepare the
+private evidence and recruitment work needed to run counted sessions in SPRINT-08.
 
-- **Due:** 2026-11-14
+- **Due:** 2026-11-15
+- **Sprint Backlog:** [the issues scheduled into SPRINT-07](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/4)
+- **Planned Velocity:** 0; the currently scheduled work is task work.
+- **Actual Velocity:** Pending sprint close.
 
 #### REL-07
 
 ### SPRINT-08
 
-Provisional: the core workflow is reliable, safe, and supported by pilot evidence.
+Run UT-01 sessions, publish sanitized results and triage findings while settling QR-07.
 
 - **Due:** 2026-11-21
+- **Sprint Backlog:** [the issues scheduled into SPRINT-08](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/1)
 
 #### REL-08
 
@@ -136,6 +141,7 @@ Provisional: the release candidate meets the agreed threshold measures available
 | [QR-02](quality-requirements/qr/QR-02.md) | [QR-02 QRT-01](quality-requirements/qr/QR-02.md#qrt-01) | Not verified | None    | [SPRINT-07](#sprint-07) | None     |
 | [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
 | [QR-06](quality-requirements/qr/QR-06.md) | [QR-06 QRT-01](quality-requirements/qr/QR-06.md#qrt-01) | Not verified | None | [SPRINT-07](#sprint-07) | University VM and staging OpenObserve organization unavailable in SPRINT-06 |
+| [QR-07](quality-requirements/qr/QR-07.md) | [QR-07 QRT-01](quality-requirements/qr/QR-07.md#qrt-01) | Not verified | None | [SPRINT-08](#sprint-08) | None |
 
 ## Progress Monitoring
 
