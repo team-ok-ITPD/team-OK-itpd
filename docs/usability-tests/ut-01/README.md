@@ -22,7 +22,9 @@ This test serves [QR-07](../../quality-requirements/qr/QR-07.md). Its manual tes
 
 Recruit five, with at least three completed and countable sessions, of adults aged 18 or older who are not team members, the Customer, instructors or course staff. Each participant must be a learner who has used Python coursework or comparable programming exercises, may have limited debugging-tool experience, and uses a university-network laptop browser. A classmate is eligible only when they meet this profile. Assign `P-01`, `P-02` and onward in arrangement order; a withdrawn, unrecorded or broken session is not counted and its replacement receives the next free code.
 
-The team will recruit through eligible classmates and university programming-study contacts, screen against this profile, then arrange in-person university-network sessions in SPRINT-08. Exact identities, contact details and dates stay private.
+**Recruitment target:** five participants as the design target and at least three completed, countable sessions as the minimum; fewer than three means QR-07 stays `Not verified` and no result is claimed (see [RISK-05](../../risks.md#risk-05)).
+
+The team will recruit through eligible classmates and university programming-study contacts, screen each candidate against this profile before assigning a code, then arrange in-person university-network sessions in SPRINT-08. Exact identities, contact details and dates stay private.
 
 ## The Tasks
 
@@ -66,7 +68,7 @@ Record each task's outcome, help, time from scenario reading to end state, and t
 
 The staging session reuses `exercise_searched`, `exercise_opened`, `workspace_opened` and `solution_verified` from [the event table](../../analytics.md#the-events). Set `DEBUG_GYM_ANALYTICS_SOURCE=usability-test` only on staging for the recorded UTC session window, then restore `web`; never use this setting in production. Link events to a session through that UTC window plus the staging test account's opaque `learner_id`; keep the account-to-`P-nn` mapping and filtered export private. The events go to the staging analytics store and must carry `source=usability-test`.
 
-The observer sheet and surveys are test-only private records. Instrumentation can corroborate search, exercise open, workspace open and server verification; it cannot measure think-aloud, facilitator help, SEQ, SUS, or why a participant struggled. Before the first counted session, a teammate runs Task 1 on staging, confirms the records reach the named store and confirms the UTC window and opaque identifier isolate that run. This verification is planned, not completed.
+The observer sheet and surveys are test-only private records. Instrumentation can corroborate search, exercise open, workspace open and server verification; it cannot measure think-aloud, facilitator help, SEQ, SUS, or why a participant struggled. Before the first counted session, the instrumentation verifier named under [Roles](#roles) runs Task 1 on staging as a teammate, confirms the records reach the named store and confirms the UTC window and opaque identifier isolate that run. The verification is scheduled in SPRINT-08 before the first counted session and is complete by the start of SPRINT-09. It is planned, not completed. Every metric excludes `source=usability-test`, and this test's traffic is never presented as a product value.
 
 ## Analysis Plan
 
@@ -76,14 +78,23 @@ Every finding is triaged. A significant finding produces a SPRINT-08 task issue 
 
 ## Schedule
 
-- **SPRINT-07:** complete design, obtain private-data access, dry run and schedule instrumentation verification.
-- **SPRINT-08:** arrange and run the five-target/three-minimum counted sessions, sanitize notes, analyse results, triage findings and settle QR-07.
+- **SPRINT-07 (design week, due 2026-11-15):** complete the design, create the private repository and recordings folder with instructor access, and start recruitment. No counted session runs in this sprint.
+- **SPRINT-08 (run week, due 2026-11-21):** the team arranges the sessions, runs the instrumentation verification and a dry run before the first counted session, runs the five-target/three-minimum counted sessions, sanitizes notes, analyses results, triages findings and settles QR-07. Results are due with Submission 8 on 2026-11-21 at 23:59.
 
-No counted session, dry run or instrumentation verification is claimed yet.
+**How the sessions are arranged:** the team contacts eligible classmates from 2026-11-16, aims to confirm at least three participants by 2026-11-17 and to run the sessions between 2026-11-18 and 2026-11-20, so the analysis and the sanitized results fit before the deadline. Each session is in person on the university network, against the staging deployment, with the seed reset before it. The team sets the exact dates; they are not fixed in this record and stay private with the participant identities.
+
+All counted sessions are planned for SPRINT-08, so the run sprint is SPRINT-08.
+
+The instrumentation verification and the dry run are scheduled in SPRINT-08 before the first counted session and are complete by the start of SPRINT-09. Because the first counted session is in SPRINT-08, the dry run is not itself the verification; a teammate also runs the separate verification described under [Instrumentation](#instrumentation). The dry run is not evidence and is not counted. No counted session, dry run or instrumentation verification is claimed yet.
 
 ## Roles
 
-Before the first counted session, the team records the GitHub usernames of one facilitator for every session, one observer, and one recordings/raw-notes custodian in the private data repository. They are intentionally unassigned here because no team allocation has been recorded.
+- **Facilitator (runs every counted session):** [@adelazzi](https://github.com/adelazzi)
+- **Observer (records help and friction):** [@Danashi11](https://github.com/Danashi11)
+- **Recordings and raw-notes custodian:** [@UTKANOS-RIBA](https://github.com/UTKANOS-RIBA)
+- **Instrumentation verifier (runs Task 1 as a teammate before the first counted session):** [@qwxiae](https://github.com/qwxiae)
+
+No role is held by a participant. If a member cannot attend a session, the team names the replacement in the private repository before that session, and the facilitator stays the same person within one session.
 
 ## Environment
 

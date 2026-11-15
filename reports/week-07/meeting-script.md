@@ -97,7 +97,7 @@ Target: validate the proposed role-based workflows, agree on the architecture an
 
 ## Roles
 
-Meeting date: To be confirmed.
+Meeting date: 2026-11-13.
 
 Expected participants: `Customer` and `Project team`.
 
