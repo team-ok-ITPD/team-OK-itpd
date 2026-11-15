@@ -75,16 +75,16 @@ The latest tagged candidate is [`v0.4.0`](https://github.com/team-ok-ITPD/team-O
 
 | Member | Evidence |
 | --- | --- |
-| [@adelazzi](https://github.com/adelazzi) | Named facilitator of the `UT-01` sessions in [the record](../../docs/usability-tests/ut-01/README.md#roles); owner of the Week 8 design-presentation action in [the meeting report](meeting-report.md#action-points). |
-| [@Danashi11](https://github.com/Danashi11) | Named observer in [the record](../../docs/usability-tests/ut-01/README.md#roles); owner of the CSV-export schema action in [the meeting report](meeting-report.md#action-points). |
-| [@qwxiae](https://github.com/qwxiae) | Named instrumentation verifier in [the record](../../docs/usability-tests/ut-01/README.md#roles); owner of the tool-configuration action in [the meeting report](meeting-report.md#action-points). |
-| [@UTKANOS-RIBA](https://github.com/UTKANOS-RIBA) | Named recordings and raw-notes custodian in [the record](../../docs/usability-tests/ut-01/README.md#roles); owner of the suspicious-submission review action in [the meeting report](meeting-report.md#action-points). |
+| [@adelazzi](https://github.com/adelazzi) | [Pull requests](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3Aadelazzi), [reviews](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3Aadelazzi), and the named facilitator in [the `UT-01` record](../../docs/usability-tests/ut-01/README.md#roles). |
+| [@Danashi11](https://github.com/Danashi11) | [Pull requests](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3ADanashi11), [reviews](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3ADanashi11), and the named observer in [the `UT-01` record](../../docs/usability-tests/ut-01/README.md#roles). |
+| [@qwxiae](https://github.com/qwxiae) | [Pull requests](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3Aqwxiae), [reviews](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3Aqwxiae), and the named instrumentation verifier in [the `UT-01` record](../../docs/usability-tests/ut-01/README.md#roles). |
+| [@UTKANOS-RIBA](https://github.com/UTKANOS-RIBA) | [Pull requests](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+author%3AUTKANOS-RIBA), [reviews](https://github.com/team-ok-ITPD/team-OK-itpd/pulls?q=is%3Apr+reviewed-by%3AUTKANOS-RIBA), and the named recordings and raw-notes custodian in [the `UT-01` record](../../docs/usability-tests/ut-01/README.md#roles). |
 
-TODO(before submit): add each member's merged pull requests and reviews for this week.
+The `UT-01` design is [PR #165](https://github.com/team-ok-ITPD/team-OK-itpd/pull/165), and the role dashboards are [PR #168](https://github.com/team-ok-ITPD/team-OK-itpd/pull/168).
 
 ## Repository Evidence
 
-TODO(before submit): link the merged pull request that closed a `SPRINT-07` task issue, and the latest green link-check, Markdown-check, `actionlint` and product-code runs on `main`.
+The `UT-01` design was merged through [PR #165](https://github.com/team-ok-ITPD/team-OK-itpd/pull/165) from branch `162-ut-01-design`, which closed task issue [#162](https://github.com/team-ok-ITPD/team-OK-itpd/issues/162). The latest runs on `main` are listed for the [product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/workflows/product.yml?query=branch%3Amain), the [link check](https://github.com/team-ok-ITPD/team-OK-itpd/actions/workflows/lychee.yml?query=branch%3Amain), the [Markdown check](https://github.com/team-ok-ITPD/team-OK-itpd/actions/workflows/markdown.yml?query=branch%3Amain), [actionlint](https://github.com/team-ok-ITPD/team-OK-itpd/actions/workflows/actionlint.yml?query=branch%3Amain) and the [documentation build](https://github.com/team-ok-ITPD/team-OK-itpd/actions/workflows/pages.yml?query=branch%3Amain).
 
 The link check excludes only the private usability-data repository, because opening it needs authenticated course access; the exclusion and its reason are in `.lycheeignore`.
 
