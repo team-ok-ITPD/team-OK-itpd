@@ -27,6 +27,7 @@ nav:
   - Planning:
       - Threshold of success: threshold-of-success.md
       - Project plan: project-plan.md
+      - Configuration plan: configuration-plan.md
       - Risks: risks.md
       - Definition of Done: definition-of-done.md
   - Decisions: decisions.md

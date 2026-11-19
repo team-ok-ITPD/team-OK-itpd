@@ -110,3 +110,96 @@ See the [observability plan](observability.md) for the signals and their queries
 | Statistic | A numerical summary calculated from the collected sample, such as a median or mean. |
 | SUS | System Usability Scale: the prescribed ten-item, five-point post-test questionnaire and score. |
 | SEQ | Single Ease Question: the seven-point ease rating asked after each task. |
+
+## Configuration Management
+
+### Configuration
+
+The maintained files, settings and processes Debug GYM depends on to build,
+check, deliver and explain the repository.
+
+**Defined by:** [the configuration plan](configuration-plan.md).
+
+### Configuration management
+
+The team's practice of maintaining the configuration inventory and keeping it
+accurate when a recorded configuration changes.
+
+**Defined by:** [the configuration plan](configuration-plan.md).
+
+### Configuration review
+
+A goal-based judgement of whether Debug GYM's configuration artifacts are the
+most convenient set for the purposes they serve.
+
+**Defined by:** [the CM evaluation](../reports/week-08/cm-evaluation.md).
+
+### Configuration plan
+
+The maintained public inventory of Debug GYM's configuration items, owners,
+locations and connections.
+
+**Defined by:** [the configuration plan](configuration-plan.md).
+
+### Configuration item
+
+One maintained file, setting, process, dependency or skill that Debug GYM
+depends on to be built, checked, delivered or understood.
+
+**Defined by:** [the configuration plan](configuration-plan.md).
+
+### Configuration evaluation
+
+The Week 8 evidence that records a goal-based review of the configuration at a
+frozen baseline.
+
+**Defined by:** [the CM evaluation](../reports/week-08/cm-evaluation.md).
+
+### Baseline
+
+An identified frozen repository state against which a configuration evaluation
+is made.
+
+**Defined by:** [the CM evaluation](../reports/week-08/cm-evaluation.md).
+
+### Upkeep
+
+The work of keeping a maintained configuration record accurate when the
+repository changes what that record describes.
+
+**Defined by:** [the configuration plan](configuration-plan.md).
+
+### Reproducible build
+
+A Debug GYM build whose documented container and dependency inputs can be
+checked again without silently selecting different versions.
+
+**Defined by:** [CFG-05](configuration-plan.md#cfg-05).
+
+### Dependency pinning
+
+Recording a specific dependency or action revision so a Debug GYM build or CI
+run uses the version the team reviewed.
+
+**Defined by:** [CFG-05](configuration-plan.md#cfg-05).
+
+### Secret
+
+A private configuration value, credential or address that Debug GYM keeps out
+of the public repository and public documentation.
+
+**Defined by:** [CFG-04](configuration-plan.md#cfg-04).
+
+### Context window
+
+The limited repository context an agent can read in one session, which Debug
+GYM's indexes and instructions must make sufficient for a correct change.
+
+**Defined by:** [CFG-06](configuration-plan.md#cfg-06).
+
+### Agent instruction
+
+A repository or subtree `AGENTS.md` rule that directs an AI assistant's work
+within its stated scope.
+
+**Defined by:** [CFG-06](configuration-plan.md#cfg-06).
