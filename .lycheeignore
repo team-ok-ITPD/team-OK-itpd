@@ -1,5 +1,7 @@
 .*static.*bugs/styles\.css.*
 https://www\.codewars\.com/kata\?tags=Debugging
+# The historical candidate's site returns HTTP 402 to automated link checkers.
+https://www\.codritium\.com/
 # Private usability-data repository; checking it needs authenticated course access.
 https://github\.com/team-ok-ITPD/team-OK-itpd-usability-data
 # Django resolves these template expressions at runtime; they are not file links.
