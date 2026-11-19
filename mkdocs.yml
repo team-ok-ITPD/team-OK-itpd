@@ -30,6 +30,7 @@ nav:
       - Risks: risks.md
       - Definition of Done: definition-of-done.md
   - Decisions: decisions.md
+  - Customer questions: customer-questions.md
   - Assumptions: assumptions.md
   - Research:
       - Value proposition: research/value-proposition.md
