@@ -1,1 +1,9 @@
 <!-- [Shared] Role-based navigation bar -->
+{% if request.user.is_authenticated %}
+  <nav class="navbar" aria-label="Primary navigation">
+    <div class="navbar-inner">
+      <a class="navbar-brand" href="{% if request.user.is_admin %}{% url 'admin_panel:dashboard' %}{% elif request.user.is_professor %}{% url 'professor:dashboard' %}{% else %}{% url 'student:dashboard' %}{% endif %}">Debug Gym</a>
+      <div class="navbar-actions"><span class="text-subtle">{{ request.user.name }}</span><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="button small ghost" type="submit">Sign out</button></form></div>
+    </div>
+  </nav>
+{% endif %}

@@ -1,8 +1,19 @@
 # [Admin Dev] URL routes for the admin panel, mounted at /admin-panel/
 from django.urls import path
 
-from .views import DashboardView
+from .views import AssignmentDetailView, AssignmentListView, DashboardView, GroupDetailView, GroupListView, GroupMemberAddView, GroupMemberRemoveView, TeacherCreateView, TeacherListView, TeacherUpdateView
 
 app_name = "admin_panel"
 
-urlpatterns = [path("", DashboardView.as_view(), name="dashboard")]
+urlpatterns = [
+    path("", DashboardView.as_view(), name="dashboard"),
+    path("users/", TeacherListView.as_view(), name="users"),
+    path("users/new/", TeacherCreateView.as_view(), name="user-create"),
+    path("users/<int:pk>/", TeacherUpdateView.as_view(), name="user-edit"),
+    path("groups/", GroupListView.as_view(), name="groups"),
+    path("groups/<int:pk>/", GroupDetailView.as_view(), name="group-detail"),
+    path("groups/<int:pk>/members/", GroupMemberAddView.as_view(), name="group-member-add"),
+    path("groups/<int:pk>/members/<int:student_pk>/remove/", GroupMemberRemoveView.as_view(), name="group-member-remove"),
+    path("assignments/", AssignmentListView.as_view(), name="assignments"),
+    path("assignments/<int:pk>/", AssignmentDetailView.as_view(), name="assignment-detail"),
+]

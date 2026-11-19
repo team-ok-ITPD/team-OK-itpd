@@ -19,6 +19,7 @@ The current minimum usable product contains one curated list-mutation exercise.
 - [Risk register](risks.md)
 - [Definition of Done](definition-of-done.md)
 - [Decisions](decisions.md)
+- [Customer questions](customer-questions.md)
 - [Assumptions](assumptions.md)
 
 ## Requirements and architecture

@@ -1,1 +1,23 @@
-<!-- [Admin Dev] List, filter and search all users -->
+<!-- [Admin Dev] List of administrator-managed teacher accounts -->
+{% extends "base.html" %}
+{% block title %}Teacher accounts · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">Administration</p><h1>Teacher accounts</h1></div>
+  <a class="button primary" href="{% url 'admin_panel:user-create' %}">Create teacher</a>
+</header>
+{% include "admin_panel/components/navigation.html" %}
+<p class="lede">Only administrators can provision, update or deactivate teacher accounts.</p>
+<form class="row admin-search" method="get"><label class="field search-field"><input aria-label="Search teachers" name="q" value="{{ query }}" placeholder="Name or email"></label><button class="button secondary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url 'admin_panel:users' %}">Clear</a>{% endif %}</form>
+{% if teachers %}
+  <section class="card">
+    <table class="table">
+      <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>{% for teacher in teachers %}<tr><td>{{ teacher.name }}</td><td>{{ teacher.email }}</td><td><span class="badge {% if teacher.is_active %}success{% else %}danger{% endif %}">{% if teacher.is_active %}Active{% else %}Inactive{% endif %}</span></td><td><a class="button small secondary" href="{% url 'admin_panel:user-edit' teacher.pk %}">Edit</a></td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+{% else %}
+  <section class="empty">{% if query %}<strong>No teachers match “{{ query }}”.</strong><span>Try another name or email, or clear the search.</span>{% else %}<strong>No teacher accounts yet.</strong><span>Create the first teacher account to begin the teaching workflow.</span><a class="button primary" href="{% url 'admin_panel:user-create' %}">Create teacher</a>{% endif %}</section>
+{% endif %}
+{% include "components/pagination.html" %}
+{% endblock %}
