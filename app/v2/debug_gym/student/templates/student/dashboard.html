@@ -1,18 +1,100 @@
-<!-- [Student Dev] Student dashboard with my groups, pending assignments and recent grades -->
+<!-- [Student Dev] Student dashboard: my groups, pending assignments, recent grades -->
 {% extends "base.html" %}
-
-{% block title %}Student dashboard · Debug Gym{% endblock %}
-
+{% block title %}My dashboard · Debug Gym{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <p class="eyebrow">Student</p>
-    <h1>My debugging practice</h1>
+    <p class="eyebrow">Student / Dashboard</p>
+    <h1>Welcome back, {{ user.name }}</h1>
+  </div>
+  <div class="row">
+    <a class="button secondary" href="{% url 'student:public_bugs' %}">Practice bugs</a>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button class="button ghost" type="submit">Sign out</button>
+    </form>
   </div>
 </header>
-<p class="lede">Your accessible exercises and assignments will appear here.</p>
-<section class="card">
-  <h2 class="card-title">Next step</h2>
-  <p class="text-muted">Exercises and assignments are not available in this baseline yet.</p>
-</section>
+<p class="lede">Your groups, what is due next and your latest grades.</p>
+
+<div class="grid-cards student-stats">
+  <div class="card stat"><span class="stat-value">{{ groups|length }}</span><span class="stat-label">My groups</span></div>
+  <div class="card stat"><span class="stat-value">{{ pending_count }}</span><span class="stat-label">Pending assignments</span></div>
+  <div class="card stat"><span class="stat-value">{{ graded_count }}</span><span class="stat-label">Graded submissions</span></div>
+</div>
+
+<div class="student-dashboard">
+  <section class="card">
+    <div class="row card-heading">
+      <h2 class="card-title">Pending assignments</h2>
+      <a class="button ghost small" href="{% url 'student:assignments_list' %}">All assignments</a>
+    </div>
+    {% if pending %}
+      <table class="table">
+        <thead><tr><th>Assignment</th><th>Bug</th><th>Deadline</th></tr></thead>
+        <tbody>
+          {% for assignment in pending %}
+            <tr>
+              <td><a href="{% url 'student:assignment_detail' assignment.pk %}">{{ assignment.title }}</a></td>
+              <td>
+                {{ assignment.bug.title }}
+                <span class="badge small">{{ assignment.bug.language }}</span>
+                <span class="badge small difficulty-{{ assignment.bug.difficulty }}">{{ assignment.bug.get_difficulty_display }}</span>
+              </td>
+              <td>
+                {{ assignment.deadline|date:"M j, H:i" }}
+                {% if assignment.due_soon %}<span class="badge warning small">Due soon</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if pending_more %}
+        <p class="text-subtle">And {{ pending_more }} more.</p>
+      {% endif %}
+    {% else %}
+      <div class="empty"><strong>Nothing pending.</strong><span>New assignments from your groups will show up here.</span></div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">My groups</h2>
+    {% if groups %}
+      <ul class="student-list">
+        {% for group in groups %}
+          <li>
+            <strong>{{ group.name }}</strong>
+            <span class="text-subtle">{{ group.professor.name }} · {{ group.student_count }} student{{ group.student_count|pluralize }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty"><strong>You are not in a group yet.</strong><span>Ask your professor or an admin to add you.</span></div>
+    {% endif %}
+  </section>
+
+  <section class="card student-grades">
+    <div class="row card-heading">
+      <h2 class="card-title">Recent grades</h2>
+      <a class="button ghost small" href="{% url 'student:results' %}">All results</a>
+    </div>
+    {% if recent_grades %}
+      <table class="table">
+        <thead><tr><th>Assignment</th><th>Grade</th><th>Feedback</th><th>Graded</th></tr></thead>
+        <tbody>
+          {% for submission in recent_grades %}
+            <tr>
+              <td>{% if submission.assignment %}<a href="{% url 'student:assignment_detail' submission.assignment_id %}">{{ submission.assignment.title }}</a>{% else %}Practice · {{ submission.bug.title }}{% endif %}</td>
+              <td><span class="badge success">{{ submission.grade|floatformat|default:"—" }}</span></td>
+              <td class="text-muted">{{ submission.feedback|default:"—"|truncatechars:80 }}</td>
+              <td class="text-subtle">{{ submission.graded_at|date:"M j"|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty"><strong>No grades yet.</strong><span>Grades and feedback appear here once your professor reviews a submission.</span></div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

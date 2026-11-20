@@ -969,3 +969,246 @@ pre {
     visibility: hidden;
   }
 }
+
+/* Page: student/dashboard */
+
+.student-stats {
+  margin-bottom: var(--space-6);
+}
+
+.student-dashboard {
+  align-items: start;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.student-grades {
+  grid-column: 1 / -1;
+}
+
+/* Scroll wide tables inside their card; the table itself stays full width. */
+.student-dashboard .card {
+  overflow-x: auto;
+}
+
+.card-heading {
+  justify-content: space-between;
+}
+
+.student-list {
+  display: grid;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.student-list li {
+  display: grid;
+  gap: var(--space-1);
+}
+
+@media (max-width: 900px) {
+  .student-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Page: student/assignments_list */
+
+.status-tabs {
+  margin-bottom: var(--space-4);
+}
+
+.table-card {
+  overflow-x: auto;
+}
+
+/* Page: student/assignment_detail */
+
+.assignment-layout {
+  align-items: start;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  margin-bottom: var(--space-4);
+}
+
+.prose {
+  color: var(--color-text-muted);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.prose p {
+  margin: 0;
+}
+
+.section-label {
+  color: var(--color-text-subtle);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.meta-list {
+  display: grid;
+  gap: var(--space-2) var(--space-4);
+  grid-template-columns: auto 1fr;
+  margin: 0;
+}
+
+.meta-list dt {
+  color: var(--color-text-subtle);
+  font-size: var(--text-sm);
+}
+
+.meta-list dd {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .assignment-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Page: student/bug_workspace */
+
+.workspace {
+  align-items: start;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+.editor-toolbar {
+  justify-content: space-between;
+}
+
+.editor-toolbar [data-editor-state] {
+  flex: 1;
+}
+
+.editor {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  display: grid;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  grid-template-columns: auto 1fr;
+  line-height: var(--leading-code);
+  min-height: 24rem;
+  overflow: hidden;
+}
+
+.editor:focus-within {
+  border-color: var(--color-accent);
+}
+
+.editor.has-error {
+  border-color: var(--color-danger);
+}
+
+.editor-gutter {
+  border-right: 1px solid var(--color-border-soft);
+  color: var(--color-text-subtle);
+  margin: 0;
+  overflow: hidden;
+  padding: var(--space-3) var(--space-2);
+  text-align: right;
+  user-select: none;
+}
+
+.editor-input {
+  background: transparent;
+  border: 0;
+  font: inherit;
+  line-height: inherit;
+  min-height: 24rem;
+  outline: none;
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+  resize: vertical;
+  tab-size: 4;
+  white-space: pre;
+}
+
+.editor-input[readonly] {
+  color: var(--color-text-muted);
+}
+
+.editor-actions {
+  justify-content: space-between;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared: flash messages above the page content */
+
+.flash-messages {
+  margin-bottom: var(--space-4);
+}
+
+/* Page: student/public_bugs */
+
+.filter-bar {
+  align-items: end;
+  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(9rem, 1fr)) auto;
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Page: student/results */
+
+.results-section {
+  margin-bottom: var(--space-6);
+}
+
+.grade-card {
+  align-items: start;
+  grid-template-columns: 6rem minmax(0, 1fr);
+}
+
+.grade-score {
+  border-right: 1px solid var(--color-border-soft);
+  display: grid;
+  gap: var(--space-1);
+  padding-right: var(--space-4);
+}
+
+.grade-score .stat-value {
+  color: var(--color-success-text);
+}
+
+.grade-body {
+  gap: var(--space-2);
+}
+
+.pager {
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .grade-card {
+    grid-template-columns: 1fr;
+  }
+
+  .grade-score {
+    border-right: 0;
+    padding-right: 0;
+  }
+}

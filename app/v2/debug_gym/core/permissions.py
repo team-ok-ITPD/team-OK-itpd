@@ -1,20 +1,45 @@
 # [Backend Dev] Role decorators and mixins for admin, professor and student access
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from functools import wraps
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 
+from .models import User
 
-class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Allow one explicitly named product role and deny every other role."""
 
-    required_role = None
+def role_required(*roles):
+    """Allow only signed-in users whose role is one of `roles`.
 
-    def test_func(self):
-        return (
-            self.request.user.is_active
-            and self.request.user.role == self.required_role
-        )
+    Signed-out visitors go to the login page (and come back after signing in);
+    a signed-in user with another role gets 403 Forbidden.
+    """
 
-    def handle_no_permission(self):
-        if self.request.user.is_authenticated:
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect_to_login(request.get_full_path())
+            if request.user.role not in roles:
+                raise PermissionDenied
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+admin_required = role_required(User.Role.ADMIN)
+professor_required = role_required(User.Role.PROFESSOR)
+student_required = role_required(User.Role.STUDENT)
+
+
+class RoleRequiredMixin(LoginRequiredMixin):
+    """Class-based view version: set `allowed_roles = [User.Role.STUDENT]`."""
+
+    allowed_roles = ()
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.role not in self.allowed_roles:
             raise PermissionDenied
-        return super().handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)

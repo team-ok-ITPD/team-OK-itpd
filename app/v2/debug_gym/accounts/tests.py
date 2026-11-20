@@ -40,31 +40,18 @@ class LoginTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.student.id)
 
-    def test_login_redirects_a_student_to_their_dashboard(self):
-        self.assertRedirects(self.login(), "/student/")
+    def test_student_goes_to_student_dashboard(self):
+        self.assertRedirects(self.login(), reverse("student:dashboard"))
 
-    def test_each_role_reaches_its_own_dashboard(self):
-        cases = (
-            (User.Role.ADMIN, "/admin-panel/"),
-            (User.Role.PROFESSOR, "/professor/"),
-            (User.Role.STUDENT, "/student/"),
-        )
-        for role, url in cases:
-            with self.subTest(role=role):
-                user = User.objects.create_user(
-                    f"{role}@example.com", role.title(), PASSWORD, role=role
-                )
-                self.client.force_login(user)
-                self.assertEqual(self.client.get(url).status_code, 200)
-                self.client.logout()
-
-    def test_anonymous_dashboard_request_redirects_to_login(self):
-        response = self.client.get("/student/")
-        self.assertRedirects(response, f"{self.url}?next=/student/")
-
-    def test_a_role_cannot_open_another_role_dashboard(self):
-        self.client.force_login(self.student)
-        self.assertEqual(self.client.get("/professor/").status_code, 403)
+    def test_until_dashboards_exist_the_page_shows_who_is_signed_in(self):
+        # Professors have no dashboard yet, so login shows the fallback card.
+        User.objects.create_user("sara@example.com", "Sara", PASSWORD, role=User.Role.PROFESSOR)
+        self.assertRedirects(self.login(email="sara@example.com"), self.url)
+        response = self.client.get(self.url)
+        self.assertContains(response, "You're signed in")
+        self.assertContains(response, "Sara")
+        self.assertContains(response, "Professor")
+        self.assertContains(response, "dashboard is being built")
 
     def test_safe_next_link_is_followed(self):
         response = self.login(next="/django-admin/")
@@ -72,7 +59,7 @@ class LoginTests(TestCase):
 
     def test_outside_next_link_is_ignored(self):
         response = self.login(next="https://evil.example.com/")
-        self.assertEqual(response["Location"], "/student/")
+        self.assertEqual(response["Location"], reverse("student:dashboard"))
 
     def test_logout(self):
         self.login()

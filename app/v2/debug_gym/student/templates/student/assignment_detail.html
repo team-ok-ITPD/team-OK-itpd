@@ -1,1 +1,102 @@
 <!-- [Student Dev] Assignment detail showing the bug description -->
+{% extends "base.html" %}
+{% block title %}{{ assignment.title }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Assignments / Detail</p>
+    <h1>{{ assignment.title }}</h1>
+  </div>
+  <div class="row">
+    <a class="button ghost" href="{% url 'student:assignments_list' %}">All assignments</a>
+    {% if assignment.is_open and assignment.my_status != "graded" %}
+      <a class="button brand" href="{% url 'student:assignment_workspace' assignment.pk %}">
+        {% if assignment.my_submission %}Edit my fix{% else %}Solve this bug{% endif %}
+      </a>
+    {% elif assignment.my_submission %}
+      <a class="button secondary" href="{% url 'student:assignment_workspace' assignment.pk %}">View my code</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if assignment.is_open %}
+  {% if assignment.due_soon %}
+    <p class="alert warning">Due in {{ assignment.deadline|timeuntil }}.</p>
+  {% endif %}
+{% else %}
+  <p class="alert error">This assignment is closed: the deadline was {{ assignment.deadline|date:"M j, Y H:i" }}. New submissions are not accepted.</p>
+{% endif %}
+
+<div class="assignment-layout">
+  <div class="stack">
+    <section class="card">
+      <h2 class="card-title">Instructions</h2>
+      {% if assignment.instructions %}
+        <div class="prose">{{ assignment.instructions|linebreaks }}</div>
+      {% else %}
+        <p class="text-muted">No extra instructions. Find and fix the bug below.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <h2 class="card-title">{{ bug.title }}</h2>
+        <span class="badge small">{{ bug.language }}</span>
+        <span class="badge small difficulty-{{ bug.difficulty }}">{{ bug.get_difficulty_display }}</span>
+      </div>
+      <div class="prose">{{ bug.description|linebreaks }}</div>
+      <h3 class="section-label">Buggy code</h3>
+      <pre class="code"><code>{{ bug.buggy_code }}</code></pre>
+    </section>
+  </div>
+
+  <aside class="stack">
+    <section class="card">
+      <h2 class="card-title">Details</h2>
+      <dl class="meta-list">
+        <dt>Status</dt>
+        <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
+        <dt>Deadline</dt>
+        <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+        <dt>Professor</dt>
+        <dd>{{ assignment.professor.name }}</dd>
+        <dt>My group{{ my_groups|length|pluralize }}</dt>
+        <dd>{{ my_groups|join:", " }}</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">My result</h2>
+      {% with submission=assignment.my_submission %}
+        {% if submission and submission.status == "graded" %}
+          <p class="stat"><span class="stat-value">{{ submission.grade|floatformat }}</span><span class="stat-label">Grade</span></p>
+          <div class="prose">{{ submission.feedback|default:"No feedback given."|linebreaks }}</div>
+        {% elif submission %}
+          <p class="text-muted">Submitted {{ submission.submitted_at|date:"M j, H:i" }}. Waiting for your professor to grade it.</p>
+        {% else %}
+          <div class="empty"><strong>Not submitted yet.</strong><span>Your fix and its grade will appear here.</span></div>
+        {% endif %}
+      {% endwith %}
+    </section>
+  </aside>
+</div>
+
+{% if submissions %}
+  <section class="card table-card submission-history">
+    <h2 class="card-title">My submissions</h2>
+    <table class="table">
+      <thead><tr><th>Submitted</th><th>Status</th><th>Grade</th><th>Feedback</th></tr></thead>
+      <tbody>
+        {% for submission in submissions %}
+          <tr>
+            <td>{{ submission.submitted_at|date:"M j, H:i" }}</td>
+            <td><span class="badge {% if submission.status == 'graded' %}success{% else %}warning{% endif %}">{{ submission.get_status_display }}</span></td>
+            <td>{{ submission.grade|floatformat|default:"—" }}</td>
+            <td class="text-muted">{{ submission.feedback|default:"—"|truncatechars:80 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+{% endblock %}
