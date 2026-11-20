@@ -16,6 +16,7 @@ The current minimum usable product contains one curated list-mutation exercise.
 
 - [Threshold of success](threshold-of-success.md)
 - [Project plan](project-plan.md)
+- [Configuration plan](configuration-plan.md)
 - [Risk register](risks.md)
 - [Definition of Done](definition-of-done.md)
 - [Decisions](decisions.md)

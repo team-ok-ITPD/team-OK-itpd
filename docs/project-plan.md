@@ -129,6 +129,8 @@ Run UT-01 sessions, publish sanitized results and triage findings while settling
 
 - **Due:** 2026-11-21
 - **Sprint Backlog:** [the issues scheduled into SPRINT-08](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/1)
+- **Planned Velocity:** 0; the scheduled work is task work while product stories
+  remain to be refined and scheduled.
 
 #### REL-08
 
@@ -139,6 +141,7 @@ Planned: the release that carries the `UT-01` results and the `QR-07 QRT-01` ver
 Provisional: the release candidate meets the agreed threshold measures available by code freeze.
 
 - **Due:** 2026-11-28
+- **Sprint Backlog:** [the issues scheduled into SPRINT-09](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/6)
 
 #### REL-09
 
