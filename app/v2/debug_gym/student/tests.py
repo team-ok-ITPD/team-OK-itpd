@@ -1,11 +1,15 @@
 # [Student Dev] Tests for the student pages
+import json
+import urllib.error
 from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from core.models import Assignment, Bug, StudyGroup, Submission, User
+from student import ai
 
 PASSWORD = "debug-gym-pass"
 
@@ -469,3 +473,282 @@ class ResultsTests(StudentTestCase):
 
     def test_dashboard_links_to_results(self):
         self.assertContains(self.get(), self.results_url)
+
+
+class OwnBugTests(StudentTestCase):
+    create_url = reverse("student:bug_create")
+    list_url = reverse("student:public_bugs")
+
+    def form_data(self, **extra):
+        data = {
+            "title": "My sneaky bug",
+            "description": "Sum skips the last item.",
+            "language": " Python ",
+            "difficulty": Bug.Difficulty.EASY,
+            "visibility": Bug.Visibility.PRIVATE,
+            "buggy_code": "for i in range(len(x) - 1):\r\n    pass\r\n",
+            "solution_code": "MY_SECRET_FIX",
+        }
+        data.update(extra)
+        return data
+
+    def create(self, user=None, **extra):
+        self.client.force_login(user or self.student)
+        return self.client.post(self.create_url, self.form_data(**extra))
+
+    def my_bug(self, **extra):
+        fields = {
+            "title": "Ali bug", "description": "d", "buggy_code": "x = 1", "solution_code": "",
+            "language": "python", "difficulty": Bug.Difficulty.EASY,
+            "visibility": Bug.Visibility.PRIVATE, "created_by": self.student,
+        }
+        fields.update(extra)
+        return Bug.objects.create(**fields)
+
+    def titles(self, user, query=""):
+        self.client.force_login(user)
+        return [b.title for b in self.client.get(self.list_url + query).context["bugs"]]
+
+    def test_pages_need_a_student(self):
+        bug = self.my_bug()
+        for url in (self.create_url, reverse("student:bug_edit", args=[bug.pk]),
+                    reverse("student:bug_delete", args=[bug.pk])):
+            self.client.logout()
+            self.assertEqual(self.client.get(url).status_code, 302)
+            self.client.force_login(self.prof)
+            self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_edit_keeps_code_exactly_as_typed(self):
+        bug = self.my_bug()
+        self.client.force_login(self.student)
+        self.client.post(reverse("student:bug_edit", args=[bug.pk]),
+                         self.form_data(buggy_code="    indented()\r\n", solution_code=""))
+        bug.refresh_from_db()
+        self.assertEqual(bug.buggy_code, "    indented()\n")
+        self.assertEqual(bug.solution_code, "")
+        self.assertEqual(bug.language, "python")
+        response = self.client.post(reverse("student:bug_edit", args=[bug.pk]), self.form_data(buggy_code="   "))
+        self.assertContains(response, "Add the buggy code to practise on.")
+
+    def test_private_bug_is_only_mine(self):
+        bug = self.my_bug(title="Secret one")
+        self.assertIn("Secret one", self.titles(self.student))
+        self.assertNotIn("Secret one", self.titles(self.other))
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(reverse("student:practice_workspace", args=[bug.pk])).status_code, 404)
+
+    def test_public_bug_is_for_everyone(self):
+        bug = self.my_bug(title="Shared one", visibility=Bug.Visibility.PUBLIC)
+        self.assertIn("Shared one", self.titles(self.other))
+        self.client.force_login(self.other)
+        page = self.client.get(reverse("student:practice_workspace", args=[bug.pk]))
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, "Edit my bug")
+
+    def test_only_mine_filter(self):
+        self.my_bug(title="Mine")
+        Bug.objects.create(
+            title="Prof public", description="d", buggy_code="x", solution_code="y",
+            language="python", difficulty=Bug.Difficulty.EASY,
+            visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
+        )
+        self.assertEqual(sorted(self.titles(self.student)), ["Mine", "Prof public"])
+        self.assertEqual(self.titles(self.student, "?mine=1"), ["Mine"])
+
+    def test_edit_my_bug(self):
+        bug = self.my_bug()
+        self.client.force_login(self.student)
+        url = reverse("student:bug_edit", args=[bug.pk])
+        self.assertContains(self.client.get(url), "Save changes")
+        self.client.post(url, self.form_data(title="Renamed", visibility=Bug.Visibility.PUBLIC))
+        bug.refresh_from_db()
+        self.assertEqual(bug.title, "Renamed")
+        self.assertEqual(bug.visibility, Bug.Visibility.PUBLIC)
+        self.assertEqual(bug.created_by, self.student)
+
+    def test_cannot_edit_or_delete_someone_elses_bug(self):
+        omar_bug = self.my_bug(created_by=self.other, visibility=Bug.Visibility.PUBLIC)
+        self.client.force_login(self.student)
+        for name in ("student:bug_edit", "student:bug_delete"):
+            url = reverse(name, args=[omar_bug.pk])
+            self.assertEqual(self.client.get(url).status_code, 404)
+            self.assertEqual(self.client.post(url, self.form_data()).status_code, 404)
+        self.assertEqual(self.client.get(reverse("student:bug_edit", args=[self.bug.pk])).status_code, 404)
+        omar_bug.refresh_from_db()
+        self.assertEqual(omar_bug.title, "Ali bug")
+
+    def test_delete_asks_first_then_removes_bug_and_attempts(self):
+        bug = self.my_bug(visibility=Bug.Visibility.PUBLIC)
+        Submission.objects.create(student=self.student, bug=bug, submitted_code="a")
+        Submission.objects.create(student=self.other, bug=bug, submitted_code="b")
+        self.client.force_login(self.student)
+        url = reverse("student:bug_delete", args=[bug.pk])
+        page = self.client.get(url)
+        self.assertContains(page, "2 practice attempts")
+        self.assertContains(page, "1 other student has practised")
+        self.assertTrue(Bug.objects.filter(pk=bug.pk).exists())
+        self.assertRedirects(self.client.post(url), self.list_url, fetch_redirect_response=False)
+        self.assertFalse(Bug.objects.filter(pk=bug.pk).exists())
+        self.assertFalse(Submission.objects.filter(bug_id=bug.pk).exists())
+
+    def test_bug_used_in_an_assignment_cannot_be_deleted(self):
+        bug = self.my_bug(visibility=Bug.Visibility.PUBLIC)
+        a = self.assignment("Uses student bug")
+        a.bug = bug
+        a.save()
+        self.client.force_login(self.student)
+        response = self.client.post(reverse("student:bug_delete", args=[bug.pk]))
+        self.assertRedirects(response, reverse("student:bug_edit", args=[bug.pk]), fetch_redirect_response=False)
+        self.assertTrue(Bug.objects.filter(pk=bug.pk).exists())
+
+
+FAKE_BUG = {
+    "title": "Second largest",
+    "description": "Should return the second largest number, but returns the largest.",
+    "buggy_code": "def second(xs):\n    return sorted(xs)[-1]\n",
+    "solution_code": "def second(xs):\n    return sorted(xs)[-2]\n",
+}
+
+
+class AIBugTests(StudentTestCase):
+    url = reverse("student:bug_create")
+
+    def form_data(self, **extra):
+        data = {
+            "provider": "anthropic",
+            "api_key": "sk-test-key",
+            "model": "",
+            "prompt": "second largest number in a list",
+            "language": " Python ",
+            "difficulty": Bug.Difficulty.MEDIUM,
+            "visibility": Bug.Visibility.PRIVATE,
+        }
+        data.update(extra)
+        return data
+
+    def post(self, fake=None, **extra):
+        self.client.force_login(self.student)
+        with patch("student.views.ai.generate_bug", side_effect=fake or (lambda **kw: dict(FAKE_BUG))) as mocked:
+            response = self.client.post(self.url, self.form_data(**extra))
+        return response, mocked
+
+    def test_needs_a_student(self):
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+        self.client.force_login(self.prof)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+
+    def test_form_offers_providers_and_hides_nothing_secret(self):
+        self.client.force_login(self.student)
+        page = self.client.get(self.url)
+        for label in ("Claude (Anthropic)", "OpenAI", "Google Gemini"):
+            self.assertContains(page, label)
+        self.assertContains(page, 'type="password"')
+        self.assertContains(page, "Pick one of the public bugs")
+
+    def test_generates_and_saves_my_bug(self):
+        response, mocked = self.post()
+        bug = Bug.objects.get(title="Second largest")
+        self.assertRedirects(response, reverse("student:practice_workspace", args=[bug.pk]),
+                             fetch_redirect_response=False)
+        mocked.assert_called_once_with(
+            provider="anthropic", api_key="sk-test-key", prompt="second largest number in a list",
+            language="python", difficulty="medium", model="",
+        )
+        self.assertEqual(bug.created_by, self.student)
+        self.assertEqual(bug.visibility, Bug.Visibility.PRIVATE)
+        self.assertEqual(bug.language, "python")
+        self.assertEqual(bug.solution_code, FAKE_BUG["solution_code"])
+        page = self.client.get(response["Location"])
+        self.assertContains(page, "AI created")
+        self.assertNotContains(page, "sorted(xs)[-2]")  # the fix stays hidden in the workspace
+
+    def test_public_choice_is_kept(self):
+        self.post(visibility=Bug.Visibility.PUBLIC)
+        self.assertEqual(Bug.objects.get(title="Second largest").visibility, Bug.Visibility.PUBLIC)
+
+    def test_ai_error_is_shown_and_nothing_saved(self):
+        def fail(**kwargs):
+            raise ai.AIError("Claude rejected this API key. Check it and try again.")
+
+        response, _ = self.post(fake=fail)
+        self.assertContains(response, "Claude rejected this API key.")
+        self.assertFalse(Bug.objects.filter(created_by=self.student).exists())
+
+    def test_api_key_is_never_sent_back_or_stored(self):
+        response, _ = self.post(fake=lambda **kw: (_ for _ in ()).throw(ai.AIError("boom")))
+        self.assertNotContains(response, "sk-test-key")
+        self.post()
+        bug = Bug.objects.get(title="Second largest")
+        self.assertNotIn("sk-test-key", str(vars(bug)))
+
+    def test_required_fields(self):
+        response, mocked = self.post(api_key="", prompt="")
+        mocked.assert_not_called()
+        self.assertEqual(set(response.context["form"].errors), {"api_key", "prompt"})
+
+
+class AIClientTests(TestCase):
+    """student/ai.py without any network: provider answers are faked."""
+
+    def test_clean_result_checks_the_answer(self):
+        self.assertEqual(ai.clean_result(dict(FAKE_BUG))["title"], "Second largest")
+        for bad in ({}, {**FAKE_BUG, "title": 5}, {**FAKE_BUG, "buggy_code": "  "},
+                    {**FAKE_BUG, "solution_code": FAKE_BUG["buggy_code"]}):
+            with self.assertRaises(ai.AIError):
+                ai.clean_result(bad)
+
+    def test_unknown_provider_and_unsafe_model_name(self):
+        with self.assertRaises(ai.AIError):
+            ai.generate_bug("nope", "k", "p", "python", "easy")
+        with self.assertRaisesMessage(ai.AIError, "model name"):
+            ai.generate_bug("gemini", "k", "p", "python", "easy", model="../../other?x=1")
+
+    def test_default_models(self):
+        self.assertEqual(ai.default_model("anthropic"), "claude-opus-5-5")
+
+    def fake_http(self, payload):
+        response = MagicMock()
+        response.read.return_value = json.dumps(payload).encode()
+        response.__enter__.return_value = response
+        return patch("student.ai.urllib.request.urlopen", return_value=response)
+
+    def test_openai_answer_is_parsed(self):
+        payload = {"choices": [{"message": {"content": json.dumps(FAKE_BUG)}}]}
+        with self.fake_http(payload) as urlopen:
+            result = ai.generate_bug("openai", "sk-o", "topic", "python", "easy")
+        self.assertEqual(result["title"], "Second largest")
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://api.openai.com/v1/chat/completions")
+        self.assertEqual(request.get_header("Authorization"), "Bearer sk-o")
+
+    def test_gemini_answer_is_parsed(self):
+        payload = {"candidates": [{"content": {"parts": [{"text": json.dumps(FAKE_BUG)}]}}]}
+        with self.fake_http(payload) as urlopen:
+            result = ai.generate_bug("gemini", "g-key", "topic", "dart", "hard")
+        self.assertEqual(result["buggy_code"], FAKE_BUG["buggy_code"])
+        self.assertIn("gemini-2.5-flash:generateContent", urlopen.call_args.args[0].full_url)
+
+    def test_rejected_key_gives_a_clear_message(self):
+        error = urllib.error.HTTPError("u", 401, "Unauthorized", {}, None)
+        with patch("student.ai.urllib.request.urlopen", side_effect=error):
+            with self.assertRaisesMessage(ai.AIError, "rejected this API key"):
+                ai.generate_bug("openai", "bad", "topic", "python", "easy")
+
+    def test_anthropic_answer_is_parsed(self):
+        text_block = MagicMock(type="text", text=json.dumps(FAKE_BUG))
+        fake_response = MagicMock(stop_reason="end_turn", content=[text_block])
+        with patch("student.ai.anthropic.Anthropic") as client_class:
+            client_class.return_value.beta.messages.create.return_value = fake_response
+            result = ai.generate_bug("anthropic", "sk-ant", "topic", "python", "easy")
+        self.assertEqual(result["title"], "Second largest")
+        client_class.assert_called_once_with(api_key="sk-ant", timeout=ai.TIMEOUT_SECONDS, max_retries=1)
+        kwargs = client_class.return_value.beta.messages.create.call_args.kwargs
+        self.assertEqual(kwargs["model"], "claude-opus-5-5")
+        self.assertEqual(kwargs["output_config"]["format"]["schema"], ai.BUG_SCHEMA)
+
+    def test_anthropic_refusal(self):
+        fake_response = MagicMock(stop_reason="refusal", content=[])
+        with patch("student.ai.anthropic.Anthropic") as client_class:
+            client_class.return_value.beta.messages.create.return_value = fake_response
+            with self.assertRaisesMessage(ai.AIError, "declined"):
+                ai.generate_bug("anthropic", "sk-ant", "topic", "python", "easy")

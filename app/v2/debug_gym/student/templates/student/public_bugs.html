@@ -7,9 +7,12 @@
     <p class="eyebrow">Student / Practice</p>
     <h1>Practice bugs</h1>
   </div>
-  <a class="button ghost" href="{% url 'student:dashboard' %}">Back to dashboard</a>
+  <div class="row">
+    <a class="button ghost" href="{% url 'student:dashboard' %}">Back to dashboard</a>
+    <a class="button primary" href="{% url 'student:bug_create' %}">New bug with AI</a>
+  </div>
 </header>
-<p class="lede">Public bugs anyone can solve. Practice is not graded, so try as often as you like.</p>
+<p class="lede">Public bugs anyone can solve, plus the bugs you wrote yourself. Practice is not graded, so try as often as you like.</p>
 
 <form class="card filter-bar" method="get" role="search">
   <label class="field">
@@ -34,6 +37,10 @@
       {% endfor %}
     </select>
   </label>
+  <label class="radio-option only-mine">
+    <input type="checkbox" name="mine" value="1" {% if filters.mine %}checked{% endif %}>
+    Only my bugs ({{ my_bug_count }})
+  </label>
   <div class="row filter-actions">
     <button class="button primary" type="submit">Filter</button>
     {% if filtered %}<a class="button ghost" href="{% url 'student:public_bugs' %}">Clear</a>{% endif %}
@@ -49,6 +56,10 @@
           <tr>
             <td>
               <a href="{% url 'student:practice_workspace' bug.pk %}">{{ bug.title }}</a>
+              {% if bug.created_by_id == user.id %}
+                <span class="badge small accent">Mine</span>
+                {% if bug.visibility == "private" %}<span class="badge small">Only me</span>{% endif %}
+              {% endif %}
               <div class="text-subtle">{{ bug.description|truncatechars:90 }}</div>
             </td>
             <td><span class="badge small">{{ bug.language }}</span></td>
@@ -61,9 +72,14 @@
               {% endif %}
             </td>
             <td>
-              <a class="button small {% if bug.my_attempts %}secondary{% else %}primary{% endif %}" href="{% url 'student:practice_workspace' bug.pk %}">
-                {% if bug.my_attempts %}Continue{% else %}Practice{% endif %}
-              </a>
+              <div class="row">
+                <a class="button small {% if bug.my_attempts %}secondary{% else %}primary{% endif %}" href="{% url 'student:practice_workspace' bug.pk %}">
+                  {% if bug.my_attempts %}Continue{% else %}Practice{% endif %}
+                </a>
+                {% if bug.created_by_id == user.id %}
+                  <a class="button small ghost" href="{% url 'student:bug_edit' bug.pk %}">Edit</a>
+                {% endif %}
+              </div>
             </td>
           </tr>
         {% endfor %}
@@ -73,6 +89,9 @@
 {% elif filtered %}
   <div class="empty"><strong>No bugs match these filters.</strong><span>Try another language or difficulty, or clear the search.</span></div>
 {% else %}
-  <div class="empty"><strong>No public bugs yet.</strong><span>Practice bugs appear here once a professor or admin publishes one.</span></div>
+  <div class="empty">
+    <strong>No practice bugs yet.</strong>
+    <span>Bugs appear here when a professor publishes one, or <a href="{% url 'student:bug_create' %}">generate one with AI</a>.</span>
+  </div>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,53 @@
+<!-- [Student Dev] Ask an AI to write a practice bug with the student's own provider and API key -->
+{% extends "base.html" %}
+{% load static %}
+{% block title %}New practice bug · Debug Gym{% endblock %}
+{% block head %}<script src="{% static 'student/ai-form.js' %}" defer></script>{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Practice / New bug</p>
+    <h1>Generate a practice bug with AI</h1>
+  </div>
+  <a class="button ghost" href="{% url 'student:public_bugs' %}">Cancel</a>
+</header>
+<p class="lede">
+  Describe what the bug should be about and the AI writes the exercise for you.
+  Want something ready-made instead? <a href="{% url 'student:public_bugs' %}">Pick one of the public bugs.</a>
+</p>
+
+<form class="card form student-bug-form" method="post" novalidate data-ai-form>
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}<p class="alert error">{{ error }}</p>{% endfor %}
+
+  <div class="form-pair">
+    {% include "student/includes/field.html" with field=form.provider %}
+    {% include "student/includes/field.html" with field=form.model %}
+  </div>
+  {% include "student/includes/field.html" with field=form.api_key %}
+  {% include "student/includes/field.html" with field=form.prompt %}
+  <div class="form-pair">
+    {% include "student/includes/field.html" with field=form.language %}
+    {% include "student/includes/field.html" with field=form.difficulty %}
+  </div>
+
+  <fieldset class="field visibility-choice{% if form.visibility.errors %} has-error{% endif %}">
+    <legend>{{ form.visibility.label }}</legend>
+    <div class="row">
+      {% for radio in form.visibility %}
+        <label class="radio-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+      {% endfor %}
+    </div>
+    <small class="field-hint">AI bugs are not checked by a professor. Share them only if they look right.</small>
+  </fieldset>
+
+  <datalist id="language-options">
+    <option value="python"><option value="javascript"><option value="java"><option value="dart"><option value="c"><option value="cpp">
+  </datalist>
+
+  <div class="row form-actions">
+    <small class="text-subtle">The AI can take up to a minute.</small>
+    <button class="button brand" type="submit" data-busy-label="Generating…">Generate bug</button>
+  </div>
+</form>
+{% endblock %}

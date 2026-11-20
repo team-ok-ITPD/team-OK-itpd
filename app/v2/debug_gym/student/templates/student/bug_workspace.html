@@ -18,7 +18,12 @@
       <p class="eyebrow">Student / Practice / Workspace</p>
       <h1>{{ bug.title }}</h1>
     </div>
-    <a class="button ghost" href="{% url 'student:public_bugs' %}">All practice bugs</a>
+    <div class="row">
+      <a class="button ghost" href="{% url 'student:public_bugs' %}">All practice bugs</a>
+      {% if bug.created_by_id == user.id %}
+        <a class="button secondary" href="{% url 'student:bug_edit' bug.pk %}">Edit my bug</a>
+      {% endif %}
+    </div>
   </header>
 {% endif %}
 
@@ -53,6 +58,10 @@
         {% else %}
           <dt>Mode</dt>
           <dd><span class="badge accent">Practice</span></dd>
+          {% if bug.created_by_id == user.id %}
+            <dt>Written by</dt>
+            <dd>You · {% if bug.visibility == "public" %}every student can practise it{% else %}only you can see it{% endif %}</dd>
+          {% endif %}
           <dt>Last saved</dt>
           <dd>{{ latest.submitted_at|date:"M j, H:i"|default:"Never" }}</dd>
         {% endif %}

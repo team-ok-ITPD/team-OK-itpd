@@ -1,0 +1,50 @@
+<!-- [Student Dev] Form for a student to create or edit their own practice bug -->
+{% extends "base.html" %}
+{% block title %}{% if bug %}Edit {{ bug.title }}{% else %}New practice bug{% endif %} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Practice / {% if bug %}Edit bug{% else %}New bug{% endif %}</p>
+    <h1>{% if bug %}Edit "{{ bug.title }}"{% else %}Create a practice bug{% endif %}</h1>
+  </div>
+  <a class="button ghost" href="{% if bug %}{% url 'student:practice_workspace' bug.pk %}{% else %}{% url 'student:public_bugs' %}{% endif %}">Cancel</a>
+</header>
+<p class="lede">Write some code with a bug in it, then practise finding and fixing it. Practice is never graded.</p>
+
+<form class="card form student-bug-form" method="post" novalidate>
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}<p class="alert error">{{ error }}</p>{% endfor %}
+
+  {% for field in form %}
+    {% if field.name == "visibility" %}
+      <fieldset class="field visibility-choice{% if field.errors %} has-error{% endif %}">
+        <legend>{{ field.label }}</legend>
+        <div class="row">
+          {% for radio in field %}
+            <label class="radio-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+          {% endfor %}
+        </div>
+        <small class="field-hint">"Every student" puts it in everyone's practice list. You can change this later.</small>
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </fieldset>
+    {% else %}
+      <label class="field{% if field.errors %} has-error{% endif %}{% if field.name == 'description' or field.name == 'buggy_code' or field.name == 'solution_code' %} field-wide{% endif %}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </label>
+    {% endif %}
+  {% endfor %}
+  <datalist id="language-options">
+    <option value="python"><option value="javascript"><option value="java"><option value="dart"><option value="c"><option value="cpp">
+  </datalist>
+
+  <div class="row form-actions">
+    <button class="button primary" type="submit">{% if bug %}Save changes{% else %}Create bug{% endif %}</button>
+    {% if bug %}
+      <a class="button danger" href="{% url 'student:bug_delete' bug.pk %}">Delete bug</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

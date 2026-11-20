@@ -8,11 +8,13 @@ from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.debug import sensitive_post_parameters
 
 from core.models import Assignment, Bug, StudyGroup, Submission
 from core.permissions import student_required
 
-from .forms import SubmissionForm
+from . import ai
+from .forms import AIBugForm, StudentBugForm, SubmissionForm
 
 DUE_SOON = timedelta(hours=48)
 DASHBOARD_LIMIT = 5
@@ -210,14 +212,20 @@ def assignment_workspace(request, pk):
     )
 
 
-def public_bugs_qs():
-    return Bug.objects.filter(visibility=Bug.Visibility.PUBLIC)
+def practice_bugs_qs(student):
+    """Bugs a student may practise: every public bug, plus their own private ones."""
+    return Bug.objects.filter(Q(visibility=Bug.Visibility.PUBLIC) | Q(created_by=student))
+
+
+def my_bug_or_404(student, pk):
+    """A bug the student created; anyone else's bug is a 404."""
+    return get_object_or_404(Bug, pk=pk, created_by=student)
 
 
 @student_required
 def public_bugs(request):
     student = request.user
-    bugs = public_bugs_qs().annotate(
+    bugs = practice_bugs_qs(student).annotate(
         my_attempts=Count("submissions", filter=Q(submissions__student=student, submissions__assignment=None)),
         last_attempt=Max(
             "submissions__submitted_at",
@@ -228,6 +236,7 @@ def public_bugs(request):
     query = request.GET.get("q", "").strip()
     language = request.GET.get("language", "")
     difficulty = request.GET.get("difficulty", "")
+    only_mine = request.GET.get("mine") == "1"
     if query:
         bugs = bugs.filter(Q(title__icontains=query) | Q(description__icontains=query))
     if language:
@@ -236,27 +245,34 @@ def public_bugs(request):
         bugs = bugs.filter(difficulty=difficulty)
     else:
         difficulty = ""
+    if only_mine:
+        bugs = bugs.filter(created_by=student)
 
     languages = (
-        public_bugs_qs().order_by(Lower("language")).values_list(Lower("language"), flat=True).distinct()
+        practice_bugs_qs(student)
+        .order_by(Lower("language"))
+        .values_list(Lower("language"), flat=True)
+        .distinct()
     )
     return render(
         request,
         "student/public_bugs.html",
         {
-            "bugs": bugs.order_by("title"),
+            "bugs": bugs.select_related("created_by").order_by("title"),
             "languages": languages,
             "difficulties": Bug.Difficulty.choices,
-            "filters": {"q": query, "language": language.lower(), "difficulty": difficulty},
-            "filtered": bool(query or language or difficulty),
+            "filters": {"q": query, "language": language.lower(), "difficulty": difficulty, "mine": only_mine},
+            "filtered": bool(query or language or difficulty or only_mine),
+            "my_bug_count": Bug.objects.filter(created_by=student).count(),
         },
     )
 
 
 @student_required
 def practice_workspace(request, pk):
-    # Only public bugs: a private bug is reachable only through its assignment.
-    bug = get_object_or_404(public_bugs_qs(), pk=pk)
+    # Public bugs and the student's own bugs. Other private bugs are reachable
+    # only through their assignment.
+    bug = get_object_or_404(practice_bugs_qs(request.user), pk=pk)
     latest = (
         Submission.objects.filter(student=request.user, bug=bug, assignment=None)
         .order_by("-submitted_at")
@@ -268,6 +284,78 @@ def practice_workspace(request, pk):
         latest=latest,
         done_url=reverse("student:practice_workspace", args=[bug.pk]),
         done_message="Practice attempt saved. Practice is not graded.",
+    )
+
+
+@student_required
+@sensitive_post_parameters("api_key")
+def bug_create(request):
+    """New practice bug: the student describes it and an AI writes it."""
+    form = AIBugForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        try:
+            generated = ai.generate_bug(
+                provider=data["provider"],
+                api_key=data["api_key"],
+                prompt=data["prompt"],
+                language=data["language"],
+                difficulty=data["difficulty"],
+                model=data["model"],
+            )
+        except ai.AIError as error:
+            form.add_error(None, str(error))
+        else:
+            bug = Bug.objects.create(
+                **generated,
+                language=data["language"],
+                difficulty=data["difficulty"],
+                visibility=data["visibility"],
+                created_by=request.user,
+            )
+            messages.success(
+                request,
+                f'AI created "{bug.title}". AI can make mistakes: check it with "Edit my bug" if something looks off.',
+            )
+            return redirect("student:practice_workspace", pk=bug.pk)
+    return render(request, "student/bug_ai_form.html", {"form": form})
+
+
+@student_required
+def bug_edit(request, pk):
+    bug = my_bug_or_404(request.user, pk)
+    form = StudentBugForm(request.POST or None, instance=bug)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Bug updated.")
+        return redirect("student:practice_workspace", pk=bug.pk)
+    return render(request, "student/bug_form.html", {"form": form, "bug": bug})
+
+
+@student_required
+def bug_delete(request, pk):
+    bug = my_bug_or_404(request.user, pk)
+    if bug.assignments.exists():
+        messages.error(
+            request, "A professor uses this bug in an assignment, so it can no longer be deleted."
+        )
+        return redirect("student:bug_edit", pk=bug.pk)
+    if request.method == "POST":
+        title = bug.title
+        bug.delete()  # its practice attempts are deleted with it
+        messages.success(request, f"Bug \"{title}\" deleted.")
+        return redirect("student:public_bugs")
+    return render(
+        request,
+        "student/bug_confirm_delete.html",
+        {
+            "bug": bug,
+            "attempt_count": bug.submissions.count(),
+            "other_students": bug.submissions.exclude(student=request.user)
+            .values("student")
+            .distinct()
+            .count(),
+        },
     )
 
 

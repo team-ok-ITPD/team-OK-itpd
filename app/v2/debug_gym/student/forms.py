@@ -1,7 +1,12 @@
 # [Student Dev] Forms for submitting bug fixes
 from django import forms
 
+from core.models import Bug
+
+from .ai import PROVIDER_CHOICES
+
 MAX_CODE_LENGTH = 50_000
+CODE_ATTRS = {"spellcheck": "false", "autocapitalize": "off", "rows": 10, "class": "code-input"}
 
 
 def normalize_code(code):
@@ -30,3 +35,90 @@ class SubmissionForm(forms.Form):
                 "This is still the original buggy code. Change something before submitting."
             )
         return code
+
+
+class StudentBugForm(forms.ModelForm):
+    """A bug a student writes for their own practice (created_by is set by the view)."""
+
+    class Meta:
+        model = Bug
+        fields = ["title", "description", "language", "difficulty", "visibility", "buggy_code", "solution_code"]
+        labels = {
+            "buggy_code": "Buggy code",
+            "solution_code": "Expected fix (optional)",
+            "visibility": "Who can practise it",
+        }
+        help_texts = {
+            "description": "What should the code do, and what goes wrong?",
+            "language": "",  # the placeholder already gives examples
+            "solution_code": "Only you can see this. Other students never see it.",
+        }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+            "language": forms.TextInput(attrs={"list": "language-options", "placeholder": "e.g. python"}),
+            "visibility": forms.RadioSelect,
+            "buggy_code": forms.Textarea(attrs=CODE_ATTRS),
+            "solution_code": forms.Textarea(attrs=CODE_ATTRS),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Keep code exactly as typed: stripping would remove the first line's indentation.
+        for name in ("buggy_code", "solution_code"):
+            self.fields[name].strip = False
+        self.fields["solution_code"].required = False
+        self.fields["visibility"].choices = [
+            (Bug.Visibility.PRIVATE, "Only me"),
+            (Bug.Visibility.PUBLIC, "Every student"),
+        ]
+        if not self.instance.pk:
+            self.initial.setdefault("visibility", Bug.Visibility.PRIVATE)
+
+    def clean_language(self):
+        return self.cleaned_data["language"].strip().lower()
+
+    def clean_buggy_code(self):
+        code = normalize_code(self.cleaned_data["buggy_code"])
+        if not code.strip():
+            raise forms.ValidationError("Add the buggy code to practise on.")
+        return code
+
+    def clean_solution_code(self):
+        return normalize_code(self.cleaned_data.get("solution_code") or "")
+
+
+class AIBugForm(forms.Form):
+    """Ask an AI to write a practice bug. The API key is used once and never saved."""
+
+    provider = forms.ChoiceField(label="AI provider", choices=PROVIDER_CHOICES)
+    api_key = forms.CharField(
+        label="API key",
+        strip=True,
+        widget=forms.PasswordInput(attrs={"autocomplete": "off", "spellcheck": "false"}),
+        help_text="Your own key for the provider above. It is used for this request only and never saved.",
+    )
+    model = forms.CharField(
+        label="Model (optional)",
+        required=False,
+        max_length=100,
+        help_text="Leave empty to use the provider's default model.",
+    )
+    prompt = forms.CharField(
+        label="What should the bug be about?",
+        max_length=1000,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "e.g. a function that finds the second largest number in a list"}),
+    )
+    language = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={"list": "language-options", "placeholder": "e.g. python"}),
+    )
+    difficulty = forms.ChoiceField(choices=Bug.Difficulty.choices, initial=Bug.Difficulty.EASY)
+    visibility = forms.ChoiceField(
+        label="Who can practise it",
+        choices=[(Bug.Visibility.PRIVATE, "Only me"), (Bug.Visibility.PUBLIC, "Every student")],
+        initial=Bug.Visibility.PRIVATE,
+        widget=forms.RadioSelect,
+    )
+
+    def clean_language(self):
+        return self.cleaned_data["language"].strip().lower()

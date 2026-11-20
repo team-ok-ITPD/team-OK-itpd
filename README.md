@@ -97,3 +97,12 @@ Software debugging is a critical skill, yet many learning resources focus on cod
 ## Project Status
 
 Debug GYM is under active development as part of the ITPD course. The reports and documentation record the team's progress, verification evidence, decisions, and outstanding requirements.
+
+
+
+## Dummy data 
+How to use it again
+
+python manage.py seed_demo
+python manage.py seed_demo --reset
+python manage.py seed_demo --delete

@@ -1162,7 +1162,7 @@ pre {
 
 .filter-bar {
   align-items: end;
-  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(9rem, 1fr)) auto;
+  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(9rem, 1fr)) auto auto;
   margin-bottom: var(--space-4);
 }
 
@@ -1211,4 +1211,66 @@ pre {
     border-right: 0;
     padding-right: 0;
   }
+}
+
+/* Page: student/bug_form */
+
+.student-bug-form {
+  max-width: var(--content-narrow);
+}
+
+.code-input {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-code);
+  tab-size: 4;
+  white-space: pre;
+}
+
+.visibility-choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.visibility-choice legend {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.radio-option {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.only-mine {
+  align-self: center;
+  font-size: var(--text-sm);
+}
+
+.form-actions {
+  justify-content: space-between;
+}
+
+.delete-card {
+  max-width: var(--content-narrow);
+}
+
+.visibility-choice input[type="radio"],
+.only-mine input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  min-height: 0;
+  padding: 0;
+  width: auto;
+}
+
+/* Page: student/bug_ai_form */
+
+.form-pair {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 }
