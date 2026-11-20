@@ -27,5 +27,7 @@ site/
 
 *.sqlite3
 app/adel_b/workspaces/
-app/v2/debug_gym/workspaces/
 app/adel_b/DEMO_ACCOUNTS.md
+app/v2/debug_gym/workspaces/
+app/v2/debug_gym/.agent-encryption-key
+app/v2/debug_gym/DEMO_ACCOUNTS.md

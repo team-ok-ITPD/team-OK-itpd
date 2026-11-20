@@ -1,0 +1,39 @@
+<!-- [Professor Dev] Authoring details and connected browser VS Code -->
+{% extends "base.html" %}
+{% block title %}{{ bug.title }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">Exercise catalog / {{ bug.get_visibility_display }}</p><h1>{{ bug.title }}</h1></div>
+  <a class="button ghost" href="{% url 'professor:bugs' %}">Back to catalog</a>
+</header>
+<div class="teaching-columns">
+  <section class="card stack">
+    <span class="badge accent">{{ bug.language }}</span>
+    <h2 class="card-title">Project workspace</h2>
+    {% if can_edit %}
+    <p class="text-muted">Edit the exercise code and tests in browser VS Code. Use Debug GYM → Save project to send the files back here.</p>
+    {% include "components/workspace_button.html" with authoring=True %}
+    {% else %}
+    <p class="text-muted">This public exercise is read-only. Assign it to your group to create your own private copy.</p>
+    {% endif %}
+    <h3>Project files</h3>
+    <ul class="project-files">{% for name in bug.project_files %}<li><code>{{ name }}</code></li>{% empty %}<li>Legacy source file</li>{% endfor %}</ul>
+    <p class="field-hint">Revision {{ bug.revision }} · Updated {{ bug.updated_at|date:"M j, H:i" }}</p>
+  </section>
+  <section class="card stack">
+    <h2 class="card-title">Exercise details</h2>
+    <p>{{ bug.description|urlize|linebreaksbr }}</p>
+    {% if can_edit %}
+    <form class="form" method="post">{% csrf_token %}
+      <input type="hidden" name="revision" value="{{ bug.revision }}">
+      {{ form.non_field_errors }}
+      {% for field in form %}<label class="field">{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}
+      <button class="button secondary">Save details</button>
+    </form>
+    {% if bug.visibility == "public" %}
+    <form method="post" action="{% url 'professor:unpublish' bug.pk %}">{% csrf_token %}<button class="button secondary">Unpublish</button></form>
+    {% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

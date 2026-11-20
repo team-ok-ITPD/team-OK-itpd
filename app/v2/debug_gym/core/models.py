@@ -1,6 +1,7 @@
 # [Backend Dev] Shared models: User, StudyGroup, Bug, Assignment, Submission
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.db.models import F, Q
 
 
 class UserManager(BaseUserManager):
@@ -149,15 +150,13 @@ class Bug(models.Model):
     description = models.TextField()
     buggy_code = models.TextField(help_text="Code with the bug")
     solution_code = models.TextField(help_text="Expected fix (hidden from students)")
-    tests_code = models.TextField(
-        blank=True,
-        default="",
-        help_text="Optional pytest file for Python bugs. The code is saved as main.py, "
-        "so tests start with: from main import *",
-    )
     language = models.CharField(max_length=50, help_text="e.g. python, dart")
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices)
     visibility = models.CharField(max_length=10, choices=Visibility.choices)
+    project_files = models.JSONField(default=dict, blank=True)
+    compose_config = models.TextField(blank=True)
+    entry_file = models.CharField(max_length=255, blank=True)
+    revision = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -198,7 +197,7 @@ class Assignment(models.Model):
         related_name="assignments",
         blank=True,
     )
-    deadline = models.DateTimeField()
+    deadline = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -209,6 +208,14 @@ class Assignment(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def results_visible(self):
+        from django.utils import timezone
+
+        return self.status == self.Status.CLOSED or (
+            self.deadline is not None and self.deadline <= timezone.now()
+        )
 
 
 class AssignmentGroup(models.Model):
@@ -253,12 +260,32 @@ class Submission(models.Model):
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SUBMITTED)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     feedback = models.TextField(null=True, blank=True)
+    # Test results come from server-side verification only (DEC-037); null means
+    # "not verified yet". They are never read from a form or the browser.
+    tests_passed = models.PositiveIntegerField(null=True, blank=True)
+    tests_total = models.PositiveIntegerField(null=True, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     graded_at = models.DateTimeField(null=True, blank=True)
+    suspicion_status = models.CharField(max_length=16, default="unchecked")
+    suspicion_reason = models.TextField(blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "submissions"
         ordering = ["-submitted_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(tests_passed__isnull=True, tests_total__isnull=True)
+                    | models.Q(
+                        tests_passed__isnull=False,
+                        tests_total__isnull=False,
+                        tests_passed__lte=models.F("tests_total"),
+                    )
+                ),
+                name="submission_valid_test_counts",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.bug} ({self.status})"
@@ -266,3 +293,35 @@ class Submission(models.Model):
     @property
     def is_practice(self):
         return self.assignment_id is None
+
+    @property
+    def test_result(self):
+        """"3/5" when test counts are recorded, otherwise None."""
+        if self.tests_passed is None or self.tests_total is None:
+            return None
+        return f"{self.tests_passed}/{self.tests_total}"
+
+
+class AgentCredential(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="agent_credential")
+    encrypted_key = models.TextField(blank=True)
+
+
+class WorkspaceSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(Assignment, null=True, blank=True, on_delete=models.CASCADE)
+    authoring = models.BooleanField(default=False)
+    token_digest = models.CharField(max_length=64, unique=True)
+    revision = models.PositiveIntegerField()
+    expires_at = models.DateTimeField()
+    last_request = models.CharField(max_length=64, blank=True)
+    last_response = models.JSONField(default=dict, blank=True)
+
+
+class AssignmentReview(models.Model):
+    assignment = models.OneToOneField(Assignment, on_delete=models.CASCADE, related_name="agent_review")
+    status = models.CharField(max_length=16, default="running")
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    detail = models.TextField(blank=True)

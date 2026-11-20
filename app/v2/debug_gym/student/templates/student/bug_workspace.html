@@ -54,7 +54,7 @@
           <dt>Status</dt>
           <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
           <dt>Deadline</dt>
-          <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+          <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         {% else %}
           <dt>Mode</dt>
           <dd><span class="badge accent">Practice</span></dd>
@@ -85,13 +85,16 @@
           {% else %}
             <li>Use the debugger to find the mistake. {% if bug.language|lower == "python" %}This bug has no tests yet.{% else %}Tests run for Python bugs only.{% endif %}</li>
           {% endif %}
-          <li>Click <strong>Submit</strong>. {% if assignment %}Your professor grades the latest submission.{% else %}Practice is never graded.{% endif %}</li>
+          <li>Click <strong>Submit</strong>. The server checks it{% if project_has_tests %} by running the tests{% endif %}. {% if assignment %}Your best checked submission is the one that counts.{% else %}Practice is never graded.{% endif %}</li>
         </ol>
         <form method="post" data-busy-form>
           {% csrf_token %}
           <button class="button brand" type="submit" data-busy-label="Starting VS Code…">Open in VS Code</button>
         </form>
         <small class="text-subtle">VS Code keeps your changes between visits. Starting it can take a few seconds.</small>
+      {% endif %}
+      {% if project_has_tests %}
+        <p class="alert info" data-progress-url="{% url 'student:progress' bug.pk %}{% if assignment %}?assignment={{ assignment.pk }}{% endif %}">Checking your latest result…</p>
       {% endif %}
     </section>
 

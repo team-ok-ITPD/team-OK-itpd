@@ -1,0 +1,18 @@
+<!-- [Professor Dev] Professor generation settings placeholder -->
+{% extends "base.html" %}
+{% block title %}Teaching settings · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Professor / Settings</p><h1>Generation settings</h1></div></header>
+<p class="lede">Choose the credentials used for exercise generation and submission analysis.</p>
+<section class="card stack settings-card">
+<h2 class="card-title">Your API key</h2>
+<p class="text-muted">Your personal key will take priority over the platform key. Leave it empty to use the platform default.</p>
+<p><span class="badge {% if has_key %}success{% else %}accent{% endif %}">{% if has_key %}Personal key saved{% elif platform_key %}Platform key available{% else %}No key configured{% endif %}</span></p>
+<form class="form" method="post" autocomplete="off">{% csrf_token %}
+{{ form.non_field_errors }}
+<label class="field">Personal API key{{ form.key }}{{ form.key.errors }}<small class="field-hint">{{ form.key.help_text }}</small></label>
+<p class="field-hint">Keys are encrypted at rest and never displayed again. Keep your key private.</p>
+<button class="button primary">Save credentials</button>
+</form>
+</section>
+{% endblock %}

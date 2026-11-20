@@ -8,8 +8,10 @@ from django.db.models import Avg, Count, Max, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
+from django.utils import timezone
+from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
@@ -17,11 +19,15 @@ from django.views.decorators.http import require_POST
 from core.models import Assignment, Bug, StudyGroup, Submission
 from core.permissions import student_required
 
+from app.adel_b.bugs.verification import VerificationBusy
+from core.runtime import RuntimeError as VerificationError
+from core.runtime import verify
+
 from . import ai
 from .forms import AIBugForm, StudentBugForm, SubmissionForm
 from .ide import IdeError, start_ide
 from .models import IdeToken
-from .workspaces import code_file_name, has_tests, write_workspace
+from .workspaces import build_project, code_file_name, has_tests, project_has_tests, write_workspace
 
 DUE_SOON = timedelta(hours=48)
 DASHBOARD_LIMIT = 5
@@ -48,34 +54,60 @@ def my_assignments(student):
 def is_open(assignment, now=None):
     """Whether the assignment still accepts submissions."""
     now = now or timezone.now()
-    return assignment.status == Assignment.Status.ACTIVE and assignment.deadline >= now
+    return assignment.status == Assignment.Status.ACTIVE and (
+        assignment.deadline is None or assignment.deadline >= now
+    )
+
+
+def best_submission(submissions):
+    """The submission that counts (DEC-022): the most tests passed, then the newest.
+
+    Submissions without recorded test counts rank below any with counts, so when
+    none has counts the newest one counts. Returns None for an empty list.
+    """
+    return max(
+        submissions,
+        key=lambda s: (
+            s.tests_passed if s.tests_passed is not None else -1,
+            s.submitted_at,
+            s.pk,
+        ),
+        default=None,
+    )
 
 
 def attach_status(assignments, student):
-    """Set .my_submission, .my_status, .status_label, .status_badge and .due_soon on each one.
+    """Set .my_submission, .latest_submission, .my_status, .status_label, .status_badge and .due_soon on each one.
 
-    The status follows the student's latest submission; with none, the assignment
-    is "todo" while it is open and "missed" once it is closed or past its deadline.
+    .my_submission is the student's counted (best) submission and the status
+    follows it; .latest_submission is the newest one, which the editor reloads.
+    With no submission, the assignment is "todo" while it is open and "missed"
+    once it is closed or past its deadline.
     """
     now = timezone.now()
     assignments = list(assignments)
-    latest = {}
+    by_assignment = {}
     for submission in Submission.objects.filter(
         student=student, assignment__in=assignments
     ).order_by("-submitted_at"):
-        latest.setdefault(submission.assignment_id, submission)
+        by_assignment.setdefault(submission.assignment_id, []).append(submission)
 
     for assignment in assignments:
-        submission = latest.get(assignment.id)
+        attempts = by_assignment.get(assignment.id, [])
+        submission = best_submission(attempts)
         if submission:
             status = submission.status  # "submitted" or "graded"
         else:
             status = "todo" if is_open(assignment, now) else "missed"
         assignment.my_submission = submission
+        assignment.latest_submission = attempts[0] if attempts else None
         assignment.my_status = status
         assignment.status_label, assignment.status_badge = STATUSES[status]
         assignment.is_open = is_open(assignment, now)
-        assignment.due_soon = status == "todo" and assignment.deadline - now <= DUE_SOON
+        assignment.due_soon = (
+            status == "todo" and assignment.deadline is not None
+            and assignment.deadline - now <= DUE_SOON
+        )
     return assignments
 
 
@@ -202,6 +234,7 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
             "blocked": blocked,
             "latest": latest,
             "has_tests": has_tests(bug),
+            "project_has_tests": project_has_tests(bug),
             "code_file": code_file_name(bug),
         },
     )
@@ -215,7 +248,7 @@ def assignment_workspace(request, pk):
         request,
         assignment.bug,
         assignment=assignment,
-        latest=assignment.my_submission,
+        latest=assignment.latest_submission,
         blocked=submit_blocked_reason(assignment),
     )
 
@@ -253,12 +286,44 @@ def ide_submit(request):
     if not form.is_valid():
         return JsonResponse({"error": " ".join(form.errors["code"])}, status=400)
 
-    Submission.objects.create(student=student, bug=bug, assignment=assignment, submitted_code=form.cleaned_data["code"])
+    code = form.cleaned_data["code"]
+
+    # Test results come only from server-side verification (DEC-037), never from VS Code.
+    passed = total = None
+    revision = bug.revision
+    if project_has_tests(bug):
+        try:
+            passed, total = verify(bug, code)
+        except VerificationBusy as error:
+            return JsonResponse({"error": str(error)}, status=503)
+        except VerificationError as error:
+            return JsonResponse({"error": str(error)}, status=503)
+
+    with transaction.atomic():
+        current = Bug.objects.select_for_update().get(pk=bug.pk)
+        if current.revision != revision:
+            return JsonResponse(
+                {"error": "The bug changed while the tests ran. Open it again from the website."}, status=409
+            )
+        if assignment is not None:
+            locked = Assignment.objects.select_for_update().get(pk=assignment.pk)
+            if not is_open(locked) or not locked.groups.filter(students=student).exists():
+                return JsonResponse(
+                    {"error": "The assignment closed or your access changed while the tests ran."}, status=403
+                )
+        elif not practice_bugs_qs(student).filter(pk=current.pk).exists():
+            return JsonResponse({"error": "You no longer have access to this bug."}, status=403)
+        Submission.objects.create(
+            student=student, bug=current, assignment=assignment, submitted_code=code,
+            tests_passed=passed, tests_total=total,
+        )
+
+    result = f" Server check: {passed}/{total} tests pass." if total else ""
     if assignment:
-        message = f'Fix submitted for "{assignment.title}". You can resubmit until the deadline.'
+        message = f'Fix submitted for "{assignment.title}".{result} You can resubmit until the deadline.'
     else:
-        message = f'Practice attempt saved for "{bug.title}". Practice is not graded.'
-    return JsonResponse({"message": message}, status=201)
+        message = f'Practice attempt saved for "{bug.title}".{result} Practice is not graded.'
+    return JsonResponse({"message": message, "passed": passed, "total": total}, status=201)
 
 
 def practice_bugs_qs(student):
@@ -349,8 +414,14 @@ def bug_create(request):
         except ai.AIError as error:
             form.add_error(None, str(error))
         else:
+            files, entry = build_project(data["language"], generated["buggy_code"], generated.get("tests_code", ""))
             bug = Bug.objects.create(
-                **generated,
+                title=generated["title"],
+                description=generated["description"],
+                buggy_code=generated["buggy_code"],
+                solution_code=generated["solution_code"],
+                project_files=files,
+                entry_file=entry,
                 language=data["language"],
                 difficulty=data["difficulty"],
                 visibility=data["visibility"],
@@ -422,3 +493,26 @@ def results(request):
             "history": history,
         },
     )
+
+
+@student_required
+@never_cache
+def progress(request, pk):
+    assignment_pk = request.GET.get("assignment")
+    if assignment_pk:
+        if not assignment_pk.isdecimal() or len(assignment_pk) > 18:
+            return JsonResponse({"error": "Invalid assignment."}, status=400)
+        assignment = get_object_or_404(my_assignments(request.user), pk=assignment_pk, bug_id=pk)
+        bug = assignment.bug
+    else:
+        assignment = None
+        bug = get_object_or_404(practice_bugs_qs(request.user), pk=pk)
+    latest = Submission.objects.filter(
+        student=request.user, bug=bug, assignment=assignment,
+    ).order_by("-submitted_at", "-pk").first()
+    return JsonResponse({
+        "id": latest.pk if latest else None,
+        "passed": latest.tests_passed if latest else None,
+        "total": latest.tests_total if latest else None,
+        "submitted": latest.submitted_at.isoformat() if latest else None,
+    })

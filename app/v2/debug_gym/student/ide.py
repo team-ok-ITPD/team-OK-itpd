@@ -84,10 +84,10 @@ def start_ide(student, folder):
     docker, client = _docker()
     name = container_name(student)
     try:
-        image_id = client.images.get(settings.DEBUG_GYM_IDE_IMAGE).id
+        image_id = client.images.get(settings.DEBUG_GYM_STUDENT_IDE_IMAGE).id
     except docker.errors.ImageNotFound:
         raise IdeError(
-            f"VS Code is not available: the image {settings.DEBUG_GYM_IDE_IMAGE!r} is not built on the server."
+            f"VS Code is not available: the image {settings.DEBUG_GYM_STUDENT_IDE_IMAGE!r} is not built on the server."
         ) from None
 
     try:
@@ -109,7 +109,7 @@ def start_ide(student, folder):
 
     try:
         container = client.containers.run(
-            settings.DEBUG_GYM_IDE_IMAGE,
+            settings.DEBUG_GYM_STUDENT_IDE_IMAGE,
             entrypoint=["code-server"],
             command=CODE_SERVER_ARGS,
             name=name,

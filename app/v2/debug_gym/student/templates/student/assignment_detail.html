@@ -24,7 +24,7 @@
     <p class="alert warning">Due in {{ assignment.deadline|timeuntil }}.</p>
   {% endif %}
 {% else %}
-  <p class="alert error">This assignment is closed: the deadline was {{ assignment.deadline|date:"M j, Y H:i" }}. New submissions are not accepted.</p>
+  <p class="alert error">This assignment is closed. {% if assignment.deadline %}The deadline was {{ assignment.deadline|date:"M j, Y H:i" }}.{% endif %} New submissions are not accepted.</p>
 {% endif %}
 
 <div class="assignment-layout">
@@ -57,7 +57,7 @@
         <dt>Status</dt>
         <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
         <dt>Deadline</dt>
-        <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+        <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         <dt>Professor</dt>
         <dd>{{ assignment.professor.name }}</dd>
         <dt>My group{{ my_groups|length|pluralize }}</dt>
@@ -70,9 +70,11 @@
       {% with submission=assignment.my_submission %}
         {% if submission and submission.status == "graded" %}
           <p class="stat"><span class="stat-value">{{ submission.grade|floatformat }}</span><span class="stat-label">Grade</span></p>
+          {% if submission.test_result %}<p class="text-muted">Tests passed: {{ submission.test_result }}</p>{% endif %}
           <div class="prose">{{ submission.feedback|default:"No feedback given."|linebreaks }}</div>
         {% elif submission %}
           <p class="text-muted">Submitted {{ submission.submitted_at|date:"M j, H:i" }}. Waiting for your professor to grade it.</p>
+          {% if submission.test_result %}<p class="text-muted">Tests passed: {{ submission.test_result }}</p>{% endif %}
         {% else %}
           <div class="empty"><strong>Not submitted yet.</strong><span>Your fix and its grade will appear here.</span></div>
         {% endif %}
@@ -85,12 +87,13 @@
   <section class="card table-card submission-history">
     <h2 class="card-title">My submissions</h2>
     <table class="table">
-      <thead><tr><th>Submitted</th><th>Status</th><th>Grade</th><th>Feedback</th></tr></thead>
+      <thead><tr><th>Submitted</th><th>Status</th><th>Tests</th><th>Grade</th><th>Feedback</th></tr></thead>
       <tbody>
         {% for submission in submissions %}
           <tr>
             <td>{{ submission.submitted_at|date:"M j, H:i" }}</td>
             <td><span class="badge {% if submission.status == 'graded' %}success{% else %}warning{% endif %}">{{ submission.get_status_display }}</span></td>
+            <td>{{ submission.test_result|default:"—" }}{% if submission.pk == assignment.my_submission.pk and submissions|length > 1 %} <span class="badge">Counted</span>{% endif %}</td>
             <td>{{ submission.grade|floatformat|default:"—" }}</td>
             <td class="text-muted">{{ submission.feedback|default:"—"|truncatechars:80 }}</td>
           </tr>
