@@ -21,6 +21,9 @@
 
 ## Review And Use
 
+OpenCode added the shared stack layout between assignment-detail sections after
+the user reported that the instructions card touched the context cards.
+
 OpenCode aligned the group teacher and student-enrollment cards in two equal
 columns with matching heights and bottom-aligned compact actions, stacking them
 on narrow screens, following the user's layout feedback.
