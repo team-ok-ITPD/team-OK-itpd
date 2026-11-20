@@ -42,27 +42,48 @@ def is_open(assignment, now=None):
     return assignment.status == Assignment.Status.ACTIVE and assignment.deadline >= now
 
 
-def attach_status(assignments, student):
-    """Set .my_submission, .my_status, .status_label, .status_badge and .due_soon on each one.
+def best_submission(submissions):
+    """The submission that counts (DEC-022): the most tests passed, then the newest.
 
-    The status follows the student's latest submission; with none, the assignment
-    is "todo" while it is open and "missed" once it is closed or past its deadline.
+    Submissions without recorded test counts rank below any with counts, so when
+    none has counts the newest one counts. Returns None for an empty list.
+    """
+    return max(
+        submissions,
+        key=lambda s: (
+            s.tests_passed if s.tests_passed is not None else -1,
+            s.submitted_at,
+            s.pk,
+        ),
+        default=None,
+    )
+
+
+def attach_status(assignments, student):
+    """Set .my_submission, .latest_submission, .my_status, .status_label, .status_badge and .due_soon on each one.
+
+    .my_submission is the student's counted (best) submission and the status
+    follows it; .latest_submission is the newest one, which the editor reloads.
+    With no submission, the assignment is "todo" while it is open and "missed"
+    once it is closed or past its deadline.
     """
     now = timezone.now()
     assignments = list(assignments)
-    latest = {}
+    by_assignment = {}
     for submission in Submission.objects.filter(
         student=student, assignment__in=assignments
     ).order_by("-submitted_at"):
-        latest.setdefault(submission.assignment_id, submission)
+        by_assignment.setdefault(submission.assignment_id, []).append(submission)
 
     for assignment in assignments:
-        submission = latest.get(assignment.id)
+        attempts = by_assignment.get(assignment.id, [])
+        submission = best_submission(attempts)
         if submission:
             status = submission.status  # "submitted" or "graded"
         else:
             status = "todo" if is_open(assignment, now) else "missed"
         assignment.my_submission = submission
+        assignment.latest_submission = attempts[0] if attempts else None
         assignment.my_status = status
         assignment.status_label, assignment.status_badge = STATUSES[status]
         assignment.is_open = is_open(assignment, now)
@@ -203,7 +224,7 @@ def assignment_workspace(request, pk):
         request,
         assignment.bug,
         assignment=assignment,
-        latest=assignment.my_submission,
+        latest=assignment.latest_submission,
         blocked=submit_blocked_reason(assignment),
         done_url=reverse("student:assignment_detail", args=[assignment.pk]),
         done_message="Fix submitted. You can resubmit until the deadline.",
