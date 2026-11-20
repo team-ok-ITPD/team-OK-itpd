@@ -10,9 +10,23 @@
     <h1>Teaching workspace</h1>
   </div>
 </header>
-<p class="lede">Create and manage teaching work after the group and assignment workflows are implemented.</p>
-<section class="card">
-  <h2 class="card-title">Next step</h2>
-  <p class="text-muted">Groups, assignments and results are not available in this baseline yet.</p>
+<p class="lede">Open an administrator-assigned group to view students and teaching work.</p>
+<div class="teaching-stats">
+  <div class="card stat"><span class="stat-value">{{ groups|length }}</span><span class="stat-label">Assigned groups</span></div>
+  <div class="card stat"><span class="stat-value">{{ student_count }}</span><span class="stat-label">Students</span></div>
+  <div class="card stat"><span class="stat-value">{{ exercise_count }}</span><span class="stat-label">Your exercises</span></div>
+</div>
+<header class="section-header"><h2>Your groups</h2><a href="{% url 'professor:create' %}">Create a new exercise →</a></header>
+<section class="grid-cards">
+{% for group in groups %}
+  <article class="card stack">
+    <h2 class="card-title">{{ group.name }}</h2>
+    <p class="text-muted">{{ group.student_count }} students</p>
+    <p class="text-muted">{{ group.description|default:"Students and assignments in one place." }}</p>
+    <a class="button secondary" href="{% url 'professor:group' group.pk %}">Open group</a>
+  </article>
+{% empty %}
+  <div class="empty"><strong>No groups assigned yet.</strong><span>Ask your administrator to assign a group.</span></div>
+{% endfor %}
 </section>
 {% endblock %}

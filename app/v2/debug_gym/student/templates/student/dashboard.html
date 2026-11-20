@@ -42,7 +42,7 @@
                 <span class="badge small difficulty-{{ assignment.bug.difficulty }}">{{ assignment.bug.get_difficulty_display }}</span>
               </td>
               <td>
-                {{ assignment.deadline|date:"M j, H:i" }}
+                {% if assignment.deadline %}{{ assignment.deadline|date:"M j, H:i" }}{% else %}No deadline{% endif %}
                 {% if assignment.due_soon %}<span class="badge warning small">Due soon</span>{% endif %}
               </td>
             </tr>

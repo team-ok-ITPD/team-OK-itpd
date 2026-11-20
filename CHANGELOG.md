@@ -6,6 +6,29 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The v2 professor workspace lists assigned groups and students, manages
+  group-specific assignments with optional deadlines, and opens results and
+  CSV exports after the deadline or manual closure.
+- Professors can browse accessible exercises, publish owned exercises, import
+  text projects as ZIP files and create an exercise directly for a group.
+- Browser VS Code supports professor project saves and verified student
+  submissions through the Debug GYM extension, with Python and JavaScript
+  runners and automatic result refresh.
+- Professors can configure an encrypted personal generation key, generate
+  validated debugging projects and receive one-time post-deadline agent
+  findings across all submitted attempts.
+- The professor workspace uses a spacious sidebar layout, balanced cards
+  and grouped authoring actions.
+- Professors can unpublish their own exercises. Assigning another author's
+  public exercise creates a private project copy with a source link in its
+  description, keeping the group's work independent of the original.
+
+### Fixed
+
+- Role-restricted class-based pages accept their configured required role.
+
 ## [0.4.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.4.0) - 2026-11-15
 
 ### Added

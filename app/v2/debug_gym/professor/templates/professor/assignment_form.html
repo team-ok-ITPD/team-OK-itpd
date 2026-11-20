@@ -1,1 +1,16 @@
 <!-- [Professor Dev] Create an assignment from a bug, assign to groups, set deadline -->
+{% extends "base.html" %}
+{% block title %}Assign exercise · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">{{ group.name }}</p><h1>Assign exercise</h1></div></header>
+<p class="lede">This assignment belongs to {{ group.name }}. Its deadline is independent of other groups.</p>
+<p class="text-muted">Choosing another author's public exercise creates a private copy in your catalog, with a link to the original. Your group receives that independent copy.</p>
+<section class="card">
+<form class="form" method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for field in form %}<label class="field">{{ field.label }}{{ field }}
+  {% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}
+  {{ field.errors }}</label>{% endfor %}
+  <div class="row"><button class="button primary">Assign</button><a class="button ghost" href="{% url 'professor:group' group.pk %}">Cancel</a></div>
+</form></section>
+{% endblock %}
