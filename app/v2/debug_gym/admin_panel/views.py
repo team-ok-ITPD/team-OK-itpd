@@ -1,5 +1,6 @@
 # [Admin Dev] Views for administrator-managed teacher accounts and group membership
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -91,6 +92,7 @@ class ProvisionedAccountListView(RoleRequiredMixin, ListView):
     account_role = User.Role.STUDENT
     account_label = "Student"
     create_url_name = "admin_panel:student-create"
+    edit_url_name = "admin_panel:student-edit"
 
     def get_queryset(self):
         queryset = User.objects.filter(role=self.account_role)
@@ -104,6 +106,7 @@ class ProvisionedAccountListView(RoleRequiredMixin, ListView):
         context.update(
             account_label=self.account_label,
             create_url=reverse(self.create_url_name),
+            edit_url_name=self.edit_url_name,
             query=self.request.GET.get("q", "").strip(),
         )
         return context
@@ -113,6 +116,7 @@ class AdministratorListView(ProvisionedAccountListView):
     account_role = User.Role.ADMIN
     account_label = "Administrator"
     create_url_name = "admin_panel:administrator-create"
+    edit_url_name = "admin_panel:administrator-edit"
 
 
 class TeacherUpdateView(RoleRequiredMixin, UpdateView):
@@ -120,19 +124,41 @@ class TeacherUpdateView(RoleRequiredMixin, UpdateView):
     form_class = TeacherForm
     template_name = "admin_panel/user_form.html"
     success_url = reverse_lazy("admin_panel:users")
+    account_role = User.Role.PROFESSOR
+    account_label = "teacher"
 
     def get_queryset(self):
-        return User.objects.filter(role=User.Role.PROFESSOR)
+        return User.objects.filter(role=self.account_role)
 
     def form_valid(self, form):
-        messages.success(self.request, "Teacher account updated.")
-        return super().form_valid(form)
+        if form.instance.pk == self.request.user.pk and not form.cleaned_data["is_active"]:
+            form.add_error("is_active", "You cannot deactivate your own administrator account.")
+            return self.form_invalid(form)
+        response = super().form_valid(form)
+        if self.object.pk == self.request.user.pk:
+            update_session_auth_hash(self.request, self.object)
+        messages.success(self.request, f"{self.account_label.capitalize()} account updated.")
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["account_label"] = "teacher"
+        context["account_label"] = self.account_label
         context["account_list_url"] = self.success_url
         return context
+
+
+class StudentUpdateView(TeacherUpdateView):
+    form_class = StudentForm
+    account_role = User.Role.STUDENT
+    account_label = "student"
+    success_url = reverse_lazy("admin_panel:students")
+
+
+class AdministratorUpdateView(TeacherUpdateView):
+    form_class = AdministratorForm
+    account_role = User.Role.ADMIN
+    account_label = "administrator"
+    success_url = reverse_lazy("admin_panel:administrators")
 
 
 class GroupCreateView(RoleRequiredMixin, CreateView):

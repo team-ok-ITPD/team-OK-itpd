@@ -113,8 +113,10 @@ Sign in at `http://127.0.0.1:8000/`. Each role lands on its own dashboard.
     public bugs; practice attempts are saved but never graded. **Results** shows
     your graded work and history.
 2. **Admin** (`admin@example.com`): open `/admin-panel/` to create teacher,
-    student and administrator accounts. Teachers can also be edited or
-    deactivated. Use **Groups** to create a group, select its active teacher,
+    student and administrator accounts. Each account list has **Edit** actions
+    for name, email, password and active status; leave the password blank to
+    keep it. Administrators cannot deactivate themselves. Use **Groups** to
+    create a group, select its active teacher,
     change its teacher, and add or remove students. Each group has one teacher.
     Changing the group's teacher does not transfer existing assignments or
     exercises. Assignment pages are read-only in the administrator panel.

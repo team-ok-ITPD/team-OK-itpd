@@ -21,6 +21,12 @@
 
 ## Review And Use
 
+OpenCode added student/administrator editing at the user's request, including
+role-scoped URLs, list actions, password preservation/reset, self-deactivation
+protection and session refresh after changing one's own administrator password.
+Regression tests cover editing, role injection, invalid data, authorization,
+CSRF and self-account handling.
+
 OpenCode added the shared stack layout between assignment-detail sections after
 the user reported that the instructions card touched the context cards.
 

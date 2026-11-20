@@ -17,6 +17,110 @@ class AdminPanelTests(TestCase):
     def login_admin(self):
         self.client.force_login(self.admin)
 
+    def test_admin_edits_students_and_other_administrators(self):
+        other_admin = User.objects.create_user(
+            "other-admin@example.com", "Other admin", "old-password", role=User.Role.ADMIN
+        )
+        self.login_admin()
+        for account, route, listing in (
+            (self.student, "student-edit", "students"),
+            (other_admin, "administrator-edit", "administrators"),
+        ):
+            with self.subTest(route=route):
+                url = reverse(f"admin_panel:{route}", args=[account.pk])
+                self.assertContains(
+                    self.client.get(reverse(f"admin_panel:{listing}")), f'href="{url}"'
+                )
+                self.assertContains(self.client.get(url), account.email)
+                response = self.client.post(url, {
+                    "name": "Updated name", "email": f"updated-{account.pk}@example.com",
+                    "is_active": "on", "password": "replacement-password",
+                    "password_confirmation": "replacement-password",
+                    "role": User.Role.PROFESSOR,
+                })
+                self.assertRedirects(response, reverse(f"admin_panel:{listing}"))
+                old_role = account.role
+                account.refresh_from_db()
+                self.assertEqual(account.name, "Updated name")
+                self.assertEqual(account.email, f"updated-{account.pk}@example.com")
+                self.assertEqual(account.role, old_role)
+                self.assertTrue(account.check_password("replacement-password"))
+                response = self.client.post(url, {
+                    "name": account.name, "email": account.email,
+                    "password": "", "password_confirmation": "",
+                })
+                self.assertRedirects(response, reverse(f"admin_panel:{listing}"))
+                account.refresh_from_db()
+                self.assertFalse(account.is_active)
+                self.assertTrue(account.check_password("replacement-password"))
+
+    def test_account_edit_routes_are_role_scoped_and_admin_only(self):
+        for route, target, wrong_target in (
+            ("student-edit", self.student, self.admin),
+            ("administrator-edit", self.admin, self.student),
+        ):
+            self.login_admin()
+            self.assertEqual(self.client.get(
+                reverse(f"admin_panel:{route}", args=[wrong_target.pk])
+            ).status_code, 404)
+            url = reverse(f"admin_panel:{route}", args=[target.pk])
+            for account in (None, self.student, self.teacher):
+                self.client.logout()
+                if account:
+                    self.client.force_login(account)
+                for method in ("get", "post"):
+                    self.assertEqual(getattr(self.client, method)(url).status_code,
+                                     403 if account else 302)
+
+    def test_account_edits_reject_duplicate_emails_and_mismatched_passwords(self):
+        self.login_admin()
+        for route, account in (
+            ("student-edit", self.student), ("administrator-edit", self.admin),
+        ):
+            for overrides in (
+                {"email": self.teacher.email.upper()},
+                {"password": "replacement-password", "password_confirmation": "different"},
+            ):
+                payload = {"name": account.name, "email": account.email, "is_active": "on",
+                           "password": "", "password_confirmation": ""}
+                payload.update(overrides)
+                response = self.client.post(
+                    reverse(f"admin_panel:{route}", args=[account.pk]), payload
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.context["form"].errors)
+                original_email = account.email
+                account.refresh_from_db()
+                self.assertEqual(account.email, original_email)
+
+    def test_admin_cannot_deactivate_self_and_self_password_change_keeps_session(self):
+        self.login_admin()
+        url = reverse("admin_panel:administrator-edit", args=[self.admin.pk])
+        payload = {"name": self.admin.name, "email": self.admin.email,
+                   "password": "", "password_confirmation": ""}
+        response = self.client.post(url, payload)
+        self.assertContains(response, "You cannot deactivate your own administrator account.")
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+        payload.update(is_active="on", password="replacement-password",
+                       password_confirmation="replacement-password")
+        self.assertRedirects(self.client.post(url, payload), reverse("admin_panel:administrators"))
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.check_password("replacement-password"))
+        self.assertEqual(self.client.get(reverse("admin_panel:dashboard")).status_code, 200)
+
+    def test_student_and_administrator_edits_require_csrf(self):
+        from django.test import Client
+
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.admin)
+        for route, account in (
+            ("student-edit", self.student), ("administrator-edit", self.admin),
+        ):
+            self.assertEqual(client.post(
+                reverse(f"admin_panel:{route}", args=[account.pk]), {}
+            ).status_code, 403)
+
     def test_admin_creates_teacher_account(self):
         self.login_admin()
         response = self.client.post(reverse("admin_panel:user-create"), {"name": "New Teacher", "email": "new@example.com", "is_active": "on", "password": "new-password", "password_confirmation": "new-password"})

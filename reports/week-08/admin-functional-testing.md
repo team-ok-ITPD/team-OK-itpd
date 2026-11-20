@@ -66,6 +66,20 @@ From `app/v2/debug_gym/`:
 
 ## Review Limits And Follow-up
 
+### Account Editing Follow-up
+
+The user subsequently requested student and administrator editing. The expanded
+`admin_panel accounts core` suite passes 67 tests, including 28 administrator
+tests. Added coverage verifies list edit links, role-scoped GET/POST access,
+name/email changes, password replacement and preservation, deactivation,
+duplicate emails, password mismatch, role-injection rejection, CSRF protection,
+self-deactivation rejection and retaining the current session after an
+administrator changes their own password. The earlier full-suite counts above
+remain the earlier run, not a claim that the expanded full suite was rerun.
+Browser follow-up also saved name changes for the synthetic student and
+administrator accounts, observed both success messages, and verified the
+administrator list's Edit link opens the matching account form.
+
 - Do not merge based only on the focused suite: the full-suite failures need
   team triage, and mobile visual testing is still outstanding.
 - The older local database has a schema mismatch involving `groups.is_archived`.

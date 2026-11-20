@@ -8,6 +8,10 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Administrators can edit student and administrator names, emails, passwords
+  and activity status; self-deactivation is blocked and self password changes
+  preserve the current session.
+
 - The v2 administrator panel can create student and administrator accounts,
   create teaching groups, and assign one active teacher per group, alongside
   existing teacher provisioning and student membership management.

@@ -15,8 +15,8 @@
 {% if accounts %}
 <section class="card">
   <table class="table">
-    <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
-    <tbody>{% for account in accounts %}<tr><td>{{ account.name }}</td><td>{{ account.email }}</td><td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td></tr>{% endfor %}</tbody>
+    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for account in accounts %}<tr><td>{{ account.name }}</td><td>{{ account.email }}</td><td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td><td><a class="button small secondary" href="{% url edit_url_name account.pk %}">Edit</a></td></tr>{% endfor %}</tbody>
   </table>
 </section>
 {% else %}

@@ -134,7 +134,7 @@ These are future verification scenarios, not passed tests or newly issued FR ide
 ## Current Implementation And Next Records
 
 The administrator UI additionally supports student and administrator account
-creation, group creation, and assignment of one active teacher to a group.
+creation and editing, group creation, and assignment of one active teacher to a group.
 These capabilities implement the explicit 2026-11-20 development request;
 they are not a newly recorded Customer decision and do not change the sourced
 matrix above. Changing a group's teacher leaves existing exercise and assignment

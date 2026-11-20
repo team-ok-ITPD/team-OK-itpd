@@ -4,9 +4,9 @@
 {% block content %}
 <header class="page-header"><div><p class="eyebrow">Administration</p><h1>{% if object %}Edit{% else %}Create{% endif %} {{ account_label }}</h1></div></header>
 {% include "admin_panel/components/navigation.html" %}
-<p class="lede">Create an account with the {{ account_label }} role. Roles cannot be changed through this form.</p>
+<p class="lede">{% if object %}Edit the {{ account_label }} account. Leave the password blank to keep it unchanged.{% else %}Create an account with the {{ account_label }} role.{% endif %} Roles cannot be changed through this form.</p>
 {% if account_label == "administrator" %}<p class="alert warning">Administrator accounts can provision other accounts and manage all teaching groups. Grant this access only to trusted operators.</p>{% endif %}
-<form method="post" class="card form"{% if object %} data-deactivate-confirm="Deactivate this teacher? They will be signed out and cannot access teaching pages."{% endif %}>
+<form method="post" class="card form"{% if object %} data-deactivate-confirm="Deactivate this {{ account_label }}? They will no longer be able to sign in."{% endif %}>
   {% csrf_token %}
   {{ form.non_field_errors }}
   {% for field in form %}
