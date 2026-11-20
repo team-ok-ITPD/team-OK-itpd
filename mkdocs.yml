@@ -14,19 +14,24 @@ nav:
   - Setup and run: setup.md
   - Features: features.md
   - Deployment: deployment.md
+  - Analytics: analytics.md
+  - Observability: observability.md
   - Product vision: product-vision.md
   - Roles and access: roles-and-access.md
   - Requirements:
       - Functional requirements: functional-requirements/README.md
       - Quality requirements: quality-requirements/README.md
+  - Usability tests: usability-tests/README.md
   - Architecture: architecture/README.md
   - Glossary: glossary.md
   - Planning:
       - Threshold of success: threshold-of-success.md
       - Project plan: project-plan.md
+      - Configuration plan: configuration-plan.md
       - Risks: risks.md
       - Definition of Done: definition-of-done.md
   - Decisions: decisions.md
+  - Customer questions: customer-questions.md
   - Assumptions: assumptions.md
   - Research:
       - Value proposition: research/value-proposition.md

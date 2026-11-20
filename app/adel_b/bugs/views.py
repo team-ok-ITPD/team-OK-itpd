@@ -11,6 +11,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 
+from config.analytics import emit
+
 from .models import Attempt, Bug, Draft, IdeToken
 
 MAX_DRAFT_LENGTH = 50_000
@@ -29,16 +31,27 @@ def login_required_json(view):
 
 
 @require_http_methods(["GET"])
+@login_required_json
 def bug_list(request):
-    return JsonResponse({"bugs": [bug.to_dict() for bug in Bug.visible_to(request.user)]})
+    audience_filter = request.GET.get("filter", "all")
+    try:
+        bugs = Bug.filtered_for(request.user, audience_filter)
+    except ValueError:
+        return JsonResponse({"error": "Choose one of my, public, group or all."}, status=400)
+    return JsonResponse({
+        "filter": audience_filter,
+        "bugs": [{**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id} for bug in bugs],
+    })
 
 
 @require_http_methods(["GET"])
+@login_required_json
 def bug_detail(request, slug):
     bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
-    return JsonResponse({"bug": bug.to_dict()})
+    emit("exercise_opened", request.user, exercise_slug=bug.slug)
+    return JsonResponse({"bug": {**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id}})
 
 
 @require_http_methods(["GET"])
@@ -103,17 +116,35 @@ def bug_attempts(request, slug):
 
 def _save_attempt(user, bug, payload):
     try:
-        code, passed, total = payload.get("code"), payload.get("passed"), payload.get("total")
-        if not isinstance(code, str) or type(passed) is not int or type(total) is not int:
+        code = payload.get("code")
+        if not isinstance(code, str):
             raise ValueError
     except (AttributeError, ValueError):
-        return JsonResponse({"error": "Send the code and the passed and total test counts."}, status=400)
+        return JsonResponse({"error": "Send the code as text."}, status=400)
     if len(code) > MAX_DRAFT_LENGTH:
         return JsonResponse({"error": "The code is too long to save."}, status=400)
-    if total != len(bug.tests) or not 0 <= passed <= total:
-        return JsonResponse({"error": f"This bug has {len(bug.tests)} tests."}, status=400)
+
+    from .verification import VerificationBusy, VerificationError, verify_submission
+
+    try:
+        passed, total = verify_submission(bug, code)
+    except VerificationBusy as error:
+        response = JsonResponse({"error": str(error)}, status=503)
+        response["Retry-After"] = "5"
+        return response
+    except VerificationError as error:
+        return JsonResponse({"error": str(error)}, status=503)
 
     attempt = Attempt.objects.create(user=user, bug=bug, code=code, passed_count=passed, total_count=total)
+    # The counts come from the verification container, never from the request body.
+    emit(
+        "solution_verified",
+        user,
+        exercise_slug=bug.slug,
+        passed_count=passed,
+        total_count=total,
+        all_passed=total > 0 and passed == total,
+    )
     return JsonResponse({"attempt": attempt.to_dict()}, status=201)
 
 
@@ -130,6 +161,9 @@ def ide_submit(request):
             {"error": "This VS Code folder is no longer connected. Open it again from the website."},
             status=401,
         )
+    if not Bug.visible_to(token.user).filter(pk=token.bug_id).exists():
+        token.delete()
+        return JsonResponse({"error": "You no longer have access to this exercise."}, status=403)
     try:
         payload = json.loads(request.body or b"{}")
     except json.JSONDecodeError:
@@ -150,7 +184,7 @@ def ide_submit(request):
 @transaction.atomic
 def bug_progress(request, slug):
     """One learner-scoped snapshot, consistent with atomic IDE submissions."""
-    bug = Bug.objects.filter(slug=slug).first()
+    bug = Bug.visible_to(request.user).filter(slug=slug).first()
     if bug is None:
         return JsonResponse({"error": "Bug not found."}, status=404)
     draft = Draft.objects.filter(user=request.user, bug=bug).first()
@@ -174,7 +208,8 @@ def history(request):
         drafts_by_bug[draft.bug_id] = draft
 
     items = []
-    for bug in Bug.objects.filter(id__in=attempts_by_bug.keys() | drafts_by_bug.keys()):
+    visible = Bug.visible_to(request.user).filter(id__in=attempts_by_bug.keys() | drafts_by_bug.keys())
+    for bug in visible:
         attempts = attempts_by_bug.get(bug.id, [])
         draft = drafts_by_bug.get(bug.id)
         if any(attempt.solved for attempt in attempts):
@@ -193,9 +228,10 @@ def history(request):
             "lastActivity": max(times).isoformat(),
         })
     items.sort(key=lambda item: item["lastActivity"], reverse=True)
+    visible_ids = Bug.visible_to(request.user).values("id")
     activity = [
         moment.isoformat()
-        for moment in request.user.attempts.values_list("created_at", flat=True)[:500]
+        for moment in request.user.attempts.filter(bug_id__in=visible_ids).values_list("created_at", flat=True)[:500]
     ]
     return JsonResponse({"items": items, "activity": activity})
 
@@ -297,6 +333,7 @@ def bug_vscode(request, slug):
         port = start_ide(request.user, folder)
     except IdeError as error:
         return JsonResponse({"error": str(error)}, status=503)
+    emit("workspace_opened", request.user, exercise_slug=bug.slug)
     return JsonResponse({"url": f"http://localhost:{port}/?folder=/home/coder/project"})
 
 
@@ -325,7 +362,7 @@ def _title_hits(wanted, title):
     )
 
 
-def rank_bugs(query, user):
+def rank_bugs(query, user, *, title_only=False):
     """Return (bugs, "title" | "description"): title matches first, else description matches.
 
     Bugs whose title matches are ranked by matched words, an exact phrase from the title
@@ -347,7 +384,7 @@ def rank_bugs(query, user):
             score += 100
         if score:
             by_title.append((score, bug))
-    if by_title:
+    if by_title or title_only:
         return [bug for _, bug in sorted(by_title, key=order)], "title"
 
     by_text = []
@@ -360,6 +397,7 @@ def rank_bugs(query, user):
 
 
 @require_http_methods(["POST"])
+@login_required_json
 def exercise_match(request):
     try:
         payload = json.loads(request.body or b"{}")
@@ -369,7 +407,9 @@ def exercise_match(request):
     except (json.JSONDecodeError, AttributeError, ValueError):
         return JsonResponse({"error": "Send a text query."}, status=400)
 
-    ranked, matched_by = rank_bugs(query, request.user)
+    title_only = payload.get("titleOnly") is True
+    ranked, matched_by = rank_bugs(query, request.user, title_only=title_only)
+    emit("exercise_searched", request.user, result_count=len(ranked))
     if not ranked:
         return JsonResponse(
             {"error": "No prepared exercise matches that request. Try a Python list, loop, or dictionary bug."},
@@ -377,8 +417,10 @@ def exercise_match(request):
         )
     # "exercise" is the best match; "exercises" lists every related one, best first.
     return JsonResponse({
-        "exercise": ranked[0].to_dict(),
-        "exercises": [bug.to_dict() for bug in ranked],
+        "exercise": {**ranked[0].to_dict(), "ownedByMe": ranked[0].created_by_id == request.user.id},
+        "exercises": [
+            {**bug.to_dict(), "ownedByMe": bug.created_by_id == request.user.id} for bug in ranked
+        ],
         "matchedBy": matched_by,
     })
 

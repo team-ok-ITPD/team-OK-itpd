@@ -505,3 +505,67 @@ browser code editor and debug controls.
   [the Week 6 customer meeting](../reports/week-06/meeting-report.md#decisions)
 - **Why:** VS Code is the editing and debugging environment, but learners still
   need to see their current verification state when they return to the product.
+
+## DEC-039
+
+Keep assignment creation and editing in the professor workflow; administrators
+may view assignments but do not manage them.
+
+- **Status:** Active
+- **Date:** 2026-11-13
+- **Made by:** Customer
+- **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
+- **Why:** The professor is responsible for teaching assignments. The
+  administrator manages users and groups; assignment editing by the
+  administrator duplicates the professor's responsibility.
+
+## DEC-040
+
+Make group assignment, student submission and professor review of code and
+test results the core workflow.
+
+- **Status:** Active
+- **Date:** 2026-11-13
+- **Made by:** Customer
+- **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
+- **Why:** The professor needs to assign exercises to groups, students need to
+  solve and submit them, and the professor needs to inspect group outcomes,
+  test results and submitted code.
+
+## DEC-041
+
+Let professors specify which development tools are available to students for
+an exercise.
+
+- **Status:** Active
+- **Date:** 2026-11-13
+- **Made by:** Customer
+- **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
+- **Why:** Exercises may require particular tools, such as a linter, debugger
+  or type checker, and the professor needs to define the student environment.
+  The configuration mechanism remains open.
+
+## DEC-042
+
+Let a professor initiate system-supported suspicious-solution analysis across
+an assignment's submissions after its deadline.
+
+- **Status:** Active
+- **Date:** 2026-11-13
+- **Made by:** Customer
+- **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
+- **Why:** The professor needs a way to identify solutions that may exploit
+  leaked tests or otherwise avoid the intended task. The system can analyze
+  the collected submissions and present suspicious results for the professor
+  to review. The model, limits and false-positive process remain open.
+
+## DEC-043
+
+Provide professors with an export of assignment submission and test results.
+
+- **Status:** Active
+- **Date:** 2026-11-13
+- **Made by:** Customer
+- **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
+- **Why:** Professors need to use assignment outcomes in downstream grading
+  workflows. The exact CSV columns and Moodle process remain open.

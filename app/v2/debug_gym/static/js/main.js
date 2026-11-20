@@ -13,3 +13,21 @@ document.addEventListener("click", (event) => {
   button.setAttribute("aria-pressed", String(!showing));
   input.focus();
 });
+
+// Destructive membership changes need an explicit user acknowledgement.
+document.addEventListener("submit", (event) => {
+  const form = event.target.closest("form[data-confirm]");
+  if (form && !window.confirm(form.dataset.confirm)) {
+    event.preventDefault();
+  }
+
+  const activeField = event.target.querySelector('[name="is_active"]');
+  if (
+    event.target.dataset.deactivateConfirm &&
+    activeField &&
+    !activeField.checked &&
+    !window.confirm(event.target.dataset.deactivateConfirm)
+  ) {
+    event.preventDefault();
+  }
+});

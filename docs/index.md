@@ -16,9 +16,11 @@ The current minimum usable product contains one curated list-mutation exercise.
 
 - [Threshold of success](threshold-of-success.md)
 - [Project plan](project-plan.md)
+- [Configuration plan](configuration-plan.md)
 - [Risk register](risks.md)
 - [Definition of Done](definition-of-done.md)
 - [Decisions](decisions.md)
+- [Customer questions](customer-questions.md)
 - [Assumptions](assumptions.md)
 
 ## Requirements and architecture
@@ -26,6 +28,9 @@ The current minimum usable product contains one curated list-mutation exercise.
 - [Roles and access](roles-and-access.md)
 - [Functional requirements](functional-requirements/README.md)
 - [Quality requirements and priorities](quality-requirements/README.md)
+- [Usability tests](usability-tests/README.md)
+- [Analytics](analytics.md)
+- [Observability](observability.md)
 - [Architecture and decisions](architecture/README.md)
 - [Glossary](glossary.md)
 

@@ -6,14 +6,19 @@ flowchart LR
     store[("workspace store<br/>(Docker named volume)")]
   end
 
+  analytics["analytics backend<br/>(self-hosted, not built by the team)"]
+  observability["observability backend<br/>(self-hosted, not built by the team)"]
+
   browser -->|"HTTP: request text and exercise response"| catalog
   catalog -->|"HTTP: health request and workspace URL"| workspace
   browser -->|"HTTP/WebSocket: VS Code UI and commands"| workspace
   workspace <-->|"filesystem: exercise files and editor configuration"| store
+  catalog -->|"HTTPS: analytics events"| analytics
+  catalog -->|"HTTP: metrics scrape and JSON request logs"| observability
 
   classDef application fill:#dbeafe,stroke:#1d4ed8,color:#172554
   classDef datastore fill:#dcfce7,stroke:#15803d,color:#052e16
   classDef external fill:#f8fafc,stroke:#64748b,stroke-dasharray:5 5,color:#0f172a
   class catalog,workspace application
   class store datastore
-  class browser external
+  class browser,analytics,observability external

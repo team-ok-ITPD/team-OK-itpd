@@ -17,12 +17,13 @@ urlpatterns = [
     path("api/ide/submit/", views.ide_submit, name="ide-submit"),
     path("api/teach/exercises/", teaching.exercises, name="teach-exercises"),
     path("api/teach/exercises/<slug:slug>/", teaching.exercise, name="teach-exercise"),
+    path("api/teach/exercises/<slug:slug>/audience/", teaching.audience, name="teach-audience"),
     path("api/teach/exercises/<slug:slug>/assignments/", teaching.assignments, name="teach-assignments"),
     path(
-        "api/teach/exercises/<slug:slug>/assignments/<int:student_id>/",
+        "api/teach/exercises/<slug:slug>/assignments/<int:assignment_id>/",
         teaching.unassign,
         name="teach-unassign",
     ),
-    path("api/teach/students/", teaching.students, name="teach-students"),
+    path("api/teach/groups/", teaching.groups, name="teach-groups"),
     path("api/assignments/", teaching.my_assignments, name="my-assignments"),
 ]

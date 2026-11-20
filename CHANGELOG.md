@@ -6,18 +6,47 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.4.0) - 2026-11-15
+
 ### Added
+
+- The `UT-01` usability test is designed, with its surveys, consent template,
+  session template and the `QR-07` interaction-capability requirement; no
+  usability result exists yet.
+- Operators can set `DEBUG_GYM_ANALYTICS_SOURCE=usability-test` on staging so
+  that analytics events from a usability session are marked and excluded from
+  product metrics; production keeps `web`.
+- The product records an analytics event for each core-task step, with a random
+  learner identifier and no personal data, when an analytics backend is
+  configured.
+- The catalog search exposes a request-duration metric and a structured request
+  log, so an operator can find a failed request and read its latency.
 
 - A sourced administrator, teacher and student capability model, access constraints,
   proposed enforcement rules and unresolved policy questions.
 
 ### Changed
 
+- Prepared exercise search matches titles and sits above the exercise list.
+- Prepared exercises enforce private, signed-in public and assigned-group access,
+  with server-filtered My, Public, Group and All catalog views.
+- Teachers assign exercises to administrator-managed groups with an independent
+  deadline per group, replacing direct student assignments and estimated duration.
+- Submitted solutions are verified in a fresh, resource-limited container instead
+  of trusting test counts reported by the browser or VS Code extension; concurrent
+  verification and its waiting queue are bounded to protect the service.
 - Open exercise pages detect new VS Code submissions, rerun their displayed tests
   and refresh results, reproduction and history without a page reload.
 
 - Exercise pages use VS Code for source editing and retain reproduction, actions,
   tests and read-only output; manual actions read the latest saved solution.
+
+### Fixed
+
+- Successful registration and sign-in now open the learner or professor workspace
+  instead of reporting a false server-reachability error.
+- The teacher's student progress table fits its card and scrolls horizontally
+  within the card on narrow screens.
 
 ## 0.3.0 - 2026-10-31
 

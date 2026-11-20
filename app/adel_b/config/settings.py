@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'config.observability.catalog_request_telemetry',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,6 +57,37 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+DEBUG_GYM_METRICS_TOKEN = os.getenv("DEBUG_GYM_METRICS_TOKEN", "")
+
+# Analytics collection is off unless the backend address is an https URL.
+DEBUG_GYM_ANALYTICS_URL = os.getenv("DEBUG_GYM_ANALYTICS_URL", "")
+DEBUG_GYM_ANALYTICS_KEY = os.getenv("DEBUG_GYM_ANALYTICS_KEY", "")
+# Set to usability-test only for a staging dry run or counted usability session.
+DEBUG_GYM_ANALYTICS_SOURCE = os.getenv("DEBUG_GYM_ANALYTICS_SOURCE", "web")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "request_telemetry": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "debug_gym.requests": {
+            "handlers": ["request_telemetry"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "debug_gym.analytics": {
+            "handlers": ["request_telemetry"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 TEMPLATES = [
     {
@@ -136,6 +168,16 @@ WORKSPACES_DIR = Path(os.getenv("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "workspac
 # The Debug GYM code-server image (built from the repository Dockerfile) used for
 # each learner's VS Code container.
 DEBUG_GYM_IDE_IMAGE = os.getenv("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
+
+# Every submitted solution runs once in this image with no network and strict resources.
+DEBUG_GYM_VERIFICATION_IMAGE = os.getenv("DEBUG_GYM_VERIFICATION_IMAGE", DEBUG_GYM_IDE_IMAGE)
+DEBUG_GYM_VERIFICATION_TIMEOUT = int(os.getenv("DEBUG_GYM_VERIFICATION_TIMEOUT", "10"))
+DEBUG_GYM_VERIFICATION_MEMORY = os.getenv("DEBUG_GYM_VERIFICATION_MEMORY", "128m")
+DEBUG_GYM_VERIFICATION_NANO_CPUS = int(os.getenv("DEBUG_GYM_VERIFICATION_NANO_CPUS", "500000000"))
+DEBUG_GYM_VERIFICATION_PIDS = int(os.getenv("DEBUG_GYM_VERIFICATION_PIDS", "32"))
+DEBUG_GYM_VERIFICATION_CONCURRENCY = int(os.getenv("DEBUG_GYM_VERIFICATION_CONCURRENCY", "2"))
+DEBUG_GYM_VERIFICATION_QUEUE_SIZE = int(os.getenv("DEBUG_GYM_VERIFICATION_QUEUE_SIZE", "8"))
+DEBUG_GYM_VERIFICATION_QUEUE_TIMEOUT = int(os.getenv("DEBUG_GYM_VERIFICATION_QUEUE_TIMEOUT", "30"))
 
 # The address the VS Code containers use to reach this server (for the extension's Submit).
 DEBUG_GYM_IDE_SERVER_URL = os.getenv("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8001")

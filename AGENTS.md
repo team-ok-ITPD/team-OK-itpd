@@ -12,6 +12,12 @@ Read the applicable rule through [the course SKILL.md](https://github.com/inno-i
 - `runners/` holds optional host launchers; `scripts/` holds container and documentation helpers.
 - `.github/` holds CI and issue forms. `site/` is generated and ignored.
 
+## Configuration
+
+- [docs/configuration-plan.md](docs/configuration-plan.md) is the maintained
+  inventory of repository configuration; read it when a change affects builds,
+  checks, environments, releases or agent context.
+
 ## Checks
 
 - Install `requirements.lock` and run `python -m pytest -q` from the repository root. The intentionally buggy exercise fails its own tests; the product suite must pass.
