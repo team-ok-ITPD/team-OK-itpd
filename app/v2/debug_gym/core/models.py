@@ -149,6 +149,12 @@ class Bug(models.Model):
     description = models.TextField()
     buggy_code = models.TextField(help_text="Code with the bug")
     solution_code = models.TextField(help_text="Expected fix (hidden from students)")
+    tests_code = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional pytest file for Python bugs. The code is saved as main.py, "
+        "so tests start with: from main import *",
+    )
     language = models.CharField(max_length=50, help_text="e.g. python, dart")
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices)
     visibility = models.CharField(max_length=10, choices=Visibility.choices)

@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}New practice bug · Debug Gym{% endblock %}
-{% block head %}<script src="{% static 'student/ai-form.js' %}" defer></script>{% endblock %}
+{% block head %}<script src="{% static 'student/busy-button.js' %}" defer></script>{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -16,7 +16,7 @@
   Want something ready-made instead? <a href="{% url 'student:public_bugs' %}">Pick one of the public bugs.</a>
 </p>
 
-<form class="card form student-bug-form" method="post" novalidate data-ai-form>
+<form class="card form student-bug-form" method="post" novalidate data-busy-form>
   {% csrf_token %}
   {% for error in form.non_field_errors %}<p class="alert error">{{ error }}</p>{% endfor %}
 

@@ -106,6 +106,55 @@ BUGS = [
     ),
 ]
 
+# pytest files for the Python bugs; the code is saved as main.py in VS Code.
+TESTS = {
+    "Sum skips the last item": (
+        "from main import *\n\n\n"
+        "def test_adds_every_number():\n    assert total([1, 2, 3]) == 6\n\n\n"
+        "def test_single_number():\n    assert total([5]) == 5\n\n\n"
+        "def test_empty_list():\n    assert total([]) == 0\n"
+    ),
+    "Adult check is off by one": (
+        "from main import *\n\n\n"
+        "def test_eighteen_is_adult():\n    assert is_adult(18) is True\n\n\n"
+        "def test_seventeen_is_not():\n    assert is_adult(17) is False\n\n\n"
+        "def test_thirty_is_adult():\n    assert is_adult(30) is True\n"
+    ),
+    "Average of an empty list crashes": (
+        "from main import *\n\n\n"
+        "def test_empty_list_is_zero():\n    assert average([]) == 0\n\n\n"
+        "def test_normal_average():\n    assert average([2, 4]) == 3\n"
+    ),
+    "Shared default list": (
+        "from main import *\n\n\n"
+        "def test_each_call_starts_fresh():\n    add_tag(\"a\")\n    assert add_tag(\"b\") == [\"b\"]\n\n\n"
+        "def test_given_list_is_used():\n    assert add_tag(\"b\", [\"a\"]) == [\"a\", \"b\"]\n"
+    ),
+    "Counting vowels misses capitals": (
+        "from main import *\n\n\n"
+        "def test_capital_vowel():\n    assert count_vowels(\"Apple\") == 2\n\n\n"
+        "def test_all_capitals():\n    assert count_vowels(\"AEIOU\") == 5\n\n\n"
+        "def test_no_vowels():\n    assert count_vowels(\"xyz\") == 0\n"
+    ),
+    "Second largest returns the largest": (
+        "from main import *\n\n\n"
+        "def test_second_largest():\n    assert second_largest([3, 9, 5]) == 5\n\n\n"
+        "def test_with_duplicates():\n    assert second_largest([9, 9, 4]) == 4\n"
+    ),
+    "Palindrome ignores case": (
+        "from main import *\n\n\n"
+        "def test_mixed_case():\n    assert is_palindrome(\"Level\") is True\n\n\n"
+        "def test_not_palindrome():\n    assert is_palindrome(\"debug\") is False\n"
+    ),
+    "FizzBuzz order": (
+        "from main import *\n\n\n"
+        "def test_fifteen():\n    assert fizzbuzz(15) == \"FizzBuzz\"\n\n\n"
+        "def test_three():\n    assert fizzbuzz(3) == \"Fizz\"\n\n\n"
+        "def test_five():\n    assert fizzbuzz(5) == \"Buzz\"\n\n\n"
+        "def test_plain():\n    assert fizzbuzz(7) == \"7\"\n"
+    ),
+}
+
 # title, bug title, professor, groups, deadline in days (negative = past), status, instructions
 ASSIGNMENTS = [
     ("Week 1: loops", "Sum skips the last item", "prof.karim", ["Python A", "Python B"], -10, "active",
@@ -194,7 +243,7 @@ class Command(BaseCommand):
             bugs[title] = Bug.objects.create(
                 title=title, language=language, difficulty=difficulty, visibility=visibility,
                 created_by=users[author], description=description,
-                buggy_code=buggy, solution_code=solution,
+                buggy_code=buggy, solution_code=solution, tests_code=TESTS.get(title, ""),
             )
 
         assignments = {}

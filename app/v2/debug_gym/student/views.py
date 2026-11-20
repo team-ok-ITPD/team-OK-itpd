@@ -1,4 +1,5 @@
 # [Student Dev] Views for student pages: assignments, bug workspace, practice, results
+import json
 from datetime import timedelta
 
 from django.contrib import messages
@@ -8,13 +9,19 @@ from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_POST
 
 from core.models import Assignment, Bug, StudyGroup, Submission
 from core.permissions import student_required
 
 from . import ai
 from .forms import AIBugForm, StudentBugForm, SubmissionForm
+from .ide import IdeError, start_ide
+from .models import IdeToken
+from .workspaces import code_file_name, has_tests, write_workspace
 
 DUE_SOON = timedelta(hours=48)
 DASHBOARD_LIMIT = 5
@@ -164,36 +171,39 @@ def submit_blocked_reason(assignment):
     return None
 
 
-def workspace(request, bug, *, assignment=None, latest=None, blocked=None, done_url, done_message):
-    """Show the editor for `bug` and save a submission on POST.
+def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
+    """The bug's page: its brief, and a button that opens it in the student's VS Code.
 
-    Shared by assignment work (`assignment` set) and practice (`assignment` None,
-    never graded). `latest` is the submission whose code fills the editor.
+    GET shows the page. POST writes the student's folder, starts their VS Code
+    container and redirects there. Submissions come back through ide_submit().
+    Shared by assignment work (`assignment` set) and practice (`assignment` None).
     """
     if request.method == "POST":
-        # Checked on the server too: a stale open tab must not submit after the deadline.
         if blocked:
             messages.error(request, blocked)
             return redirect(request.path)
-        form = SubmissionForm(request.POST, bug=bug)
-        if form.is_valid():
-            Submission.objects.create(
-                student=request.user,
-                bug=bug,
-                assignment=assignment,
-                submitted_code=form.cleaned_data["code"],
+        try:
+            folder = write_workspace(
+                request.user, bug, assignment=assignment,
+                start_code=latest.submitted_code if latest else bug.buggy_code,
+                site_url=request.build_absolute_uri(request.path),
             )
-            messages.success(request, done_message)
-            return redirect(done_url)
-    else:
-        form = SubmissionForm(
-            bug=bug, initial={"code": latest.submitted_code if latest else bug.buggy_code}
-        )
+            return redirect(start_ide(request.user, folder))
+        except IdeError as error:
+            messages.error(request, str(error))
+            return redirect(request.path)
 
     return render(
         request,
         "student/bug_workspace.html",
-        {"assignment": assignment, "bug": bug, "form": form, "blocked": blocked, "latest": latest},
+        {
+            "assignment": assignment,
+            "bug": bug,
+            "blocked": blocked,
+            "latest": latest,
+            "has_tests": has_tests(bug),
+            "code_file": code_file_name(bug),
+        },
     )
 
 
@@ -207,9 +217,48 @@ def assignment_workspace(request, pk):
         assignment=assignment,
         latest=assignment.my_submission,
         blocked=submit_blocked_reason(assignment),
-        done_url=reverse("student:assignment_detail", args=[assignment.pk]),
-        done_message="Fix submitted. You can resubmit until the deadline.",
     )
+
+
+@csrf_exempt
+@require_POST
+def ide_submit(request):
+    """Save a fix sent by the Debug Gym VS Code extension (authenticated by its token)."""
+    scheme, _, key = request.headers.get("Authorization", "").partition(" ")
+    token = IdeToken.find(key.strip()) if scheme.lower() == "bearer" and key.strip() else None
+    if token is None or not token.student.is_active or not token.student.is_student:
+        return JsonResponse(
+            {"error": "This VS Code folder is no longer connected. Open it again from the website."}, status=401
+        )
+    student, bug, assignment = token.student, token.bug, token.assignment
+
+    # Access and deadline rules are the same as on the website.
+    if assignment is not None:
+        assignment = my_assignments(student).filter(pk=assignment.pk).first()
+        if assignment is None:
+            return JsonResponse({"error": "You no longer have access to this assignment."}, status=403)
+        attach_status([assignment], student)
+        blocked = submit_blocked_reason(assignment)
+        if blocked:
+            return JsonResponse({"error": blocked}, status=403)
+    elif not practice_bugs_qs(student).filter(pk=bug.pk).exists():
+        return JsonResponse({"error": "You no longer have access to this bug."}, status=403)
+
+    try:
+        payload = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        payload = None
+    code = payload.get("code") if isinstance(payload, dict) else None
+    form = SubmissionForm({"code": code if isinstance(code, str) else ""}, bug=bug)
+    if not form.is_valid():
+        return JsonResponse({"error": " ".join(form.errors["code"])}, status=400)
+
+    Submission.objects.create(student=student, bug=bug, assignment=assignment, submitted_code=form.cleaned_data["code"])
+    if assignment:
+        message = f'Fix submitted for "{assignment.title}". You can resubmit until the deadline.'
+    else:
+        message = f'Practice attempt saved for "{bug.title}". Practice is not graded.'
+    return JsonResponse({"message": message}, status=201)
 
 
 def practice_bugs_qs(student):
@@ -278,13 +327,7 @@ def practice_workspace(request, pk):
         .order_by("-submitted_at")
         .first()
     )
-    return workspace(
-        request,
-        bug,
-        latest=latest,
-        done_url=reverse("student:practice_workspace", args=[bug.pk]),
-        done_message="Practice attempt saved. Practice is not graded.",
-    )
+    return workspace(request, bug, latest=latest)
 
 
 @student_required

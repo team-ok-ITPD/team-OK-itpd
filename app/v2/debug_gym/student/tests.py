@@ -1,15 +1,20 @@
 # [Student Dev] Tests for the student pages
 import json
+import shutil
+import tempfile
 import urllib.error
 from datetime import timedelta
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from core.models import Assignment, Bug, StudyGroup, Submission, User
-from student import ai
+from student import ai, ide
+from student.ide import IdeError
+from student.models import IdeToken
 
 PASSWORD = "debug-gym-pass"
 
@@ -222,16 +227,31 @@ class AssignmentPagesTests(StudentTestCase):
         self.assertContains(self.get(), reverse("student:assignment_detail", args=[a.pk]))
 
 
+@override_settings(DEBUG_GYM_IDE_SERVER_URL="http://host.docker.internal:8002")
 class WorkspaceTests(StudentTestCase):
+    """The bug page and Open in VS Code (Docker is faked)."""
+
+    def setUp(self):
+        super().setUp()
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        override = override_settings(WORKSPACES_DIR=Path(self.tmp))
+        override.enable()
+        self.addCleanup(override.disable)
+        self.bug.tests_code = "from main import *\n\n\ndef test_x():\n    assert True\n"
+        self.bug.save()
+
     def ws_url(self, assignment):
         return reverse("student:assignment_workspace", args=[assignment.pk])
 
-    def post(self, assignment, code="fixed = True\n", user=None):
+    def open_vscode(self, assignment, user=None):
         self.client.force_login(user or self.student)
-        return self.client.post(self.ws_url(assignment), {"code": code})
+        with patch("student.views.start_ide", return_value="http://localhost:41234/?folder=/home/coder/project") as start:
+            response = self.client.post(self.ws_url(assignment))
+        return response, start
 
-    def my_submissions(self, assignment):
-        return Submission.objects.filter(student=self.student, assignment=assignment)
+    def folder(self, assignment):
+        return Path(self.tmp) / str(self.student.pk) / f"assignment-{assignment.pk}"
 
     def test_needs_a_student_in_the_group(self):
         a = self.assignment("Task")
@@ -239,79 +259,204 @@ class WorkspaceTests(StudentTestCase):
         self.client.force_login(self.prof)
         self.assertEqual(self.client.get(self.ws_url(a)).status_code, 403)
         other = self.assignment("Not mine", group=self.other_group)
-        self.assertEqual(self.post(other).status_code, 404)
-        self.assertFalse(Submission.objects.exists())
+        response, start = self.open_vscode(other)
+        self.assertEqual(response.status_code, 404)
+        start.assert_not_called()
 
-    def test_editor_starts_with_buggy_code_and_hides_solution(self):
+    def test_page_offers_vscode_and_hides_solution(self):
         a = self.assignment("Task")
         self.client.force_login(self.student)
-        response = self.client.get(self.ws_url(a))
-        self.assertContains(response, "Starting from the buggy code.")
-        self.assertContains(response, "for i in range(len(x) - 1): pass</textarea>")
-        self.assertNotContains(response, self.bug.solution_code)
+        page = self.client.get(self.ws_url(a))
+        self.assertContains(page, "Open in VS Code</button>")
+        self.assertContains(page, "<code>main.py</code>", html=False)
+        self.assertContains(page, "<strong>Test</strong>", html=False)
+        self.assertNotContains(page, self.bug.solution_code)
+        self.assertNotContains(page, "<textarea")
 
-    def test_submit_saves_the_fix_and_redirects(self):
+    def test_open_writes_the_folder_and_redirects_to_vscode(self):
         a = self.assignment("Task")
-        response = self.post(a, code="line one\r\n    line two\r\n")
-        self.assertRedirects(
-            response, reverse("student:assignment_detail", args=[a.pk]),
-            fetch_redirect_response=False,  # the flash message shows only once
-        )
-        submission = self.my_submissions(a).get()
-        self.assertEqual(submission.submitted_code, "line one\n    line two\n")
-        self.assertEqual(submission.bug, self.bug)
-        self.assertEqual(submission.status, Submission.Status.SUBMITTED)
-        self.assertContains(self.client.get(response["Location"]), "Fix submitted.")
+        response, start = self.open_vscode(a)
+        self.assertRedirects(response, "http://localhost:41234/?folder=/home/coder/project",
+                             fetch_redirect_response=False)
+        folder = self.folder(a)
+        start.assert_called_once_with(self.student, folder)
+        self.assertEqual((folder / "main.py").read_text(), self.bug.buggy_code + "\n")
+        self.assertIn("def test_x", (folder / "test_main.py").read_text())
+        config = json.loads((folder / ".debug-gym" / "config.json").read_text())
+        self.assertEqual(config["server"], "http://host.docker.internal:8002")
+        self.assertEqual(config["file"], "main.py")
+        self.assertTrue(config["tests"])
+        self.assertTrue(config["site"].endswith(self.ws_url(a)))
+        self.assertEqual(IdeToken.find(config["token"]).assignment, a)
+        self.assertNotIn(self.bug.solution_code, "".join(p.read_text() for p in folder.rglob("*") if p.is_file()))
 
-    def test_editor_reloads_my_latest_fix(self):
+    def test_reopening_keeps_my_edits_and_replaces_the_token(self):
         a = self.assignment("Task")
-        self.post(a, code="first try")
-        self.post(a, code="second try")
-        self.assertEqual(self.my_submissions(a).count(), 2)
-        response = self.client.get(self.ws_url(a))
-        self.assertContains(response, "second try</textarea>")
-        self.assertContains(response, "Loaded your last submission.")
+        self.open_vscode(a)
+        folder = self.folder(a)
+        old_token = json.loads((folder / ".debug-gym" / "config.json").read_text())["token"]
+        (folder / "main.py").write_text("my work in progress\n")
+        self.open_vscode(a)
+        self.assertEqual((folder / "main.py").read_text(), "my work in progress\n")
+        self.assertIsNone(IdeToken.find(old_token))
+        self.assertEqual(IdeToken.objects.count(), 1)
 
-    def test_empty_or_unchanged_code_is_rejected(self):
+    def test_first_open_starts_from_my_last_submission(self):
         a = self.assignment("Task")
-        self.assertContains(self.post(a, code="   \n"), "Your fix is empty.")
-        unchanged = self.bug.buggy_code.replace("\n", "\r\n") + "\n"
-        self.assertContains(self.post(a, code=unchanged), "still the original buggy code")
-        self.assertFalse(self.my_submissions(a).exists())
+        Submission.objects.create(student=self.student, bug=self.bug, assignment=a, submitted_code="mine")
+        self.open_vscode(a)
+        self.assertEqual((self.folder(a) / "main.py").read_text(), "mine\n")
 
-    def test_submit_after_deadline_is_blocked(self):
+    def test_docker_problem_is_shown_on_the_page(self):
+        a = self.assignment("Task")
+        self.client.force_login(self.student)
+        with patch("student.views.start_ide", side_effect=IdeError("VS Code is not available: Docker is not running")):
+            response = self.client.post(self.ws_url(a), follow=True)
+        self.assertContains(response, "Docker is not running")
+
+    def test_closed_work_offers_no_vscode(self):
         a = self.assignment("Late", days=-1)
-        response = self.post(a)
-        self.assertRedirects(response, self.ws_url(a))
-        self.assertFalse(self.my_submissions(a).exists())
+        self.client.force_login(self.student)
         page = self.client.get(self.ws_url(a))
         self.assertContains(page, "The deadline has passed")
-        self.assertContains(page, "readonly")
-        self.assertContains(page, "disabled")
+        self.assertNotContains(page, "Open in VS Code</button>")
+        _, start = self.open_vscode(a)
+        start.assert_not_called()
 
-    def test_submit_to_closed_assignment_is_blocked(self):
-        a = self.assignment("Closed", status=Assignment.Status.CLOSED)
-        self.post(a)
-        self.assertFalse(self.my_submissions(a).exists())
+    def test_non_python_bug_has_no_tests(self):
+        self.bug.language = "dart"
+        self.bug.save()
+        a = self.assignment("Dart task")
+        self.open_vscode(a)
+        folder = self.folder(a)
+        self.assertTrue((folder / "main.dart").exists())
+        self.assertFalse((folder / "test_main.py").exists())
+        self.assertFalse(json.loads((folder / ".debug-gym" / "config.json").read_text())["tests"])
 
-    def test_graded_work_cannot_be_resubmitted(self):
+    def test_removed_tests_disappear_from_the_folder(self):
         a = self.assignment("Task")
-        Submission.objects.create(
-            student=self.student, bug=self.bug, assignment=a, submitted_code="done",
-            status=Submission.Status.GRADED, grade=9,
-        )
-        self.post(a, code="sneaky change")
-        self.assertEqual(self.my_submissions(a).count(), 1)
-        self.assertContains(self.client.get(self.ws_url(a)), "already graded")
+        self.open_vscode(a)
+        self.bug.tests_code = ""
+        self.bug.save()
+        self.open_vscode(a)
+        self.assertFalse((self.folder(a) / "test_main.py").exists())
 
-    def test_detail_page_solve_button(self):
-        open_task = self.assignment("Open")
-        self.client.force_login(self.student)
-        detail = reverse("student:assignment_detail", args=[open_task.pk])
-        self.assertContains(self.client.get(detail), "Solve this bug")
+
+class IdeSubmitTests(StudentTestCase):
+    """POST /student/ide/submit/ from the VS Code extension."""
+
+    url = reverse("student:ide_submit")
+
+    def send(self, key, code="fixed = True\n"):
+        return self.client.post(
+            self.url, data=json.dumps({"code": code}), content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {key}",
+        )
+
+    def mine(self, assignment=None):
+        return Submission.objects.filter(student=self.student, assignment=assignment)
+
+    def test_saves_the_fix(self):
+        a = self.assignment("Task")
+        response = self.send(IdeToken.issue(self.student, self.bug, a), code="line\r\n")
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("Fix submitted", response.json()["message"])
+        submission = self.mine(a).get()
+        self.assertEqual(submission.submitted_code, "line\n")
+        self.assertEqual(submission.status, Submission.Status.SUBMITTED)
+
+    def test_needs_a_valid_token(self):
+        self.assignment("Task")
+        self.assertEqual(self.client.post(self.url, data="{}", content_type="application/json").status_code, 401)
+        self.assertEqual(self.send("not-a-real-token").status_code, 401)
+        self.assertFalse(Submission.objects.exists())
+
+    def test_blocked_after_deadline_and_when_graded(self):
         late = self.assignment("Late", days=-1)
-        page = self.client.get(reverse("student:assignment_detail", args=[late.pk]))
-        self.assertNotContains(page, self.ws_url(late))
+        response = self.send(IdeToken.issue(self.student, self.bug, late))
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("deadline has passed", response.json()["error"])
+        done = self.assignment("Done")
+        Submission.objects.create(student=self.student, bug=self.bug, assignment=done,
+                                  submitted_code="x", status=Submission.Status.GRADED, grade=9)
+        self.assertEqual(self.send(IdeToken.issue(self.student, self.bug, done)).status_code, 403)
+        self.assertEqual(self.mine(late).count(), 0)
+        self.assertEqual(self.mine(done).count(), 1)
+
+    def test_losing_access_blocks_submit(self):
+        a = self.assignment("Task")
+        key = IdeToken.issue(self.student, self.bug, a)
+        self.group.students.remove(self.student)
+        self.assertEqual(self.send(key).status_code, 403)
+        self.assertFalse(self.mine(a).exists())
+
+    def test_rejects_empty_or_unchanged_code(self):
+        key = IdeToken.issue(self.student, self.bug, self.assignment("Task"))
+        self.assertIn("empty", self.send(key, code="  ").json()["error"])
+        self.assertIn("original buggy code", self.send(key, code=self.bug.buggy_code).json()["error"])
+        self.assertFalse(Submission.objects.exists())
+
+    def test_practice_submission(self):
+        public = Bug.objects.create(
+            title="Public", description="d", buggy_code="x = 1", solution_code="x = 2", language="python",
+            difficulty=Bug.Difficulty.EASY, visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
+        )
+        response = self.send(IdeToken.issue(self.student, public), code="x = 2")
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("Practice attempt saved", response.json()["message"])
+        self.assertIsNone(Submission.objects.get().assignment)
+        # A private bug the student cannot practise.
+        self.assertEqual(self.send(IdeToken.issue(self.student, self.bug), code="y").status_code, 403)
+
+    def test_non_student_token_is_refused(self):
+        key = IdeToken.issue(self.prof, self.bug, self.assignment("Task"))
+        self.assertEqual(self.send(key).status_code, 401)
+
+
+class StartIdeTests(TestCase):
+    """student/ide.py with a fake Docker client."""
+
+    def setUp(self):
+        self.student = User.objects.create_user("ali@example.com", "Ali", PASSWORD)
+        self.docker = MagicMock()
+        self.docker.errors.ImageNotFound = type("ImageNotFound", (Exception,), {})
+        self.docker.errors.NotFound = type("NotFound", (Exception,), {})
+        self.docker.errors.APIError = type("APIError", (Exception,), {})
+        self.client_ = MagicMock()
+        patcher = patch("student.ide._docker", return_value=(self.docker, self.client_))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_missing_image_gives_a_clear_error(self):
+        self.client_.images.get.side_effect = self.docker.errors.ImageNotFound()
+        with self.assertRaisesMessage(ide.IdeError, "is not built on the server"):
+            ide.start_ide(self.student, Path("/tmp/x"))
+
+    def test_starts_a_locked_down_container(self):
+        self.client_.containers.get.side_effect = self.docker.errors.NotFound()
+        container = self.client_.containers.run.return_value
+        container.ports = {ide.CONTAINER_PORT: [{"HostPort": "41234"}]}
+        with patch("student.ide._wait_until_ready"):
+            url = ide.start_ide(self.student, Path("/tmp/x"))
+        self.assertEqual(url, "http://localhost:41234/?folder=/home/coder/project")
+        kwargs = self.client_.containers.run.call_args.kwargs
+        self.assertEqual(kwargs["name"], f"debug-gym-v2-ide-{self.student.pk}")
+        self.assertEqual(kwargs["ports"], {ide.CONTAINER_PORT: ("127.0.0.1", None)})
+        self.assertIn("no-new-privileges:true", kwargs["security_opt"])
+        self.assertEqual(kwargs["mem_limit"], "512m")
+
+    def test_reuses_a_matching_container(self):
+        folder = Path("/tmp/x")
+        image = self.client_.images.get.return_value
+        container = self.client_.containers.get.return_value
+        container.status = "running"
+        container.labels = {ide.FOLDER_LABEL: str(folder), ide.SETTINGS_LABEL: ide.settings_label()}
+        container.image.id = image.id
+        container.ports = {ide.CONTAINER_PORT: [{"HostPort": "41000"}]}
+        with patch("student.ide._wait_until_ready"):
+            url = ide.start_ide(self.student, folder)
+        self.assertIn(":41000/", url)
+        self.client_.containers.run.assert_not_called()
 
 
 class PracticeTests(StudentTestCase):
@@ -374,17 +519,11 @@ class PracticeTests(StudentTestCase):
         self.client.post(self.ws_url(self.bug), {"code": "changed"})
         self.assertFalse(Submission.objects.exists())
 
-    def test_practice_attempt_is_saved_without_assignment_or_grade(self):
+    def test_practice_page_offers_vscode(self):
         self.client.force_login(self.student)
-        response = self.client.post(self.ws_url(self.public), {"code": "x = 2"})
-        self.assertRedirects(response, self.ws_url(self.public), fetch_redirect_response=False)
-        attempt = Submission.objects.get()
-        self.assertIsNone(attempt.assignment)
-        self.assertIsNone(attempt.grade)
-        self.assertTrue(attempt.is_practice)
         page = self.client.get(self.ws_url(self.public))
-        self.assertContains(page, "Practice attempt saved.")
-        self.assertContains(page, "x = 2</textarea>")
+        self.assertContains(page, "Open in VS Code</button>")
+        self.assertContains(page, "Practice is not graded")
         self.assertNotContains(page, "SOLUTION")
 
     def test_attempt_count_is_mine_and_practice_only(self):
@@ -405,11 +544,6 @@ class PracticeTests(StudentTestCase):
         self.client.force_login(self.student)
         statuses = {x.title: x.my_status for x in self.client.get(reverse("student:assignments_list")).context["assignments"]}
         self.assertEqual(statuses, {"Task": "todo"})
-
-    def test_unchanged_code_is_rejected(self):
-        self.client.force_login(self.student)
-        self.assertContains(self.client.post(self.ws_url(self.public), {"code": "x = 1"}), "still the original buggy code")
-        self.assertFalse(Submission.objects.exists())
 
 
 class ResultsTests(StudentTestCase):

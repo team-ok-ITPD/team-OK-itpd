@@ -1,6 +1,6 @@
-// [Student Dev] AI bug form: show that generation is running and block double submits
+// [Student Dev] Forms marked data-busy-form: show that work is running and block double submits
 
-document.querySelectorAll("[data-ai-form]").forEach((form) => {
+document.querySelectorAll("[data-busy-form]").forEach((form) => {
   form.addEventListener("submit", () => {
     const button = form.querySelector("[data-busy-label]");
     if (!button) {

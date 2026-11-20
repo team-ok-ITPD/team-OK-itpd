@@ -27,4 +27,5 @@ site/
 
 *.sqlite3
 app/adel_b/workspaces/
+app/v2/debug_gym/workspaces/
 app/adel_b/DEMO_ACCOUNTS.md

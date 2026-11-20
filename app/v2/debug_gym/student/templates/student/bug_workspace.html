@@ -1,8 +1,8 @@
-<!-- [Student Dev] Bug workspace with code editor, run/test and submit fix -->
+<!-- [Student Dev] Bug page: brief, status and Open in VS Code (tests and submit happen there) -->
 {% extends "base.html" %}
 {% load static %}
 {% block title %}{% if assignment %}Solve{% else %}Practice{% endif %}: {{ bug.title }} · Debug Gym{% endblock %}
-{% block head %}<script src="{% static 'student/workspace.js' %}" defer></script>{% endblock %}
+{% block head %}<script src="{% static 'student/busy-button.js' %}" defer></script>{% endblock %}
 {% block content %}
 {% if assignment %}
   <header class="page-header">
@@ -32,7 +32,7 @@
 {% elif assignment.due_soon %}
   <p class="alert warning">Due in {{ assignment.deadline|timeuntil }}.</p>
 {% elif not assignment %}
-  <p class="alert info">Practice is not graded. Save as many attempts as you like.</p>
+  <p class="alert info">Practice is not graded. Submit as many attempts as you like.</p>
 {% endif %}
 
 <div class="workspace">
@@ -69,40 +69,39 @@
     </section>
   </aside>
 
-  <form class="card editor-card" method="post" data-workspace>
-    {% csrf_token %}
-    <div class="row editor-toolbar">
-      <span class="badge small">{{ bug.language }}</span>
-      <span class="text-subtle" data-editor-state>
-        {% if latest %}Loaded your last {% if assignment %}submission{% else %}attempt{% endif %}.{% else %}Starting from the buggy code.{% endif %}
-      </span>
-      {% if not blocked %}
-        <button class="button ghost small" type="button" data-reset-code>Reset to buggy code</button>
+  <div class="stack">
+    <section class="card vscode-card">
+      <div class="row card-heading">
+        <h2 class="card-title">Solve it in VS Code</h2>
+        <span class="badge small">{{ bug.language }}</span>
+      </div>
+      {% if blocked %}
+        <p class="text-muted">This work is closed, so VS Code is not offered. Your last code is below.</p>
+      {% else %}
+        <ol class="vscode-steps">
+          <li>Open your own VS Code. The bug is in <code>{{ code_file }}</code>{% if latest %}, starting from your last submission{% endif %}.</li>
+          {% if has_tests %}
+            <li>Click <strong>Test</strong> in the status bar to run the bug's tests, and use the debugger to find the mistake.</li>
+          {% else %}
+            <li>Use the debugger to find the mistake. {% if bug.language|lower == "python" %}This bug has no tests yet.{% else %}Tests run for Python bugs only.{% endif %}</li>
+          {% endif %}
+          <li>Click <strong>Submit</strong>. {% if assignment %}Your professor grades the latest submission.{% else %}Practice is never graded.{% endif %}</li>
+        </ol>
+        <form method="post" data-busy-form>
+          {% csrf_token %}
+          <button class="button brand" type="submit" data-busy-label="Starting VS Code…">Open in VS Code</button>
+        </form>
+        <small class="text-subtle">VS Code keeps your changes between visits. Starting it can take a few seconds.</small>
       {% endif %}
-    </div>
+    </section>
 
-    <label class="visually-hidden" for="{{ form.code.id_for_label }}">Your fix</label>
-    <div class="editor{% if form.code.errors %} has-error{% endif %}">
-      <pre class="editor-gutter" aria-hidden="true" data-editor-gutter>1</pre>
-      <textarea class="editor-input" name="{{ form.code.html_name }}" id="{{ form.code.id_for_label }}"
-                spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
-                {% if form.code.errors %}aria-invalid="true" aria-describedby="code-error"{% endif %}
-                {% if blocked %}readonly{% endif %}>{{ form.code.value|default:"" }}</textarea>
-    </div>
-    {% for error in form.code.errors %}
-      <small class="field-error" id="code-error">{{ error }}</small>
-    {% endfor %}
-
-    <div class="row editor-actions">
-      <small class="text-subtle">
-        Tab indents.
-        {% if assignment %}Submitting again replaces your earlier fix until the deadline.{% else %}Each save is kept as a new attempt.{% endif %}
-      </small>
-      <button class="button primary" type="submit" {% if blocked %}disabled{% endif %}>
-        {% if assignment %}Submit fix{% else %}Save attempt{% endif %}
-      </button>
-    </div>
-    {{ bug.buggy_code|json_script:"buggy-code" }}
-  </form>
+    {% if latest %}
+      <section class="card">
+        <h2 class="card-title">Your last {% if assignment %}submission{% else %}attempt{% endif %}</h2>
+        <p class="text-subtle">{{ latest.submitted_at|date:"M j, Y H:i" }}</p>
+        <pre class="code"><code>{{ latest.submitted_code }}</code></pre>
+      </section>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

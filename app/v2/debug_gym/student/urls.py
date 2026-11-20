@@ -16,4 +16,6 @@ urlpatterns = [
     path("practice/<int:pk>/edit/", views.bug_edit, name="bug_edit"),
     path("practice/<int:pk>/delete/", views.bug_delete, name="bug_delete"),
     path("results/", views.results, name="results"),
+    # Called by the Debug Gym VS Code extension, not by the browser.
+    path("ide/submit/", views.ide_submit, name="ide_submit"),
 ]
