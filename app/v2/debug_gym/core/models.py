@@ -1,6 +1,7 @@
 # [Backend Dev] Shared models: User, StudyGroup, Bug, Assignment, Submission
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.db.models import F, Q
 
 
 class UserManager(BaseUserManager):
@@ -247,12 +248,30 @@ class Submission(models.Model):
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SUBMITTED)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     feedback = models.TextField(null=True, blank=True)
+    # Test results come from server-side verification only (DEC-037); null means
+    # "not verified yet". They are never read from a form or the browser.
+    tests_passed = models.PositiveIntegerField(null=True, blank=True)
+    tests_total = models.PositiveIntegerField(null=True, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     graded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "submissions"
         ordering = ["-submitted_at"]
+        constraints = [
+            # Both counts are set or both are empty, and passed never exceeds total.
+            models.CheckConstraint(
+                condition=(
+                    Q(tests_passed__isnull=True, tests_total__isnull=True)
+                    | Q(
+                        tests_passed__isnull=False,
+                        tests_total__isnull=False,
+                        tests_passed__lte=F("tests_total"),
+                    )
+                ),
+                name="submission_test_counts_consistent",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.bug} ({self.status})"
@@ -260,3 +279,10 @@ class Submission(models.Model):
     @property
     def is_practice(self):
         return self.assignment_id is None
+
+    @property
+    def test_result(self):
+        """"3/5" when test counts are recorded, otherwise None."""
+        if self.tests_passed is None or self.tests_total is None:
+            return None
+        return f"{self.tests_passed}/{self.tests_total}"
