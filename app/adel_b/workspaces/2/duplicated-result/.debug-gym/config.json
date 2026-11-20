@@ -1,0 +1,7 @@
+{
+  "server": "http://host.docker.internal:8001",
+  "site": "http://localhost:8001/#/practice/duplicated-result",
+  "bug": "duplicated-result",
+  "file": "unique_items.py",
+  "token": "-3UAzGWLJOFCdV_eKzUdfMG7ycOtUECjf6eJt_BB5P8"
+}

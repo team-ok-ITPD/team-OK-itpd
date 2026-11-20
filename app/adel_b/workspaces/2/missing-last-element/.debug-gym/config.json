@@ -1,0 +1,7 @@
+{
+  "server": "http://host.docker.internal:8001",
+  "site": "http://localhost:8001/#/practice/missing-last-element",
+  "bug": "missing-last-element",
+  "file": "sum_positive.py",
+  "token": "2pSANXs3v0kuYtGGWT_5RBb1XEUmodElhxZAThkEnyE"
+}

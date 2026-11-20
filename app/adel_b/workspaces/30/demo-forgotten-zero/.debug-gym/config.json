@@ -1,0 +1,7 @@
+{
+  "server": "http://host.docker.internal:8001",
+  "site": "http://localhost:8001/#/practice/demo-forgotten-zero",
+  "bug": "demo-forgotten-zero",
+  "file": "count_zeros.py",
+  "token": "c8D-GHY0QlAyvOYzmetDIc73d7qaKbVy2m8H08TNg1M"
+}

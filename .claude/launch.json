@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "catalog",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "app.server"],
+      "port": 3000
+    },
+    {
+      "name": "adel_b",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "app/adel_b/.venv/bin/python app/adel_b/manage.py runserver 172.17.0.1:8001 & trap 'kill $! 2>/dev/null' EXIT INT TERM; app/adel_b/.venv/bin/python app/adel_b/manage.py runserver 127.0.0.1:8001"
+      ],
+      "port": 8001
+    },
+    {
+      "name": "v2",
+      "runtimeExecutable": "app/v2/venv/bin/python",
+      "runtimeArgs": ["app/v2/debug_gym/manage.py", "runserver", "127.0.0.1:8002"],
+      "port": 8002
+    }
+  ]
+}

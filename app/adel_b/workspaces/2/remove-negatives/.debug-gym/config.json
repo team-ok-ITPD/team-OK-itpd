@@ -1,0 +1,7 @@
+{
+  "server": "http://host.docker.internal:8001",
+  "site": "http://localhost:8001/#/practice/remove-negatives",
+  "bug": "remove-negatives",
+  "file": "remove_negatives.py",
+  "token": "FH7Hn37kdWwmh02SZufDwb4_9zp6X8Wsj9ci0PJjlsA"
+}
