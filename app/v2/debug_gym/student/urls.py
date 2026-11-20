@@ -13,4 +13,5 @@ urlpatterns = [
     path("practice/", views.public_bugs, name="public_bugs"),
     path("practice/<int:pk>/", views.practice_workspace, name="practice_workspace"),
     path("results/", views.results, name="results"),
+    path("progress/<int:pk>/", views.progress, name="progress"),
 ]

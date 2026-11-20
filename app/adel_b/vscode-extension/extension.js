@@ -7,6 +7,8 @@ const path = require("path");
 const vscode = require("vscode");
 const { parseJUnit } = require("./junit");
 const { siteLink } = require("./links");
+const { projectSnapshot } = require("./snapshot");
+const { testCommand } = require("./test-command");
 
 const TEST_TIMEOUT_MS = 60_000;
 // Written by the Debug GYM server when it opens this folder.
@@ -83,13 +85,13 @@ function summarize(results) {
 }
 
 // Runs pytest in the workspace and resolves with the parsed results and the console output.
-function runPytest(folder, targets) {
+function runProjectTests(folder, targets, language) {
   const report = path.join(os.tmpdir(), `debug-gym-${process.pid}-${Date.now()}.xml`);
-  const args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "junit_family=xunit1", `--junitxml=${report}`, ...targets];
+  const { executable, args } = testCommand(language, report, targets);
   return new Promise((resolve, reject) => {
     // No __pycache__ folders in the learner's files.
     const env = { ...process.env, PYTHONDONTWRITEBYTECODE: "1" };
-    execFile("python", args, { cwd: folder, env, timeout: TEST_TIMEOUT_MS }, (error, stdout, stderr) => {
+    execFile(executable, args, { cwd: folder, env, timeout: TEST_TIMEOUT_MS }, (error, stdout, stderr) => {
       const output = `${stdout}${stderr}`;
       let xml = "";
       try {
@@ -162,9 +164,10 @@ function activate(context) {
     try {
       await vscode.workspace.saveAll(false);
       output.appendLine(`$ python -m pytest -q ${targets.join(" ")}`.trim());
+      const config = readConfig(folder);
       const outcome = await vscode.window.withProgress(
         { location: { viewId: "debugGym.results" }, title: label },
-        () => runPytest(folder, targets),
+        () => runProjectTests(path.join(folder, config?.testRoot || "."), targets, config?.language),
       );
       output.appendLine(outcome.output.trimEnd());
       output.appendLine("");
@@ -220,30 +223,43 @@ function activate(context) {
       );
       return;
     }
-    const outcome = await runTests();
-    if (!outcome) {
-      return;
-    }
-    const passed = outcome.results.filter((result) => result.status === "passed").length;
+    const authoring = config.protocol === 2 && config.mode === "author";
+    await vscode.workspace.saveAll(false);
+    const outcome = authoring ? null : await runTests();
+    if (!authoring && !outcome) return;
+    const passed = outcome?.results.filter((result) => result.status === "passed").length || 0;
     submitButton.text = "$(sync~spin) Submitting...";
     try {
       const code = fs.readFileSync(path.join(folder, config.file), "utf8");
       const response = await fetch(`${config.server}/api/ide/submit/`, {
         method: "POST",
         headers: { Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ bug: config.bug, code, passed, total: outcome.results.length }),
+        body: JSON.stringify({
+          bug: config.bug, code, passed, total: outcome?.results.length || 0,
+          ...(authoring ? { files: projectSnapshot(folder) } : {}),
+        }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(payload.error || `The server answered with HTTP ${response.status}.`);
       }
-      backToWebsite(config, payload.attempt);
+      if (authoring) {
+        vscode.window.showInformationMessage("Exercise project saved on Debug GYM.");
+      } else {
+        backToWebsite(config, payload.attempt);
+      }
     } catch (error) {
       const reason = error.cause?.code === "ECONNREFUSED" ? "the Debug GYM server could not be reached" : error.message;
       vscode.window.showErrorMessage(`Your solution was not submitted: ${reason}`);
     } finally {
-      submitButton.text = "$(cloud-upload) Submit";
+      submitButton.text = config.mode === "author" ? "$(cloud-upload) Save project" : "$(cloud-upload) Submit";
     }
+  }
+
+  const config = workspaceFolder() && readConfig(workspaceFolder());
+  if (config?.protocol === 2 && config.mode === "author") {
+    submitButton.text = "$(cloud-upload) Save project";
+    submitButton.tooltip = "Save the exercise source and tests to Debug GYM";
   }
 
   context.subscriptions.push(

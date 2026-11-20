@@ -24,7 +24,7 @@
     <p class="alert warning">Due in {{ assignment.deadline|timeuntil }}.</p>
   {% endif %}
 {% else %}
-  <p class="alert error">This assignment is closed: the deadline was {{ assignment.deadline|date:"M j, Y H:i" }}. New submissions are not accepted.</p>
+  <p class="alert error">This assignment is closed. {% if assignment.deadline %}The deadline was {{ assignment.deadline|date:"M j, Y H:i" }}.{% endif %} New submissions are not accepted.</p>
 {% endif %}
 
 <div class="assignment-layout">
@@ -57,7 +57,7 @@
         <dt>Status</dt>
         <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
         <dt>Deadline</dt>
-        <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+        <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         <dt>Professor</dt>
         <dd>{{ assignment.professor.name }}</dd>
         <dt>My group{{ my_groups|length|pluralize }}</dt>

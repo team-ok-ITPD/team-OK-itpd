@@ -14,11 +14,14 @@
   <body class="{% block body_class %}{% endblock %}">
     {% block body %}
       {% include "components/navbar.html" %}
-      <main class="container">
+      {% if request.user.is_professor %}<div class="teaching-shell">{% include "professor/navigation.html" %}{% endif %}
+      <main class="container{% if request.user.is_professor %} teaching-main{% endif %}">
         {% include "components/messages.html" %}
         {% block content %}{% endblock %}
       </main>
+      {% if request.user.is_professor %}</div>{% endif %}
     {% endblock %}
     <script src="{% static 'js/main.js' %}" defer></script>
+    <script src="{% static 'js/workspace-launch.js' %}" defer></script>
   </body>
 </html>
