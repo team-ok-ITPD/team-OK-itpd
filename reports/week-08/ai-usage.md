@@ -21,6 +21,10 @@
 
 ## Review And Use
 
+OpenCode removed the Exercise column from the administrator assignment list at
+the user's request, retaining exercise information in assignment details and
+adding regression assertions for both views.
+
 OpenCode removed the dashboard's introductory provisioning sentence at the
 user's request.
 

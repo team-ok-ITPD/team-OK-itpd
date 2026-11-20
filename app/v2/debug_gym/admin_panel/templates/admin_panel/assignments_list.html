@@ -16,12 +16,11 @@
 {% if assignments %}
   <section class="card">
     <table class="table">
-      <thead><tr><th>Assignment</th><th>Exercise</th><th>Teacher</th><th>Groups</th><th>Deadline</th><th>Status</th></tr></thead>
+      <thead><tr><th>Assignment</th><th>Teacher</th><th>Groups</th><th>Deadline</th><th>Status</th></tr></thead>
       <tbody>
         {% for assignment in assignments %}
           <tr>
             <td><a href="{% url 'admin_panel:assignment-detail' assignment.pk %}">{{ assignment.title }}</a></td>
-            <td>{{ assignment.bug.title }}</td>
             <td>{{ assignment.professor.name }}</td>
             <td>{% for group in assignment.groups.all %}<span class="badge small">{{ group.name }}</span>{% empty %}<span class="text-subtle">No groups</span>{% endfor %}</td>
             <td>{{ assignment.deadline|date:"M j, Y H:i" }}</td>
