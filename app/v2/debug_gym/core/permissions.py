@@ -35,11 +35,21 @@ student_required = role_required(User.Role.STUDENT)
 
 
 class RoleRequiredMixin(LoginRequiredMixin):
-    """Class-based view version: set `allowed_roles = [User.Role.STUDENT]`."""
+    """Class-based view version.
 
+    Set one role with `required_role = User.Role.ADMIN`, or several with
+    `allowed_roles = [User.Role.ADMIN, User.Role.PROFESSOR]`.
+    """
+
+    required_role = None
     allowed_roles = ()
 
+    def get_allowed_roles(self):
+        if self.allowed_roles:
+            return tuple(self.allowed_roles)
+        return (self.required_role,) if self.required_role else ()
+
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role not in self.allowed_roles:
+        if request.user.is_authenticated and request.user.role not in self.get_allowed_roles():
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
