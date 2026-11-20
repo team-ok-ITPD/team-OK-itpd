@@ -16,6 +16,6 @@
       <label class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
     {% endif %}
   {% endfor %}
-  <div class="row"><button class="button primary" type="submit">Save {{ account_label }}</button><a class="button ghost" href="{{ account_list_url }}">Cancel</a></div>
+  <div class="row"><button class="button primary" type="submit">Save {{ account_label }}</button><a class="button ghost" href="{% url account_list_url_name %}">Cancel</a></div>
 </form>
 {% endblock %}

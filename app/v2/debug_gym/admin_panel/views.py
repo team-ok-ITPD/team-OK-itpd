@@ -55,6 +55,7 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
     template_name = "admin_panel/user_form.html"
     success_url = reverse_lazy("admin_panel:users")
     account_label = "teacher"
+    account_list_url_name = "admin_panel:users"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -68,7 +69,7 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["account_label"] = self.account_label
-        context["account_list_url"] = self.success_url
+        context["account_list_url_name"] = self.account_list_url_name
         return context
 
 
@@ -76,12 +77,14 @@ class StudentCreateView(TeacherCreateView):
     form_class = StudentForm
     account_label = "student"
     success_url = reverse_lazy("admin_panel:students")
+    account_list_url_name = "admin_panel:students"
 
 
 class AdministratorCreateView(TeacherCreateView):
     form_class = AdministratorForm
     account_label = "administrator"
     success_url = reverse_lazy("admin_panel:administrators")
+    account_list_url_name = "admin_panel:administrators"
 
 
 class ProvisionedAccountListView(RoleRequiredMixin, ListView):
@@ -93,6 +96,7 @@ class ProvisionedAccountListView(RoleRequiredMixin, ListView):
     account_label = "Student"
     create_url_name = "admin_panel:student-create"
     edit_url_name = "admin_panel:student-edit"
+    list_url_name = "admin_panel:students"
 
     def get_queryset(self):
         queryset = User.objects.filter(role=self.account_role)
@@ -105,8 +109,9 @@ class ProvisionedAccountListView(RoleRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context.update(
             account_label=self.account_label,
-            create_url=reverse(self.create_url_name),
+            create_url_name=self.create_url_name,
             edit_url_name=self.edit_url_name,
+            list_url_name=self.list_url_name,
             query=self.request.GET.get("q", "").strip(),
         )
         return context
@@ -117,6 +122,7 @@ class AdministratorListView(ProvisionedAccountListView):
     account_label = "Administrator"
     create_url_name = "admin_panel:administrator-create"
     edit_url_name = "admin_panel:administrator-edit"
+    list_url_name = "admin_panel:administrators"
 
 
 class TeacherUpdateView(RoleRequiredMixin, UpdateView):
@@ -126,6 +132,7 @@ class TeacherUpdateView(RoleRequiredMixin, UpdateView):
     success_url = reverse_lazy("admin_panel:users")
     account_role = User.Role.PROFESSOR
     account_label = "teacher"
+    account_list_url_name = "admin_panel:users"
 
     def get_queryset(self):
         return User.objects.filter(role=self.account_role)
@@ -143,7 +150,7 @@ class TeacherUpdateView(RoleRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["account_label"] = self.account_label
-        context["account_list_url"] = self.success_url
+        context["account_list_url_name"] = self.account_list_url_name
         return context
 
 
@@ -152,6 +159,7 @@ class StudentUpdateView(TeacherUpdateView):
     account_role = User.Role.STUDENT
     account_label = "student"
     success_url = reverse_lazy("admin_panel:students")
+    account_list_url_name = "admin_panel:students"
 
 
 class AdministratorUpdateView(TeacherUpdateView):
@@ -159,6 +167,7 @@ class AdministratorUpdateView(TeacherUpdateView):
     account_role = User.Role.ADMIN
     account_label = "administrator"
     success_url = reverse_lazy("admin_panel:administrators")
+    account_list_url_name = "admin_panel:administrators"
 
 
 class GroupCreateView(RoleRequiredMixin, CreateView):

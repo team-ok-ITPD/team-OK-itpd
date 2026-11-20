@@ -21,6 +21,11 @@
 
 ## Review And Use
 
+OpenCode inspected PR #190's failed CI logs and corrected README whitespace.
+It replaced three administrator template URL interpolations with Django's
+named URL tag so the static link checker no longer treats runtime values as
+missing files. Link-check exclusions and required-check policies were not weakened.
+
 OpenCode removed the Exercise column from the administrator assignment list at
 the user's request, retaining exercise information in assignment details and
 adding regression assertions for both views.

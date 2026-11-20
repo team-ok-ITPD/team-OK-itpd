@@ -4,13 +4,13 @@
 {% block content %}
 <header class="page-header">
   <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts</h1></div>
-  <a class="button primary" href="{{ create_url }}">Create {{ account_label|lower }}</a>
+  <a class="button primary" href="{% url create_url_name %}">Create {{ account_label|lower }}</a>
 </header>
 {% include "admin_panel/components/navigation.html" %}
 <form class="row admin-search" method="get">
   <label class="field search-field"><input aria-label="Search accounts" name="q" value="{{ query }}" placeholder="Name or email"></label>
   <button class="button secondary" type="submit">Search</button>
-  {% if query %}<a class="button ghost" href="{{ request.path }}">Clear</a>{% endif %}
+  {% if query %}<a class="button ghost" href="{% url list_url_name %}">Clear</a>{% endif %}
 </form>
 {% if accounts %}
 <section class="card">

@@ -66,6 +66,15 @@ From `app/v2/debug_gym/`:
 
 ## Review Limits And Follow-up
 
+### CI Blocker Follow-up
+
+After reviewing the failed CI runs for `9082b8c`, README whitespace was corrected
+and the three administrator links flagged as missing files were changed from
+runtime interpolation to named Django URL tags. No link-check exclusions or
+required checks were removed. The full repository Markdown check now passes
+with both CLI 0.20.0 and the CI version 0.24.0; the 67 focused tests pass again.
+The earlier Markdown failure record above describes the earlier run.
+
 ### Account Editing Follow-up
 
 The user subsequently requested student and administrator editing. The expanded
