@@ -21,6 +21,9 @@
 
 ## Review And Use
 
+OpenCode removed the dashboard's introductory provisioning sentence at the
+user's request.
+
 OpenCode added student/administrator editing at the user's request, including
 role-scoped URLs, list actions, password preservation/reset, self-deactivation
 protection and session refresh after changing one's own administrator password.
