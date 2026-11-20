@@ -473,3 +473,90 @@ class ResultsTests(StudentTestCase):
 
     def test_dashboard_links_to_results(self):
         self.assertContains(self.get(), self.results_url)
+
+
+class BestSubmissionTests(StudentTestCase):
+    """DEC-022: the submission with the most passed tests counts, not the newest."""
+
+    def detail(self, assignment):
+        self.client.force_login(self.student)
+        return self.client.get(reverse("student:assignment_detail", args=[assignment.pk]))
+
+    def attempt(self, assignment, passed=None, total=None, code="fixed", **extra):
+        return Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=assignment,
+            submitted_code=code, tests_passed=passed, tests_total=total, **extra,
+        )
+
+    def counted(self, assignment):
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("student:assignments_list"))
+        return next(a for a in response.context["assignments"] if a.pk == assignment.pk)
+
+    def test_most_passed_tests_counts_even_when_older(self):
+        a = self.assignment("Best")
+        self.attempt(a, 1, 3)
+        best = self.attempt(a, 3, 3)
+        self.attempt(a, 2, 3)
+        self.assertEqual(self.counted(a).my_submission, best)
+        self.assertContains(self.detail(a), "Tests passed: 3/3")
+
+    def test_equal_counts_newest_counts(self):
+        a = self.assignment("Tie")
+        self.attempt(a, 2, 3)
+        newest = self.attempt(a, 2, 3)
+        self.assertEqual(self.counted(a).my_submission, newest)
+
+    def test_without_counts_latest_counts(self):
+        a = self.assignment("No counts")
+        self.attempt(a)
+        latest = self.attempt(a)
+        self.assertEqual(self.counted(a).my_submission, latest)
+
+    def test_attempt_with_counts_beats_one_without(self):
+        a = self.assignment("Mixed")
+        verified = self.attempt(a, 0, 3)
+        self.attempt(a)
+        self.assertEqual(self.counted(a).my_submission, verified)
+
+    def test_status_follows_the_counted_submission(self):
+        a = self.assignment("Status")
+        self.attempt(a, 3, 3, status=Submission.Status.GRADED, grade=9, graded_at=timezone.now())
+        self.attempt(a, 1, 3)
+        self.assertEqual(self.counted(a).my_status, "graded")
+
+    def test_classmate_results_do_not_count_for_me(self):
+        a = self.assignment("Mine only")
+        mine = self.attempt(a, 1, 3)
+        Submission.objects.create(
+            student=self.other, bug=self.bug, assignment=a, submitted_code="x",
+            tests_passed=3, tests_total=3,
+        )
+        self.assertEqual(self.counted(a).my_submission, mine)
+
+    def test_editor_reloads_latest_code_not_the_counted_one(self):
+        a = self.assignment("Editor")
+        self.attempt(a, 3, 3, code="best code")
+        self.attempt(a, 1, 3, code="newest code")
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("student:assignment_workspace", args=[a.pk]))
+        self.assertContains(response, "newest code")
+        self.assertNotContains(response, "best code")
+
+    def test_history_marks_the_counted_attempt(self):
+        a = self.assignment("History")
+        self.attempt(a, 3, 3)
+        self.attempt(a, 1, 3)
+        response = self.detail(a)
+        self.assertContains(response, "Counted", count=1)
+
+    def test_form_cannot_set_test_results(self):
+        a = self.assignment("Forged")
+        self.client.force_login(self.student)
+        self.client.post(
+            reverse("student:assignment_workspace", args=[a.pk]),
+            {"code": "fixed", "tests_passed": 3, "tests_total": 3},
+        )
+        submission = Submission.objects.get(student=self.student, assignment=a)
+        self.assertIsNone(submission.tests_passed)
+        self.assertIsNone(submission.tests_total)
