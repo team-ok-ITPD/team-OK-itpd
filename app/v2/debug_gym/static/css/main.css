@@ -1471,3 +1471,28 @@ pre {
   column-gap: var(--space-5);
   row-gap: var(--space-2);
 }
+
+/* Page: admin_panel/group_students */
+
+.admin-group-members {
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.admin-group-members > .card,
+.admin-group-members .field {
+  align-content: start;
+  min-width: 0;
+}
+
+.admin-group-members > .card > .button {
+  justify-self: start;
+}
+
+.admin-group-members > .card > p {
+  overflow-wrap: anywhere;
+}
+
+.admin-group-roster {
+  grid-column: 1 / -1;
+}

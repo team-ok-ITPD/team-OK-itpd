@@ -21,6 +21,10 @@
 
 ## Review And Use
 
+OpenCode corrected stretching on the group-membership page after a user
+screenshot: the teacher/student controls align to their content, action buttons
+use their natural width, and the roster occupies a separate full-width row.
+
 At the user's follow-up request, OpenCode made all five administrator dashboard
 card actions use the shared primary button style instead of highlighting only
 teacher management.
