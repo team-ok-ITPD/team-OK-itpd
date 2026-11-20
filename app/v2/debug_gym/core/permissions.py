@@ -9,7 +9,10 @@ class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     required_role = None
 
     def test_func(self):
-        return self.request.user.role == self.required_role
+        return (
+            self.request.user.is_active
+            and self.request.user.role == self.required_role
+        )
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:

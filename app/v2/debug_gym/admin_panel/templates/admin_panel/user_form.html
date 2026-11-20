@@ -1,1 +1,19 @@
-<!-- [Admin Dev] Create or edit a user, set role, activate or deactivate -->
+<!-- [Admin Dev] Create and edit teacher account form -->
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit teacher{% else %}Create teacher{% endif %} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Administration</p><h1>{% if object %}Edit teacher{% else %}Create teacher{% endif %}</h1></div></header>
+{% include "admin_panel/components/navigation.html" %}
+<p class="lede">Teacher accounts provide access to groups, exercises and assignments.</p>
+<form method="post" class="card form"{% if object %} data-deactivate-confirm="Deactivate this teacher? They will be signed out and cannot access teaching pages."{% endif %}>
+  {% csrf_token %}
+  {% for field in form %}
+    {% if field.name == "is_active" %}
+      <label class="field form-check{% if field.errors %} has-error{% endif %}">{{ field }}<span>{{ field.label }}</span><small class="field-hint">Inactive teachers cannot sign in or access teaching pages.</small>{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
+    {% else %}
+      <label class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
+    {% endif %}
+  {% endfor %}
+  <div class="row"><button class="button primary" type="submit">Save teacher</button><a class="button ghost" href="{% url 'admin_panel:users' %}">Cancel</a></div>
+</form>
+{% endblock %}

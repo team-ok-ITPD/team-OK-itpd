@@ -1,1 +1,2 @@
 <!-- [Shared] Pagination controls for list pages -->
+{% if is_paginated %}<nav class="row pagination" aria-label="Pagination">{% if page_obj.has_previous %}<a class="button small ghost" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Previous</a>{% endif %}<span class="text-subtle">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="button small ghost" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Next</a>{% endif %}</nav>{% endif %}

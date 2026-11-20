@@ -1,0 +1,9 @@
+<!-- [Admin Dev] Read-only assignment details for administrator context -->
+{% extends "base.html" %}
+{% block title %}{{ assignment.title }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Assignment visibility</p><h1>{{ assignment.title }}</h1></div><a class="button ghost" href="{% url 'admin_panel:assignments' %}">Back to assignments</a></header>
+{% include "admin_panel/components/navigation.html" %}
+<section class="grid-cards"><article class="card"><h2 class="card-title">Teaching context</h2><p><strong>Exercise:</strong> {{ assignment.bug.title }}</p><p><strong>Teacher:</strong> {{ assignment.professor.name }}</p><p><strong>Deadline:</strong> {{ assignment.deadline|date:"M j, Y H:i" }}</p><p><span class="badge {% if assignment.status == 'active' %}accent{% endif %}">{{ assignment.get_status_display }}</span></p></article><article class="card"><h2 class="card-title">Groups</h2>{% for group in assignment.groups.all %}<p><span class="badge small">{{ group.name }}</span></p>{% empty %}<p class="text-muted">No groups assigned.</p>{% endfor %}</article></section>
+{% if assignment.instructions %}<section class="card"><h2 class="card-title">Instructions</h2><p>{{ assignment.instructions|linebreaksbr }}</p></section>{% endif %}
+{% endblock %}
