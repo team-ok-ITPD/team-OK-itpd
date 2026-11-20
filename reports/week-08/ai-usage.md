@@ -21,6 +21,10 @@
 
 ## Review And Use
 
+At the user's follow-up request, OpenCode made all five administrator dashboard
+card actions use the shared primary button style instead of highlighting only
+teacher management.
+
 OpenCode expanded administrator functional coverage to 23 tests and recorded
 browser and automated evidence in
 [Administrator Functional Testing](admin-functional-testing.md). It created
