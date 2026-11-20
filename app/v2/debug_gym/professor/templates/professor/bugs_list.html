@@ -1,1 +1,31 @@
 <!-- [Professor Dev] Public bugs plus the professor's private bugs -->
+{% extends "base.html" %}
+{% block title %}Exercise catalog · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Professor</p><h1>Exercise catalog</h1></div>
+<a class="button primary" href="{% url 'professor:create' %}">Create exercise</a></header>
+<p class="lede">A library of your teaching work, alongside exercises shared by the community.</p>
+<form class="form row catalog-filters" method="get">
+  <label class="field">Search titles<input type="search" name="q" value="{{ query }}"></label>
+  <label class="field">Show<select name="scope"><option value="all">All accessible</option>
+    <option value="mine" {% if scope == "mine" %}selected{% endif %}>My exercises</option>
+    <option value="public" {% if scope == "public" %}selected{% endif %}>Public exercises</option>
+  </select></label>
+  {% if group %}<input type="hidden" name="group" value="{{ group.pk }}">{% endif %}
+  <button class="button secondary">Filter</button>
+</form>
+<div class="grid-cards">{% for bug in bugs %}
+  <article class="card stack"><h2 class="card-title">{{ bug.title }}</h2><p>{{ bug.description|urlize|linebreaksbr }}</p>
+    <div class="row"><span class="badge">{{ bug.language }}</span><span class="badge">{{ bug.get_visibility_display }}</span></div>
+    <a class="button secondary" href="{% url 'professor:bug' bug.pk %}">{% if bug.created_by_id == request.user.pk %}Open exercise{% else %}View details{% endif %}</a>
+    {% if group %}<a class="button primary" href="{% url 'professor:assign' group.pk %}?bug={{ bug.pk }}">Assign to {{ group.name }}</a>{% endif %}
+    {% if bug.created_by_id == request.user.pk %}
+    {% if bug.visibility == "private" %}
+    <form method="post" action="{% url 'professor:publish' bug.pk %}">{% csrf_token %}<button class="button secondary">Publish exercise</button></form>
+    {% else %}
+    <form method="post" action="{% url 'professor:unpublish' bug.pk %}">{% csrf_token %}<button class="button secondary">Unpublish</button></form>
+    {% endif %}
+    {% endif %}
+  </article>
+{% empty %}<div class="empty"><strong>No exercises found.</strong><span>Public exercises and your private exercises appear here.</span></div>{% endfor %}</div>
+{% endblock %}

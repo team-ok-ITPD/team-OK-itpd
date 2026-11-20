@@ -1,0 +1,9 @@
+<!-- [Professor Dev] Teaching navigation -->
+<nav class="teaching-nav" aria-label="Teaching navigation">
+  <div class="teaching-nav-title"><span class="badge accent">Professor</span><strong>Teaching studio</strong><span class="text-muted">Build. Assign. Review.</span></div>
+  <a class="teaching-nav-link{% if request.resolver_match.url_name == 'dashboard' or group %} is-active{% endif %}" href="{% url 'professor:dashboard' %}"><span>01</span> My groups</a>
+  <a class="teaching-nav-link{% if request.resolver_match.url_name == 'bugs' or request.resolver_match.url_name == 'bug' %} is-active{% endif %}" href="{% url 'professor:bugs' %}"><span>02</span> Exercise catalog</a>
+  <a class="teaching-nav-link{% if request.resolver_match.url_name == 'create' or request.resolver_match.url_name == 'generate' %} is-active{% endif %}" href="{% url 'professor:create' %}"><span>03</span> Create exercise</a>
+  <a class="teaching-nav-link{% if request.resolver_match.url_name == 'settings' %} is-active{% endif %}" href="{% url 'professor:settings' %}"><span>04</span> Settings</a>
+  <p class="teaching-nav-foot">Your workspace<br><strong>{{ request.user.name }}</strong></p>
+</nav>

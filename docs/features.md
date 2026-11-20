@@ -4,6 +4,9 @@ This page introduces Debug GYM's implemented capabilities in the order a
 learner meets them. Project-specific words use the definitions in the
 [glossary](glossary.md).
 
+For the v2 professor implementation and its pending integrations, see the
+[teaching workflow](teaching-workflow.md).
+
 ## Find A Prepared Exercise
 
 A learner can search for a prepared [exercise](glossary.md#exercise) and open

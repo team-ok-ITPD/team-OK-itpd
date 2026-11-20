@@ -2,7 +2,7 @@
   "name": "debug-gym",
   "displayName": "Debug GYM",
   "description": "Test and submit Debug GYM exercises from VS Code.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "team-ok-itpd",
   "license": "MIT",
   "engines": {

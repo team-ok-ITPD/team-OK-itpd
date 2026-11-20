@@ -7,12 +7,17 @@ from django.db.models import Avg, Count, Max, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
 from django.utils import timezone
+from django.db import transaction
 
 from core.models import Assignment, Bug, StudyGroup, Submission
 from core.permissions import student_required
 
 from .forms import SubmissionForm
+from core.runtime import RuntimeError, verify
+from app.adel_b.bugs.verification import VerificationBusy
 
 DUE_SOON = timedelta(hours=48)
 DASHBOARD_LIMIT = 5
@@ -39,7 +44,9 @@ def my_assignments(student):
 def is_open(assignment, now=None):
     """Whether the assignment still accepts submissions."""
     now = now or timezone.now()
-    return assignment.status == Assignment.Status.ACTIVE and assignment.deadline >= now
+    return assignment.status == Assignment.Status.ACTIVE and (
+        assignment.deadline is None or assignment.deadline >= now
+    )
 
 
 def best_submission(submissions):
@@ -87,7 +94,10 @@ def attach_status(assignments, student):
         assignment.my_status = status
         assignment.status_label, assignment.status_badge = STATUSES[status]
         assignment.is_open = is_open(assignment, now)
-        assignment.due_soon = status == "todo" and assignment.deadline - now <= DUE_SOON
+        assignment.due_soon = (
+            status == "todo" and assignment.deadline is not None
+            and assignment.deadline - now <= DUE_SOON
+        )
     return assignments
 
 
@@ -196,12 +206,36 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None, done_
             return redirect(request.path)
         form = SubmissionForm(request.POST, bug=bug)
         if form.is_valid():
-            Submission.objects.create(
-                student=request.user,
-                bug=bug,
-                assignment=assignment,
-                submitted_code=form.cleaned_data["code"],
-            )
+            revision = bug.revision
+            try:
+                passed, total = verify(bug, form.cleaned_data["code"])
+            except (RuntimeError, VerificationBusy) as error:
+                form.add_error(None, str(error))
+                return render(request, "student/bug_workspace.html", {
+                    "assignment": assignment, "bug": bug, "form": form,
+                    "blocked": blocked, "latest": latest,
+                })
+            with transaction.atomic():
+                current = Bug.objects.select_for_update().get(pk=bug.pk)
+                if current.revision != revision:
+                    messages.error(request, "The exercise changed while the tests ran. Reopen it.")
+                    return redirect(request.path)
+                if assignment:
+                    assignment = Assignment.objects.select_for_update().get(pk=assignment.pk)
+                    if not is_open(assignment) or not assignment.groups.filter(students=request.user).exists():
+                        messages.error(request, "The assignment closed or your access changed while the tests ran.")
+                        return redirect(request.path)
+                elif current.visibility != Bug.Visibility.PUBLIC:
+                    messages.error(request, "This practice exercise is no longer public.")
+                    return redirect("student:public_bugs")
+                Submission.objects.create(
+                    student=request.user,
+                    bug=current,
+                    assignment=assignment,
+                    submitted_code=form.cleaned_data["code"],
+                    tests_passed=passed,
+                    tests_total=total,
+                )
             messages.success(request, done_message)
             return redirect(done_url)
     else:
@@ -312,3 +346,26 @@ def results(request):
             "history": history,
         },
     )
+
+
+@student_required
+@never_cache
+def progress(request, pk):
+    assignment_pk = request.GET.get("assignment")
+    if assignment_pk:
+        if not assignment_pk.isdecimal() or len(assignment_pk) > 18:
+            return JsonResponse({"error": "Invalid assignment."}, status=400)
+        assignment = get_object_or_404(my_assignments(request.user), pk=assignment_pk, bug_id=pk)
+        bug = assignment.bug
+    else:
+        assignment = None
+        bug = get_object_or_404(public_bugs_qs(), pk=pk)
+    latest = Submission.objects.filter(
+        student=request.user, bug=bug, assignment=assignment,
+    ).order_by("-submitted_at", "-pk").first()
+    return JsonResponse({
+        "id": latest.pk if latest else None,
+        "passed": latest.tests_passed if latest else None,
+        "total": latest.tests_total if latest else None,
+        "submitted": latest.submitted_at.isoformat() if latest else None,
+    })

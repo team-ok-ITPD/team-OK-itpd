@@ -1,1 +1,28 @@
 <!-- [Professor Dev] Group detail with students and group performance -->
+{% extends "base.html" %}
+{% block title %}{{ group.name }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Professor / Group</p><h1>{{ group.name }}</h1></div>
+<div class="row"><a class="button secondary" href="{% url 'professor:assign' group.pk %}">Assign exercise</a>
+<a class="button primary" href="{% url 'professor:create' %}?group={{ group.pk }}">Create exercise for group</a></div></header>
+<p class="lede">{{ group.description|default:"Manage assignments and follow this group's progress." }}</p>
+<div class="stack">
+<section class="card stack">
+  <h2 class="card-title">Assignments</h2>
+  {% for assignment in assignments %}
+  <article class="row">
+    <a href="{% url 'professor:assignment' group.pk assignment.pk %}">{{ assignment.title }}</a>
+    <span class="badge">{{ assignment.get_status_display }}</span>
+    <span class="text-muted">{% if assignment.deadline %}Due {{ assignment.deadline|date:"M j, Y H:i" }} UTC{% else %}No deadline{% endif %}</span>
+  </article>
+  {% empty %}<p class="text-muted">No assignments yet.</p>{% endfor %}
+</section>
+<section class="card stack">
+  <h2 class="card-title">Students</h2>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Name</th><th>Email</th></tr></thead>
+    <tbody>{% for student in students %}<tr><td>{{ student.name }}</td><td>{{ student.email }}</td></tr>
+    {% empty %}<tr><td colspan="2">No students in this group.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section></div>
+{% endblock %}

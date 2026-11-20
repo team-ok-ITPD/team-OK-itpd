@@ -10,7 +10,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 HERE = Path(__file__).resolve().parent
-FILES = ["package.json", "extension.js", "junit.js", "links.js"]
+FILES = ["package.json", "extension.js", "junit.js", "links.js", "snapshot.js", "test-command.js"]
 
 CONTENT_TYPES = """<?xml version="1.0" encoding="utf-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">

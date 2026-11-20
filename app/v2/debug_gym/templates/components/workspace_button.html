@@ -1,0 +1,8 @@
+<!-- [Shared] Connected browser VS Code action -->
+<form method="post" action="{% url 'workspace-launch' bug.pk %}" data-launch-workspace>
+  {% csrf_token %}
+  {% if authoring %}<input type="hidden" name="mode" value="author">{% endif %}
+  {% if assignment %}<input type="hidden" name="assignment" value="{{ assignment.pk }}">{% endif %}
+  <button class="button primary" type="submit">Open in VS Code online</button>
+  <p class="alert error" data-workspace-error hidden></p>
+</form>

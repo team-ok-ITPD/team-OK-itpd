@@ -49,7 +49,7 @@
           <dt>Status</dt>
           <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
           <dt>Deadline</dt>
-          <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+          <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         {% else %}
           <dt>Mode</dt>
           <dd><span class="badge accent">Practice</span></dd>
@@ -60,7 +60,15 @@
     </section>
   </aside>
 
+  <section class="card stack">
+    <h2 class="card-title">VS Code workspace</h2>
+    <p class="text-muted">Open the exercise in browser VS Code. Run tests with the Debug GYM extension, then Submit your solution for server verification.</p>
+    {% if not blocked %}{% include "components/workspace_button.html" %}{% endif %}
+    <p class="alert info" data-progress-url="{% url 'student:progress' bug.pk %}{% if assignment %}?assignment={{ assignment.pk }}{% endif %}">Checking your latest result…</p>
+  </section>
+
   <form class="card editor-card" method="post" data-workspace>
+    {{ form.non_field_errors }}
     {% csrf_token %}
     <div class="row editor-toolbar">
       <span class="badge small">{{ bug.language }}</span>
@@ -87,7 +95,7 @@
     <div class="row editor-actions">
       <small class="text-subtle">
         Tab indents.
-        {% if assignment %}Submitting again replaces your earlier fix until the deadline.{% else %}Each save is kept as a new attempt.{% endif %}
+        {% if assignment %}You can submit again while the assignment is open.{% else %}Each save is kept as a new attempt.{% endif %}
       </small>
       <button class="button primary" type="submit" {% if blocked %}disabled{% endif %}>
         {% if assignment %}Submit fix{% else %}Save attempt{% endif %}

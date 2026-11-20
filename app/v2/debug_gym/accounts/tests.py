@@ -43,15 +43,11 @@ class LoginTests(TestCase):
     def test_student_goes_to_student_dashboard(self):
         self.assertRedirects(self.login(), reverse("student:dashboard"))
 
-    def test_until_dashboards_exist_the_page_shows_who_is_signed_in(self):
-        # Professors have no dashboard yet, so login shows the fallback card.
+    def test_professor_goes_to_professor_dashboard(self):
         User.objects.create_user("sara@example.com", "Sara", PASSWORD, role=User.Role.PROFESSOR)
-        self.assertRedirects(self.login(email="sara@example.com"), self.url)
-        response = self.client.get(self.url)
-        self.assertContains(response, "You're signed in")
-        self.assertContains(response, "Sara")
-        self.assertContains(response, "Professor")
-        self.assertContains(response, "dashboard is being built")
+        self.assertRedirects(
+            self.login(email="sara@example.com"), reverse("professor:dashboard"),
+        )
 
     def test_safe_next_link_is_followed(self):
         response = self.login(next="/django-admin/")
