@@ -1,1 +1,53 @@
 <!-- [Student Dev] Assignments list with status: todo, submitted, graded -->
+{% extends "base.html" %}
+{% block title %}My assignments · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Assignments</p>
+    <h1>My assignments</h1>
+  </div>
+  <a class="button ghost" href="{% url 'student:dashboard' %}">Back to dashboard</a>
+</header>
+<p class="lede">Every assignment sent to your groups, nearest deadline first.</p>
+
+<nav class="row status-tabs" aria-label="Filter by status">
+  {% for tab in tabs %}
+    <a class="button small {% if tab.key == current %}secondary{% else %}ghost{% endif %}"
+       href="{% url 'student:assignments_list' %}{% if tab.key %}?status={{ tab.key }}{% endif %}"
+       {% if tab.key == current %}aria-current="page"{% endif %}>
+      {{ tab.label }} <span class="badge small">{{ tab.count }}</span>
+    </a>
+  {% endfor %}
+</nav>
+
+{% if assignments %}
+  <section class="card table-card">
+    <table class="table">
+      <thead><tr><th>Assignment</th><th>Bug</th><th>Deadline</th><th>Status</th><th>Grade</th></tr></thead>
+      <tbody>
+        {% for assignment in assignments %}
+          <tr>
+            <td><a href="{% url 'student:assignment_detail' assignment.pk %}">{{ assignment.title }}</a></td>
+            <td>
+              {{ assignment.bug.title }}
+              <span class="badge small">{{ assignment.bug.language }}</span>
+              <span class="badge small difficulty-{{ assignment.bug.difficulty }}">{{ assignment.bug.get_difficulty_display }}</span>
+            </td>
+            <td>
+              {{ assignment.deadline|date:"M j, H:i" }}
+              {% if assignment.due_soon %}<span class="badge warning small">Due soon</span>{% endif %}
+            </td>
+            <td><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></td>
+            <td>{% if assignment.my_status == "graded" %}{{ assignment.my_submission.grade|floatformat }}{% else %}<span class="text-subtle">—</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% elif current %}
+  <div class="empty"><strong>No assignments with this status.</strong><span>Pick another filter above.</span></div>
+{% else %}
+  <div class="empty"><strong>No assignments yet.</strong><span>Assignments sent to your groups will show up here.</span></div>
+{% endif %}
+{% endblock %}

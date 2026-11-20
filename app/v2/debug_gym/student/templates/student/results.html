@@ -1,1 +1,90 @@
 <!-- [Student Dev] Grades, feedback and progress history -->
+{% extends "base.html" %}
+{% block title %}My results · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Results</p>
+    <h1>My results</h1>
+  </div>
+  <a class="button ghost" href="{% url 'student:dashboard' %}">Back to dashboard</a>
+</header>
+<p class="lede">Your grades, your professors' feedback and everything you have submitted.</p>
+
+<div class="grid-cards student-stats">
+  <div class="card stat"><span class="stat-value">{{ average|floatformat:1|default:"—" }}</span><span class="stat-label">Average grade</span></div>
+  <div class="card stat"><span class="stat-value">{{ graded|length }}</span><span class="stat-label">Graded</span></div>
+  <div class="card stat"><span class="stat-value">{{ waiting_count }}</span><span class="stat-label">Waiting for a grade</span></div>
+  <div class="card stat"><span class="stat-value">{{ practice_count }}</span><span class="stat-label">Practice attempts</span></div>
+</div>
+
+<section class="stack results-section">
+  <h2 class="card-title">Grades and feedback</h2>
+  {% if graded %}
+    {% for submission in graded %}
+      <article class="card grade-card">
+        <div class="grade-score">
+          <span class="stat-value">{{ submission.grade|floatformat|default:"—" }}</span>
+          <span class="stat-label">Grade</span>
+        </div>
+        <div class="stack grade-body">
+          <div class="row">
+            {% if submission.assignment %}
+              <a class="card-title" href="{% url 'student:assignment_detail' submission.assignment_id %}">{{ submission.assignment.title }}</a>
+            {% else %}
+              <span class="card-title">{{ submission.bug.title }}</span>
+            {% endif %}
+            <span class="badge small">{{ submission.bug.language }}</span>
+            <span class="badge small difficulty-{{ submission.bug.difficulty }}">{{ submission.bug.get_difficulty_display }}</span>
+          </div>
+          <div class="prose">{{ submission.feedback|default:"No feedback given."|linebreaks }}</div>
+          <p class="text-subtle">Graded {{ submission.graded_at|date:"M j, Y"|default:"—" }} · submitted {{ submission.submitted_at|date:"M j, Y H:i" }}</p>
+        </div>
+      </article>
+    {% endfor %}
+  {% else %}
+    <div class="empty"><strong>No grades yet.</strong><span>Grades and feedback appear here once your professor reviews a submission.</span></div>
+  {% endif %}
+</section>
+
+<section class="card table-card results-section">
+  <h2 class="card-title">Progress history</h2>
+  {% if history.paginator.count %}
+    <table class="table">
+      <thead><tr><th>Submitted</th><th>Work</th><th>Type</th><th>Status</th><th>Grade</th></tr></thead>
+      <tbody>
+        {% for submission in history %}
+          <tr>
+            <td>{{ submission.submitted_at|date:"M j, Y H:i" }}</td>
+            <td>
+              {% if submission.assignment %}
+                <a href="{% url 'student:assignment_detail' submission.assignment_id %}">{{ submission.assignment.title }}</a>
+              {% elif submission.bug.visibility == "public" %}
+                <a href="{% url 'student:practice_workspace' submission.bug_id %}">{{ submission.bug.title }}</a>
+              {% else %}
+                {{ submission.bug.title }}
+              {% endif %}
+            </td>
+            <td>{% if submission.assignment %}<span class="badge small">Assignment</span>{% else %}<span class="badge small accent">Practice</span>{% endif %}</td>
+            <td>
+              {% if submission.status == "graded" %}<span class="badge success">Graded</span>
+              {% elif submission.assignment %}<span class="badge warning">Submitted</span>
+              {% else %}<span class="text-subtle">Not graded</span>{% endif %}
+            </td>
+            <td>{{ submission.grade|floatformat|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if history.paginator.num_pages > 1 %}
+      <nav class="row pager" aria-label="History pages">
+        {% if history.has_previous %}<a class="button ghost small" href="?page={{ history.previous_page_number }}">Newer</a>{% endif %}
+        <span class="text-subtle">Page {{ history.number }} of {{ history.paginator.num_pages }}</span>
+        {% if history.has_next %}<a class="button ghost small" href="?page={{ history.next_page_number }}">Older</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty"><strong>Nothing submitted yet.</strong><span>Solve an assignment or a practice bug to start your history.</span></div>
+  {% endif %}
+</section>
+{% endblock %}

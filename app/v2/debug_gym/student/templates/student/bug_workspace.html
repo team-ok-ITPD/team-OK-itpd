@@ -1,1 +1,99 @@
 <!-- [Student Dev] Bug workspace with code editor, run/test and submit fix -->
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if assignment %}Solve{% else %}Practice{% endif %}: {{ bug.title }} · Debug Gym{% endblock %}
+{% block head %}<script src="{% static 'student/workspace.js' %}" defer></script>{% endblock %}
+{% block content %}
+{% if assignment %}
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Student / Assignments / Workspace</p>
+      <h1>{{ assignment.title }}</h1>
+    </div>
+    <a class="button ghost" href="{% url 'student:assignment_detail' assignment.pk %}">Back to assignment</a>
+  </header>
+{% else %}
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Student / Practice / Workspace</p>
+      <h1>{{ bug.title }}</h1>
+    </div>
+    <a class="button ghost" href="{% url 'student:public_bugs' %}">All practice bugs</a>
+  </header>
+{% endif %}
+
+{% if blocked %}
+  <p class="alert error">{{ blocked }}</p>
+{% elif assignment.due_soon %}
+  <p class="alert warning">Due in {{ assignment.deadline|timeuntil }}.</p>
+{% elif not assignment %}
+  <p class="alert info">Practice is not graded. Save as many attempts as you like.</p>
+{% endif %}
+
+<div class="workspace">
+  <aside class="stack">
+    <section class="card">
+      <div class="row">
+        <h2 class="card-title">{{ bug.title }}</h2>
+        <span class="badge small difficulty-{{ bug.difficulty }}">{{ bug.get_difficulty_display }}</span>
+      </div>
+      <div class="prose">{{ bug.description|linebreaks }}</div>
+      {% if assignment.instructions %}
+        <h3 class="section-label">Instructions</h3>
+        <div class="prose">{{ assignment.instructions|linebreaks }}</div>
+      {% endif %}
+    </section>
+    <section class="card">
+      <dl class="meta-list">
+        {% if assignment %}
+          <dt>Status</dt>
+          <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
+          <dt>Deadline</dt>
+          <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+        {% else %}
+          <dt>Mode</dt>
+          <dd><span class="badge accent">Practice</span></dd>
+          <dt>Last saved</dt>
+          <dd>{{ latest.submitted_at|date:"M j, H:i"|default:"Never" }}</dd>
+        {% endif %}
+      </dl>
+    </section>
+  </aside>
+
+  <form class="card editor-card" method="post" data-workspace>
+    {% csrf_token %}
+    <div class="row editor-toolbar">
+      <span class="badge small">{{ bug.language }}</span>
+      <span class="text-subtle" data-editor-state>
+        {% if latest %}Loaded your last {% if assignment %}submission{% else %}attempt{% endif %}.{% else %}Starting from the buggy code.{% endif %}
+      </span>
+      {% if not blocked %}
+        <button class="button ghost small" type="button" data-reset-code>Reset to buggy code</button>
+      {% endif %}
+    </div>
+
+    <label class="visually-hidden" for="{{ form.code.id_for_label }}">Your fix</label>
+    <div class="editor{% if form.code.errors %} has-error{% endif %}">
+      <pre class="editor-gutter" aria-hidden="true" data-editor-gutter>1</pre>
+      <textarea class="editor-input" name="{{ form.code.html_name }}" id="{{ form.code.id_for_label }}"
+                spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
+                {% if form.code.errors %}aria-invalid="true" aria-describedby="code-error"{% endif %}
+                {% if blocked %}readonly{% endif %}>{{ form.code.value|default:"" }}</textarea>
+    </div>
+    {% for error in form.code.errors %}
+      <small class="field-error" id="code-error">{{ error }}</small>
+    {% endfor %}
+
+    <div class="row editor-actions">
+      <small class="text-subtle">
+        Tab indents.
+        {% if assignment %}Submitting again replaces your earlier fix until the deadline.{% else %}Each save is kept as a new attempt.{% endif %}
+      </small>
+      <button class="button primary" type="submit" {% if blocked %}disabled{% endif %}>
+        {% if assignment %}Submit fix{% else %}Save attempt{% endif %}
+      </button>
+    </div>
+    {{ bug.buggy_code|json_script:"buggy-code" }}
+  </form>
+</div>
+{% endblock %}

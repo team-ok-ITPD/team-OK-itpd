@@ -40,12 +40,17 @@ class LoginTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.student.id)
 
+    def test_student_goes_to_student_dashboard(self):
+        self.assertRedirects(self.login(), reverse("student:dashboard"))
+
     def test_until_dashboards_exist_the_page_shows_who_is_signed_in(self):
-        self.assertRedirects(self.login(), self.url)
+        # Professors have no dashboard yet, so login shows the fallback card.
+        User.objects.create_user("sara@example.com", "Sara", PASSWORD, role=User.Role.PROFESSOR)
+        self.assertRedirects(self.login(email="sara@example.com"), self.url)
         response = self.client.get(self.url)
         self.assertContains(response, "You're signed in")
-        self.assertContains(response, "Ali")
-        self.assertContains(response, "Student")
+        self.assertContains(response, "Sara")
+        self.assertContains(response, "Professor")
         self.assertContains(response, "dashboard is being built")
 
     def test_safe_next_link_is_followed(self):
@@ -54,7 +59,7 @@ class LoginTests(TestCase):
 
     def test_outside_next_link_is_ignored(self):
         response = self.login(next="https://evil.example.com/")
-        self.assertEqual(response["Location"], self.url)
+        self.assertEqual(response["Location"], reverse("student:dashboard"))
 
     def test_logout(self):
         self.login()
