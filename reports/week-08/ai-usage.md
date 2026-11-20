@@ -21,6 +21,10 @@
 
 ## Review And Use
 
+OpenCode aligned the group teacher and student-enrollment cards in two equal
+columns with matching heights and bottom-aligned compact actions, stacking them
+on narrow screens, following the user's layout feedback.
+
 OpenCode corrected stretching on the group-membership page after a user
 screenshot: the teacher/student controls align to their content, action buttons
 use their natural width, and the roster occupies a separate full-width row.
