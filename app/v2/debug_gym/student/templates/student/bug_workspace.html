@@ -54,7 +54,7 @@
           <dt>Status</dt>
           <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
           <dt>Deadline</dt>
-          <dd>{{ assignment.deadline|date:"M j, Y H:i" }}</dd>
+          <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         {% else %}
           <dt>Mode</dt>
           <dd><span class="badge accent">Practice</span></dd>

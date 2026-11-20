@@ -1,0 +1,44 @@
+<!-- [Professor Dev] Assignment settings and deadline-gated results -->
+{% extends "base.html" %}
+{% block title %}{{ assignment.title }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">{{ group.name }}</p><h1>{{ assignment.title }}</h1></div>
+<a class="button ghost" href="{% url 'professor:group' group.pk %}">Back to group</a></header>
+<div class="stack">
+<section class="card stack">
+  <h2 class="card-title">{{ assignment.bug.title }}</h2>
+  <p>{{ assignment.instructions|default:"" }}</p>
+  <p><span class="badge">{{ assignment.get_status_display }}</span></p>
+  <form class="form" method="post">{% csrf_token %}{{ form.non_field_errors }}
+    <label class="field">Deadline (optional, UTC){{ form.deadline }}{{ form.deadline.errors }}</label>
+    <button class="button secondary">Save deadline</button>
+  </form>
+  {% if assignment.status == "active" %}
+  <form method="post" action="{% url 'professor:close' group.pk assignment.pk %}">{% csrf_token %}
+    <button class="button danger">Close assignment</button>
+    <p class="field-hint">Stops submissions and opens the result table.</p>
+  </form>{% endif %}
+</section>
+<section class="card stack">
+<h2 class="card-title">Student results</h2>
+{% if assignment.results_visible %}
+  <a class="button secondary" href="{% url 'professor:export' group.pk assignment.pk %}">Export CSV</a>
+  <div class="alert info">{% if review %}Agent review: {{ review.status }}. {{ review.detail }}{% else %}A one-time agent review is queued. It starts automatically when a generation key is available.{% endif %}</div>
+  <p class="field-hint">The agent checks all submissions once after the deadline or manual closure. Findings are advisory and need your review.</p>
+  <div class="table-wrap"><table class="table">
+  <thead><tr><th>Name</th><th>Email</th><th>Tests passed / total</th><th>Review</th></tr></thead>
+  <tbody>{% for row in rows %}<tr>
+    <td>{{ row.student.name }}</td><td>{{ row.student.email }}</td>
+    <td>{% if row.submission.tests_passed != None %}{{ row.submission.tests_passed }} / {{ row.submission.tests_total }}
+      {% elif row.submission %}Awaiting verification{% else %}No submission{% endif %}</td>
+    <td>{% if row.review.reviewed_at %}
+      <span class="badge {% if row.review.suspicion_status == 'review' %}warning{% else %}success{% endif %}">{% if row.review.suspicion_status == 'review' %}Needs review{% else %}No concerns found{% endif %}</span>
+      <p class="review-note">{{ row.review.suspicion_reason }}</p>
+      {% else %}<span class="badge">Not checked</span>{% endif %}</td>
+  </tr>{% empty %}<tr><td colspan="4">No students in this group.</td></tr>{% endfor %}</tbody>
+  </table></div>
+{% else %}
+  <p class="alert info">Results open after the deadline or when you close the assignment.</p>
+{% endif %}
+</section></div>
+{% endblock %}

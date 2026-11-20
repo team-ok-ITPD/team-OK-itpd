@@ -1,8 +1,11 @@
 # [Backend Dev] Project settings: installed apps, database, templates, static files, auth
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Share the existing browser VS Code launcher with the original application.
+sys.path.insert(0, str(BASE_DIR.parents[2]))
 
 # --- Security -------------------------------------------------------------
 # Set DJANGO_SECRET_KEY / DJANGO_DEBUG / DJANGO_ALLOWED_HOSTS in the environment
@@ -109,3 +112,11 @@ WORKSPACES_DIR = Path(os.environ.get("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "wor
 # How the VS Code container reaches this Django server to submit. Django must also
 # listen on Docker's bridge address (172.17.0.1) for this to work.
 DEBUG_GYM_IDE_SERVER_URL = os.environ.get("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8002")
+DEBUG_GYM_IDE_IMAGE = os.getenv("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
+DEBUG_GYM_SITE_URL = os.getenv("DEBUG_GYM_SITE_URL", "http://localhost:8002")
+DEBUG_GYM_WORKSPACES_DIR = BASE_DIR / "workspaces"
+DEBUG_GYM_AGENT_URL = os.getenv("DEBUG_GYM_AGENT_URL", "https://api.openai.com/v1/chat/completions")
+DEBUG_GYM_AGENT_MODEL = os.getenv("DEBUG_GYM_AGENT_MODEL", "gpt-4.1-mini")
+DEBUG_GYM_AGENT_KEY = os.getenv("DEBUG_GYM_AGENT_KEY", "")
+DEBUG_GYM_KEY_FILE = BASE_DIR / ".agent-encryption-key"
+DATA_UPLOAD_MAX_MEMORY_SIZE = 6_000_000

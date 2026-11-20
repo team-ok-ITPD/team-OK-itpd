@@ -6,6 +6,7 @@ import urllib.error
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -25,6 +26,9 @@ class StudentTestCase(TestCase):
     url = reverse("student:dashboard")
 
     def setUp(self):
+        verifier = patch("student.views.verify", return_value=(1, 1))
+        verifier.start()
+        self.addCleanup(verifier.stop)
         self.student = User.objects.create_user("ali@example.com", "Ali", PASSWORD)
         self.other = User.objects.create_user("omar@example.com", "Omar", PASSWORD)
         self.prof = User.objects.create_user(

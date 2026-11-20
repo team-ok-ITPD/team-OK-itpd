@@ -1,1 +1,32 @@
-<!-- [Professor Dev] Create or edit a bug and set its visibility -->
+<!-- [Professor Dev] Project import and planned agent generation -->
+{% extends "base.html" %}
+{% block title %}Create exercise · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">Professor{% if group %} / {{ group.name }}{% endif %}</p><h1>Create exercise</h1></div></header>
+<p class="lede">Start from your own project or describe a new debugging challenge. Every exercise begins private.</p>
+<div class="teaching-columns">
+<section class="card stack">
+<h2 class="card-title">Upload a project</h2>
+<p class="text-muted">Compress your project folder into a ZIP. The exercise starts private.
+{% if group %}It will also be assigned to {{ group.name }} without a deadline. You can set one from the group afterwards.{% endif %}</p>
+<form class="form" method="post" enctype="multipart/form-data">{% csrf_token %}
+{% if group %}<input type="hidden" name="group" value="{{ group.pk }}">{% endif %}
+{{ form.non_field_errors }}
+{% for field in form %}<label class="field">{{ field.label }}{{ field }}
+{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</label>{% endfor %}
+<p class="field-hint">After saving, open the project in VS Code online to edit source files and tests.</p>
+<button class="button primary">Create{% if group %} and assign{% endif %}</button>
+</form></section>
+<section class="card stack">
+<h2 class="card-title">Generate with an agent</h2>
+<p class="text-muted">Describe the learning goal. The project is checked against its reference solution before it enters your catalog.</p>
+<form class="form" method="post" action="{% url 'professor:generate' %}">{% csrf_token %}
+{% if group %}<input type="hidden" name="group" value="{{ group.pk }}">{% endif %}
+{{ generate_form.non_field_errors }}
+{% for field in generate_form %}<label class="field">{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}
+<p class="field-hint">Uses your personal key when configured, otherwise the platform key.</p>
+<button class="button primary" type="submit">Generate and verify</button>
+<a href="{% url 'professor:settings' %}">Manage API key</a>
+</form>
+</section></div>
+{% endblock %}

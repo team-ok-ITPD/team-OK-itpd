@@ -43,6 +43,14 @@ class RoleRequiredMixin(LoginRequiredMixin):
 
     required_role = None
     allowed_roles = ()
+    required_role = None
+
+    def get_allowed_roles(self):
+        if self.allowed_roles:
+            return tuple(self.allowed_roles)
+        if self.required_role:
+            return (self.required_role,)
+        return ()
 
     def get_allowed_roles(self):
         if self.allowed_roles:
