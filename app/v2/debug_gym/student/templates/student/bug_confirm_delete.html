@@ -1,0 +1,23 @@
+<!-- [Student Dev] Confirm deleting a student's own practice bug -->
+{% extends "base.html" %}
+{% block title %}Delete {{ bug.title }} · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Practice / Delete bug</p>
+    <h1>Delete "{{ bug.title }}"?</h1>
+  </div>
+</header>
+
+<section class="card stack delete-card">
+  <p>This permanently deletes the bug{% if attempt_count %} and <strong>{{ attempt_count }} practice attempt{{ attempt_count|pluralize }}</strong> made on it{% endif %}. It cannot be undone.</p>
+  {% if other_students %}
+    <p class="alert warning">{{ other_students }} other student{{ other_students|pluralize:" has,s have" }} practised this public bug. Their attempts will be deleted too.</p>
+  {% endif %}
+  <form class="row" method="post">
+    {% csrf_token %}
+    <button class="button danger" type="submit">Yes, delete it</button>
+    <a class="button ghost" href="{% url 'student:bug_edit' bug.pk %}">Keep it</a>
+  </form>
+</section>
+{% endblock %}

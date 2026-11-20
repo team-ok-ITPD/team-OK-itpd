@@ -7,13 +7,7 @@
     <p class="eyebrow">Student / Dashboard</p>
     <h1>Welcome back, {{ user.name }}</h1>
   </div>
-  <div class="row">
-    <a class="button secondary" href="{% url 'student:public_bugs' %}">Practice bugs</a>
-    <form method="post" action="{% url 'accounts:logout' %}">
-      {% csrf_token %}
-      <button class="button ghost" type="submit">Sign out</button>
-    </form>
-  </div>
+  <a class="button secondary" href="{% url 'student:public_bugs' %}">Practice bugs</a>
 </header>
 <p class="lede">Your groups, what is due next and your latest grades.</p>
 

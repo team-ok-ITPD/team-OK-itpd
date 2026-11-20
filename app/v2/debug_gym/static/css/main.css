@@ -1096,65 +1096,21 @@ pre {
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 }
 
-.editor-toolbar {
-  justify-content: space-between;
-}
-
-.editor-toolbar [data-editor-state] {
-  flex: 1;
-}
-
-.editor {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+.vscode-card form {
   display: grid;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  grid-template-columns: auto 1fr;
-  line-height: var(--leading-code);
-  min-height: 24rem;
-  overflow: hidden;
 }
 
-.editor:focus-within {
-  border-color: var(--color-accent);
-}
-
-.editor.has-error {
-  border-color: var(--color-danger);
-}
-
-.editor-gutter {
-  border-right: 1px solid var(--color-border-soft);
-  color: var(--color-text-subtle);
-  margin: 0;
-  overflow: hidden;
-  padding: var(--space-3) var(--space-2);
-  text-align: right;
-  user-select: none;
-}
-
-.editor-input {
-  background: transparent;
-  border: 0;
-  font: inherit;
-  line-height: inherit;
-  min-height: 24rem;
-  outline: none;
-  overflow: auto;
-  padding: var(--space-3) var(--space-4);
-  resize: vertical;
-  tab-size: 4;
-  white-space: pre;
-}
-
-.editor-input[readonly] {
+.vscode-steps {
   color: var(--color-text-muted);
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
 }
 
-.editor-actions {
-  justify-content: space-between;
+.vscode-steps strong,
+.vscode-steps code {
+  color: var(--color-text);
 }
 
 @media (max-width: 900px) {
@@ -1173,7 +1129,7 @@ pre {
 
 .filter-bar {
   align-items: end;
-  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(9rem, 1fr)) auto;
+  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(9rem, 1fr)) auto auto;
   margin-bottom: var(--space-4);
 }
 
@@ -1387,4 +1343,93 @@ pre {
     border-right: 0;
     padding-right: 0;
   }
+}
+
+/* Page: student/bug_form */
+
+.student-bug-form {
+  max-width: var(--content-narrow);
+}
+
+.code-input {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-code);
+  tab-size: 4;
+  white-space: pre;
+}
+
+.visibility-choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.visibility-choice legend {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.radio-option {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.only-mine {
+  align-self: center;
+  font-size: var(--text-sm);
+}
+
+.form-actions {
+  justify-content: space-between;
+}
+
+.delete-card {
+  max-width: var(--content-narrow);
+}
+
+.visibility-choice input[type="radio"],
+.only-mine input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  min-height: 0;
+  padding: 0;
+  width: auto;
+}
+
+/* Page: student/bug_ai_form */
+
+.form-pair {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+/* Page: accounts/login - demo quick sign-in (development only) */
+
+.demo-logins {
+  border-top: 1px dashed var(--color-border);
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+.demo-login-list {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.demo-login-list form {
+  display: grid;
+}
+
+.button.demo-login {
+  flex-direction: column;
+  gap: 0;
+  height: auto;
+  line-height: 1.3;
+  padding: var(--space-2) var(--space-3);
 }

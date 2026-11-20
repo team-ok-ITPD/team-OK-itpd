@@ -1,5 +1,8 @@
 # [Backend Dev] Tests for login and logout
-from django.test import TestCase
+from io import StringIO
+
+from django.core.management import call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import User
@@ -43,11 +46,12 @@ class LoginTests(TestCase):
     def test_student_goes_to_student_dashboard(self):
         self.assertRedirects(self.login(), reverse("student:dashboard"))
 
-    def test_professor_goes_to_professor_dashboard(self):
+    def test_professor_and_admin_go_to_their_dashboards(self):
         User.objects.create_user("sara@example.com", "Sara", PASSWORD, role=User.Role.PROFESSOR)
-        self.assertRedirects(
-            self.login(email="sara@example.com"), reverse("professor:dashboard"),
-        )
+        self.assertRedirects(self.login(email="sara@example.com"), reverse("professor:dashboard"))
+        self.client.logout()
+        User.objects.create_superuser("root@example.com", "Root", PASSWORD)
+        self.assertRedirects(self.login(email="root@example.com"), reverse("admin_panel:dashboard"))
 
     def test_safe_next_link_is_followed(self):
         response = self.login(next="/django-admin/")
@@ -62,3 +66,45 @@ class LoginTests(TestCase):
         response = self.client.post(reverse("accounts:logout"))
         self.assertRedirects(response, self.url)
         self.assertNotIn("_auth_user_id", self.client.session)
+
+
+@override_settings(DEMO_LOGIN=True)
+class DemoLoginTests(TestCase):
+    url = reverse("accounts:login")
+
+    def setUp(self):
+        out = StringIO()
+        call_command("seed_demo", stdout=out)
+
+    def test_buttons_show_one_account_per_role(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "Demo accounts")
+        for label in ("Sign in as Admin", "Sign in as Professor", "Sign in as Student"):
+            self.assertContains(response, label)
+        self.assertEqual([d["label"] for d in response.context["demo_logins"]], ["Admin", "Professor", "Student"])
+
+    def test_each_button_signs_in_to_its_dashboard(self):
+        cases = {
+            "admin@demo.debuggym.test": "admin_panel:dashboard",
+            "prof.karim@demo.debuggym.test": "professor:dashboard",
+            "ali@demo.debuggym.test": "student:dashboard",
+        }
+        for email, dashboard in cases.items():
+            demo = next(d for d in self.client.get(self.url).context["demo_logins"] if d["user"].email == email)
+            response = self.client.post(self.url, {"username": email, "password": demo["password"]})
+            self.assertRedirects(response, reverse(dashboard), fetch_redirect_response=False)
+            self.client.logout()
+
+    @override_settings(DEMO_LOGIN=False)
+    def test_hidden_when_turned_off(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "Demo accounts")
+        self.assertNotContains(response, "demo-pass")
+
+    def test_hidden_without_demo_data(self):
+        call_command("seed_demo", "--delete", stdout=StringIO())
+        self.assertNotContains(self.client.get(self.url), "Demo accounts")
+
+    def test_hidden_when_signed_in(self):
+        self.client.force_login(User.objects.get(email="ali@demo.debuggym.test"))
+        self.assertNotContains(self.client.get(self.url), "Demo accounts")

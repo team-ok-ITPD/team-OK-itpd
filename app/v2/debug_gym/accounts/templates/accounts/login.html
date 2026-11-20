@@ -126,6 +126,26 @@
         {% endif %}
       </p>
       <p class="role-strip" aria-hidden="true"><span>Students</span>·<span>Professors</span>·<span>Admins</span></p>
+
+      {% if demo_logins %}
+        <section class="demo-logins" aria-labelledby="demo-title">
+          <p class="eyebrow" id="demo-title">Demo accounts · development only</p>
+          <div class="demo-login-list">
+            {% for demo in demo_logins %}
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <input type="hidden" name="username" value="{{ demo.user.email }}">
+                <input type="hidden" name="password" value="{{ demo.password }}">
+                <button class="button secondary small demo-login" type="submit">
+                  <span>Sign in as {{ demo.label }}</span>
+                  <span class="text-subtle">{{ demo.user.name }}</span>
+                </button>
+              </form>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
     {% endif %}
   </section>
 </div>
