@@ -133,6 +133,15 @@ These are future verification scenarios, not passed tests or newly issued FR ide
 
 ## Current Implementation And Next Records
 
+The administrator UI additionally supports student and administrator account
+creation, group creation, and assignment of one active teacher to a group.
+These capabilities implement the explicit 2026-11-20 development request;
+they are not a newly recorded Customer decision and do not change the sourced
+matrix above. Changing a group's teacher leaves existing exercise and assignment
+ownership unchanged. Only administrators may access these provisioning routes;
+the server fixes the account role for each creation route rather than trusting
+a submitted role value.
+
 The Django app has student/professor profiles, administrator-managed teaching groups and membership, teacher-owned group/exercise assignments with independent deadlines, and server-enforced private, signed-in public and assigned-group exercise audiences. Drafts, attempts and IDE tokens remain linked to individual users and lose access when the audience no longer permits them. University-email verification and the complete product administrator role are not implemented, so this increment is not proof that the full target matrix is enforced.
 
 Refine the remaining backlog stories and measurable FR criteria before implementing unresolved audience and lifecycle policy. Keep proposed policy separate until it is confirmed. Do not rewrite the accepted US-01 through US-05.

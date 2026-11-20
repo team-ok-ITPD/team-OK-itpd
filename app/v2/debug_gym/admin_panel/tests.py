@@ -25,6 +25,239 @@ class AdminPanelTests(TestCase):
         self.assertEqual(teacher.role, User.Role.PROFESSOR)
         self.assertTrue(teacher.check_password("new-password"))
 
+    def test_admin_creates_each_account_role_without_payload_role_override(self):
+        self.login_admin()
+        for route, role, destination in (
+            ("user-create", User.Role.PROFESSOR, "users"),
+            ("student-create", User.Role.STUDENT, "students"),
+            ("administrator-create", User.Role.ADMIN, "administrators"),
+        ):
+            with self.subTest(role=role):
+                email = f"new-{role}@example.com"
+                response = self.client.post(reverse(f"admin_panel:{route}"), {
+                    "name": f"New {role}", "email": email, "is_active": "on",
+                    "password": "new-password", "password_confirmation": "new-password",
+                    "role": User.Role.ADMIN if role != User.Role.ADMIN else User.Role.STUDENT,
+                })
+                self.assertRedirects(response, reverse(f"admin_panel:{destination}"))
+                account = User.objects.get(email=email)
+                self.assertEqual(account.role, role)
+                self.assertTrue(account.check_password("new-password"))
+                self.assertNotEqual(account.password, "new-password")
+
+    def test_account_creation_validates_passwords_and_case_insensitive_email(self):
+        self.login_admin()
+        for route in ("user-create", "student-create", "administrator-create"):
+            for overrides in (
+                {"email": "invalid-email"},
+                {"email": self.teacher.email.upper()},
+                {"password_confirmation": "different-password"},
+                {"password": "short", "password_confirmation": "short"},
+            ):
+                with self.subTest(route=route, overrides=overrides):
+                    before = User.objects.count()
+                    payload = {
+                        "name": "New account", "email": "unique@example.com",
+                        "is_active": "on", "password": "new-password",
+                        "password_confirmation": "new-password",
+                    }
+                    payload.update(overrides)
+                    response = self.client.post(reverse(f"admin_panel:{route}"), payload)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertTrue(response.context["form"].errors)
+                    self.assertEqual(User.objects.count(), before)
+
+    def test_admin_creates_group_assigns_teacher_and_enrolls_student(self):
+        self.login_admin()
+        response = self.client.post(reverse("admin_panel:group-create"), {
+            "name": "New group", "description": "Python", "professor": self.teacher.pk,
+        })
+        group = StudyGroup.objects.get(name="New group")
+        self.assertRedirects(response, reverse("admin_panel:group-detail", args=[group.pk]))
+        self.assertEqual(group.professor, self.teacher)
+        response = self.client.post(reverse("admin_panel:group-member-add", args=[group.pk]),
+                                    {"student": self.student.pk})
+        self.assertRedirects(response, reverse("admin_panel:group-detail", args=[group.pk]))
+        self.assertTrue(group.students.filter(pk=self.student.pk).exists())
+
+    def test_admin_can_assign_another_teacher_without_changing_memberships(self):
+        teacher = User.objects.create_user("other@example.com", "Other", "password",
+                                           role=User.Role.PROFESSOR)
+        self.group.students.add(self.student)
+        bug = Bug.objects.create(
+            title="Owned exercise", description="Original ownership",
+            buggy_code="pass", solution_code="pass", language="python",
+            created_by=self.teacher,
+        )
+        assignment = Assignment.objects.create(
+            title="Owned assignment", bug=bug, professor=self.teacher
+        )
+        assignment.groups.add(self.group)
+        self.login_admin()
+        response = self.client.post(reverse("admin_panel:group-edit", args=[self.group.pk]), {
+            "name": self.group.name, "description": "", "professor": teacher.pk,
+        })
+        self.assertRedirects(response, reverse("admin_panel:group-detail", args=[self.group.pk]))
+        self.group.refresh_from_db()
+        self.assertEqual(self.group.professor, teacher)
+        self.assertTrue(self.group.students.filter(pk=self.student.pk).exists())
+        assignment.refresh_from_db()
+        bug.refresh_from_db()
+        self.assertEqual(assignment.professor, self.teacher)
+        self.assertEqual(bug.created_by, self.teacher)
+
+    def test_group_teacher_must_be_an_active_professor(self):
+        inactive = User.objects.create_user("inactive@example.com", "Inactive", "password",
+                                            role=User.Role.PROFESSOR, is_active=False)
+        self.login_admin()
+        for invalid_teacher in (self.admin, self.student, inactive):
+            for route, args in (("group-create", []), ("group-edit", [self.group.pk])):
+                with self.subTest(role=invalid_teacher.role, route=route):
+                    response = self.client.post(reverse(f"admin_panel:{route}", args=args), {
+                        "name": "Invalid group", "professor": invalid_teacher.pk,
+                    })
+                    self.assertEqual(response.status_code, 200)
+                    self.assertIn("professor", response.context["form"].errors)
+        self.group.refresh_from_db()
+        self.assertEqual(self.group.professor, self.teacher)
+        self.assertFalse(StudyGroup.objects.filter(name="Invalid group").exists())
+
+    def test_provisioning_and_group_mutations_require_admin(self):
+        urls = [
+            reverse(f"admin_panel:{route}") for route in
+            ("user-create", "student-create", "administrator-create", "group-create")
+        ] + [
+            reverse("admin_panel:group-edit", args=[self.group.pk]),
+            reverse("admin_panel:group-member-add", args=[self.group.pk]),
+            reverse("admin_panel:group-member-remove", args=[self.group.pk, self.student.pk]),
+        ]
+        for account in (None, self.student, self.teacher):
+            self.client.logout()
+            if account:
+                self.client.force_login(account)
+            for url in urls:
+                for method in ("get", "post"):
+                    with self.subTest(account=account, url=url, method=method):
+                        response = getattr(self.client, method)(url)
+                        self.assertEqual(response.status_code, 403 if account else 302)
+
+    def test_new_management_pages_render_and_link_to_actions(self):
+        self.login_admin()
+        for route, content in (
+            ("students", "Create student"),
+            ("administrators", "Create administrator"),
+            ("student-create", "Save student"),
+            ("administrator-create", "Save administrator"),
+            ("group-create", "Save group"),
+        ):
+            with self.subTest(route=route):
+                self.assertContains(self.client.get(reverse(f"admin_panel:{route}")), content)
+        self.assertContains(self.client.get(reverse("admin_panel:groups")), "Create group")
+        self.assertContains(
+            self.client.get(reverse("admin_panel:group-detail", args=[self.group.pk])),
+            "Edit group / assign teacher",
+        )
+
+    def test_all_admin_pages_require_admin_including_direct_urls(self):
+        urls = [
+            reverse(f"admin_panel:{route}") for route in (
+                "dashboard", "users", "students", "administrators", "user-create",
+                "student-create", "administrator-create", "groups", "group-create",
+                "assignments",
+            )
+        ] + [
+            reverse("admin_panel:user-edit", args=[self.teacher.pk]),
+            reverse("admin_panel:group-detail", args=[self.group.pk]),
+            reverse("admin_panel:group-edit", args=[self.group.pk]),
+            reverse("admin_panel:assignment-detail", args=[999]),
+        ]
+        for account in (None, self.student, self.teacher):
+            self.client.logout()
+            if account:
+                self.client.force_login(account)
+            for url in urls:
+                with self.subTest(account=account, url=url):
+                    self.assertEqual(self.client.get(url).status_code, 403 if account else 302)
+
+    def test_teacher_edit_preserves_password_and_role_and_rejects_role_injection(self):
+        self.login_admin()
+        response = self.client.post(reverse("admin_panel:user-edit", args=[self.teacher.pk]), {
+            "name": "Updated teacher", "email": "updated@example.com", "is_active": "on",
+            "password": "", "password_confirmation": "", "role": User.Role.ADMIN,
+        })
+        self.assertRedirects(response, reverse("admin_panel:users"))
+        self.teacher.refresh_from_db()
+        self.assertEqual(self.teacher.name, "Updated teacher")
+        self.assertEqual(self.teacher.role, User.Role.PROFESSOR)
+        self.assertTrue(self.teacher.check_password("debug-gym-pass"))
+        self.assertEqual(
+            self.client.get(reverse("admin_panel:user-edit", args=[self.admin.pk])).status_code,
+            404,
+        )
+
+    def test_duplicate_and_inactive_students_are_rejected(self):
+        self.group.students.add(self.student)
+        inactive = User.objects.create_user(
+            "inactive-student@example.com", "Inactive", "password", is_active=False
+        )
+        self.login_admin()
+        for student in (self.student, inactive, self.admin, self.teacher):
+            with self.subTest(student=student):
+                response = self.client.post(
+                    reverse("admin_panel:group-member-add", args=[self.group.pk]),
+                    {"student": student.pk},
+                )
+                self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.group.students.count(), 1)
+
+    def test_membership_changes_are_post_only_and_scoped_to_group(self):
+        self.group.students.add(self.student)
+        other_group = StudyGroup.objects.create(name="Other group", professor=self.teacher)
+        self.login_admin()
+        for route, args in (
+            ("group-member-add", [self.group.pk]),
+            ("group-member-remove", [self.group.pk, self.student.pk]),
+        ):
+            self.assertEqual(
+                self.client.get(reverse(f"admin_panel:{route}", args=args)).status_code, 405
+            )
+        response = self.client.post(reverse(
+            "admin_panel:group-member-remove", args=[other_group.pk, self.student.pk]
+        ))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(self.group.students.filter(pk=self.student.pk).exists())
+
+    def test_account_lists_are_role_scoped_searchable_and_paginated(self):
+        User.objects.bulk_create([
+            User(name=f"Learner {index:02}", email=f"learner{index}@example.com",
+                 role=User.Role.STUDENT) for index in range(21)
+        ])
+        self.login_admin()
+        for route, visible, hidden in (
+            ("students", self.student.email, self.teacher.email),
+            ("administrators", self.admin.email, self.student.email),
+        ):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(f"admin_panel:{route}"), {"q": visible.upper()})
+                self.assertContains(response, visible)
+                self.assertNotContains(response, hidden)
+                response = self.client.get(reverse(f"admin_panel:{route}"), {"q": "missing"})
+                self.assertContains(response, "No accounts match")
+        response = self.client.get(reverse("admin_panel:students"))
+        self.assertEqual(len(response.context["accounts"]), 20)
+        self.assertContains(response, "?page=2")
+        response = self.client.get(reverse("admin_panel:students"), {"page": 2})
+        self.assertEqual(len(response.context["accounts"]), 2)
+
+    def test_mutations_require_csrf_token(self):
+        from django.test import Client
+
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.admin)
+        for route in ("user-create", "student-create", "administrator-create", "group-create"):
+            with self.subTest(route=route):
+                self.assertEqual(client.post(reverse(f"admin_panel:{route}"), {}).status_code, 403)
+
     def test_admin_management_pages_render(self):
         self.login_admin()
         for url, content in (
@@ -96,6 +329,11 @@ class AdminPanelTests(TestCase):
         self.assertContains(response, assignment.title)
         self.assertContains(response, self.group.name)
         self.assertNotContains(response, "Edit assignment")
+        detail_url = reverse("admin_panel:assignment-detail", args=[assignment.pk])
+        self.assertContains(self.client.get(detail_url), assignment.title)
+        self.assertEqual(self.client.post(detail_url, {"title": "Changed"}).status_code, 405)
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.title, "Loop exercise")
 
     def test_admin_adds_and_removes_student(self):
         self.login_admin()

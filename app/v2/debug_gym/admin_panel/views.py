@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 from core.models import Assignment, GroupStudent, StudyGroup, User
 from core.permissions import RoleRequiredMixin
 
-from .forms import GroupMemberForm, TeacherForm
+from .forms import AdministratorForm, GroupForm, GroupMemberForm, StudentForm, TeacherForm
 
 
 class DashboardView(RoleRequiredMixin, TemplateView):
@@ -53,6 +53,7 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
     form_class = TeacherForm
     template_name = "admin_panel/user_form.html"
     success_url = reverse_lazy("admin_panel:users")
+    account_label = "teacher"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -60,8 +61,58 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
-        messages.success(self.request, "Teacher account created.")
+        messages.success(self.request, f"{self.account_label.capitalize()} account created.")
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_label"] = self.account_label
+        context["account_list_url"] = self.success_url
+        return context
+
+
+class StudentCreateView(TeacherCreateView):
+    form_class = StudentForm
+    account_label = "student"
+    success_url = reverse_lazy("admin_panel:students")
+
+
+class AdministratorCreateView(TeacherCreateView):
+    form_class = AdministratorForm
+    account_label = "administrator"
+    success_url = reverse_lazy("admin_panel:administrators")
+
+
+class ProvisionedAccountListView(RoleRequiredMixin, ListView):
+    required_role = User.Role.ADMIN
+    template_name = "admin_panel/accounts_list.html"
+    context_object_name = "accounts"
+    paginate_by = 20
+    account_role = User.Role.STUDENT
+    account_label = "Student"
+    create_url_name = "admin_panel:student-create"
+
+    def get_queryset(self):
+        queryset = User.objects.filter(role=self.account_role)
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            queryset = queryset.filter(Q(name__icontains=query) | Q(email__icontains=query))
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            account_label=self.account_label,
+            create_url=reverse(self.create_url_name),
+            query=self.request.GET.get("q", "").strip(),
+        )
+        return context
+
+
+class AdministratorListView(ProvisionedAccountListView):
+    account_role = User.Role.ADMIN
+    account_label = "Administrator"
+    create_url_name = "admin_panel:administrator-create"
 
 
 class TeacherUpdateView(RoleRequiredMixin, UpdateView):
@@ -75,6 +126,39 @@ class TeacherUpdateView(RoleRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         messages.success(self.request, "Teacher account updated.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_label"] = "teacher"
+        context["account_list_url"] = self.success_url
+        return context
+
+
+class GroupCreateView(RoleRequiredMixin, CreateView):
+    required_role = User.Role.ADMIN
+    form_class = GroupForm
+    template_name = "admin_panel/group_form.html"
+
+    def get_success_url(self):
+        return reverse("admin_panel:group-detail", args=[self.object.pk])
+
+    def form_valid(self, form):
+        messages.success(self.request, "Teaching group created.")
+        return super().form_valid(form)
+
+
+class GroupUpdateView(RoleRequiredMixin, UpdateView):
+    required_role = User.Role.ADMIN
+    model = StudyGroup
+    form_class = GroupForm
+    template_name = "admin_panel/group_form.html"
+
+    def get_success_url(self):
+        return reverse("admin_panel:group-detail", args=[self.object.pk])
+
+    def form_valid(self, form):
+        messages.success(self.request, "Teaching group updated.")
         return super().form_valid(form)
 
 

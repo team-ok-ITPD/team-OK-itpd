@@ -8,6 +8,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The v2 administrator panel can create student and administrator accounts,
+  create teaching groups, and assign one active teacher per group, alongside
+  existing teacher provisioning and student membership management.
 - The v2 professor workspace lists assigned groups and students, manages
   group-specific assignments with optional deadlines, and opens results and
   CSV exports after the deadline or manual closure.
@@ -27,6 +30,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Reconciled overlapping v2 test-result migrations and joined the independent
+  exercise-test migration so a fresh database can be migrated.
 - Role-restricted class-based pages accept their configured required role.
 
 ## [0.4.0](https://github.com/team-ok-ITPD/team-OK-itpd/releases/tag/v0.4.0) - 2026-11-15

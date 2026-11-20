@@ -112,10 +112,12 @@ Sign in at `http://127.0.0.1:8000/`. Each role lands on its own dashboard.
     **Submitted**, and you can resubmit until the deadline. **Practice** lists
     public bugs; practice attempts are saved but never graded. **Results** shows
     your graded work and history.
-2. **Admin** (`admin@example.com`): open `/admin-panel/` to create and edit
-    teacher accounts, view groups and add or remove students, and view
-    assignments. The admin panel cannot create groups or edit assignments; use
-    the Django admin for that.
+2. **Admin** (`admin@example.com`): open `/admin-panel/` to create teacher,
+    student and administrator accounts. Teachers can also be edited or
+    deactivated. Use **Groups** to create a group, select its active teacher,
+    change its teacher, and add or remove students. Each group has one teacher.
+    Changing the group's teacher does not transfer existing assignments or
+    exercises. Assignment pages are read-only in the administrator panel.
 3. **Professor** (`prof@example.com`): `/professor/` currently shows only a
     placeholder dashboard. Groups, assignments and grading pages are not
     implemented yet.

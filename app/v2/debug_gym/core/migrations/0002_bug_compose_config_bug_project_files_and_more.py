@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0001_initial"),
+        ("core", "0002_submission_test_results"),
     ]
 
     operations = [
@@ -21,20 +21,14 @@ class Migration(migrations.Migration):
             name="project_files",
             field=models.JSONField(blank=True, default=dict),
         ),
-        migrations.AddField(
-            model_name="submission",
-            name="tests_passed",
-            field=models.PositiveIntegerField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name="submission",
-            name="tests_total",
-            field=models.PositiveIntegerField(blank=True, null=True),
-        ),
         migrations.AlterField(
             model_name="assignment",
             name="deadline",
             field=models.DateTimeField(blank=True, null=True),
+        ),
+        migrations.RemoveConstraint(
+            model_name="submission",
+            name="submission_test_counts_consistent",
         ),
         migrations.AddConstraint(
             model_name="submission",

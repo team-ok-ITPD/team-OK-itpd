@@ -4,6 +4,7 @@
 {% block title %}Administration · Debug Gym{% endblock %}
 
 {% block content %}
+<div class="admin-dashboard stack">
 <header class="page-header">
   <div>
     <p class="eyebrow">Administration</p>
@@ -11,16 +12,19 @@
   </div>
 </header>
 {% include "admin_panel/components/navigation.html" %}
-<p class="lede">Provision teachers, maintain group membership and inspect assignments without changing teaching work.</p>
+<p class="lede">Provision accounts, create groups, assign teachers and maintain student membership.</p>
 <section class="grid-cards" aria-label="Administration totals">
   <article class="card stat"><span class="stat-value">{{ teacher_count }}</span><span class="stat-label">Teacher accounts</span></article>
   <article class="card stat"><span class="stat-value">{{ group_count }}</span><span class="stat-label">Teaching groups</span></article>
   <article class="card stat"><span class="stat-value">{{ assignment_count }}</span><span class="stat-label">Active assignments</span></article>
 </section>
-<section class="grid-cards">
+<section class="grid-cards admin-dashboard-actions" aria-label="Administration actions">
   <article class="card"><h2 class="card-title">Teacher accounts</h2><p class="text-muted">Create, update or deactivate teacher accounts.</p><a class="button primary" href="{% url 'admin_panel:users' %}">Manage teachers</a></article>
-  <article class="card"><h2 class="card-title">Group membership</h2><p class="text-muted">Add and remove student members from existing groups.</p><a class="button secondary" href="{% url 'admin_panel:groups' %}">Manage groups</a></article>
+  <article class="card"><h2 class="card-title">Student accounts</h2><p class="text-muted">Create student accounts before enrolling them in groups.</p><a class="button secondary" href="{% url 'admin_panel:students' %}">Manage students</a></article>
+  <article class="card"><h2 class="card-title">Administrator accounts</h2><p class="text-muted">Provision trusted platform administrators.</p><a class="button secondary" href="{% url 'admin_panel:administrators' %}">Manage administrators</a></article>
+  <article class="card"><h2 class="card-title">Group membership</h2><p class="text-muted">Create groups, assign teachers, and add or remove students.</p><a class="button secondary" href="{% url 'admin_panel:groups' %}">Manage groups</a></article>
   <article class="card"><h2 class="card-title">Assignment visibility</h2><p class="text-muted">Inspect teaching assignments without changing their content or deadlines.</p><a class="button secondary" href="{% url 'admin_panel:assignments' %}">View assignments</a></article>
 </section>
-<section class="card"><h2 class="card-title">Administration scope</h2><p class="text-muted">Administrators manage teacher accounts and group membership. Assignment creation and editing remain with professors.</p></section>
+<section class="card"><h2 class="card-title">Administration scope</h2><p class="text-muted">Administrators provision accounts and manage teaching groups. Assignment creation and editing remain with professors.</p></section>
+</div>
 {% endblock %}
