@@ -31,6 +31,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Professors can unpublish their own exercises. Assigning another author's
   public exercise creates a private project copy with a source link in its
   description, keeping the group's work independent of the original.
+- The repository has a maintained configuration plan that inventories the
+  configuration that builds, checks, delivers and explains Debug GYM, and the
+  Week 8 customer decisions `DEC-044` through `DEC-052` are recorded.
 
 ### Fixed
 

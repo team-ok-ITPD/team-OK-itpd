@@ -1,6 +1,6 @@
 # Configuration Plan
 
-**Reviewed:** 2026-11-19
+**Reviewed:** 2026-11-21
 
 This is the maintained inventory of the configuration that builds, checks,
 delivers and explains Debug GYM. Each connection records the edge and the
@@ -44,7 +44,9 @@ workflow syntax.
   local check can hide a failed container or a broken public report link.
 - **Owner:** Team CI owner.
 - **Where:** `.github/workflows/product.yml`, `markdown.yml`, `lychee.yml`,
-  `pages.yml` and `actionlint.yml`.
+  `pages.yml` and `actionlint.yml`. The product workflow runs the root tests and
+  the catalog application's tests; the v2 Django tests under `app/v2/debug_gym`
+  are run by hand and no workflow runs them.
 - **Connections:**
   - `reads` [CFG-05](#cfg-05): product checks build the dependency and
     container configuration; a changed lockfile or image without CI coverage
@@ -113,7 +115,11 @@ The container build, Python dependency locks and dependency-update settings.
 - **Owner:** Team dependency owner.
 - **Where:** `Dockerfile`, `compose.yaml`, `requirements.lock`,
   `requirements.txt`, `app/adel_b/requirements.txt`,
-  `app/v2/debug_gym/requirements.txt` and `.github/dependabot.yml`.
+  `app/v2/debug_gym/requirements.txt` and `.github/dependabot.yml`. The root
+  `requirements.txt` pins a different `pytest` version from the one in
+  `requirements.lock`, the container and the workflow install only the lock, the
+  v2 requirements use version ranges that no workflow installs, and Dependabot
+  watches only the repository root.
 - **Connections:**
   - `produces` [CFG-02](#cfg-02): product and container checks build these
     inputs; an unpinned or incompatible update can fail the pipeline.
@@ -137,7 +143,8 @@ The root `AGENTS.md` and the v2-specific `app/v2/debug_gym/AGENTS.md`.
   they govern. Without them, agents can duplicate styles, edit private files or
   treat planned evidence as completed.
 - **Owner:** All team members.
-- **Where:** `AGENTS.md` and `app/v2/debug_gym/AGENTS.md`.
+- **Where:** `AGENTS.md`, `app/v2/debug_gym/AGENTS.md` and the `app/v2/debug_gym/CLAUDE.md`
+  that imports it. The root `AGENTS.md` does not yet describe `app/v2/` or its checks.
 - **Connections:**
   - `cites` [CFG-08](#cfg-08): the root instructions route an agent to the
     course skill; a missing route leaves course requirements undiscovered.
