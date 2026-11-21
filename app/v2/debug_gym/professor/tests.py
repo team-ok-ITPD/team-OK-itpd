@@ -1,4 +1,6 @@
 # [Professor Dev] Regression checks for dashboard role access
+import json
+
 from django.test import TestCase
 
 from core.models import User
@@ -294,16 +296,28 @@ class TeachingWorkflowTests(TestCase):
             response = self.client.post(url, {}) if name == "close" else self.client.get(url)
             self.assertEqual(response.status_code, 404)
 
+    def ide_submit(self, assignment, payload):
+        """Students submit from their VS Code (student.views.ide_submit), not a web form."""
+        from student.models import IdeToken
+
+        self.bug.project_files = {"main.py": self.bug.buggy_code, "test_main.py": "def test_x():\n    pass\n"}
+        self.bug.entry_file = "main.py"
+        self.bug.save()
+        return self.client.post(
+            reverse("student:ide_submit"), data=json.dumps(payload), content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {IdeToken.issue(self.student, self.bug, assignment)}",
+        )
+
     def test_student_can_submit_without_deadline_until_manual_closure(self):
         assignment = self.assignment()
         self.client.force_login(self.student)
         url = reverse("student:assignment_workspace", args=[assignment.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
-        self.client.post(url, {"code": "fixed code"})
+        self.ide_submit(assignment, {"code": "fixed code"})
         self.assertEqual(assignment.submissions.count(), 1)
         assignment.status = "closed"
         assignment.save()
-        self.client.post(url, {"code": "another fix"})
+        self.ide_submit(assignment, {"code": "another fix"})
         self.assertEqual(assignment.submissions.count(), 1)
 
     def test_invalid_test_counts_are_rejected(self):
@@ -394,9 +408,7 @@ class TeachingWorkflowTests(TestCase):
 
     def test_fake_student_test_counts_are_not_saved(self):
         assignment = self.assignment()
-        self.client.force_login(self.student)
-        url = reverse("student:assignment_workspace", args=[assignment.pk])
-        self.client.post(url, {"code": "fixed", "tests_passed": 999, "tests_total": 999})
+        self.ide_submit(assignment, {"code": "fixed", "tests_passed": 999, "tests_total": 999})
         submission = assignment.submissions.get()
         self.assertEqual(submission.tests_passed, 1)
         self.assertEqual(submission.tests_total, 1)
