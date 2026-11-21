@@ -21,6 +21,7 @@ from core.permissions import student_required
 
 from app.adel_b.bugs.verification import VerificationBusy
 from core.runtime import RuntimeError as VerificationError
+from core.bridge import ensure_relay, ide_server_url
 from core.runtime import verify
 
 from . import ai
@@ -214,12 +215,16 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
         if blocked:
             messages.error(request, blocked)
             return redirect(request.path)
+        port = int(request.get_port())
         try:
             folder = write_workspace(
                 request.user, bug, assignment=assignment,
                 start_code=latest.submitted_code if latest else bug.buggy_code,
                 site_url=request.build_absolute_uri(request.path),
+                server_url=ide_server_url(port),
             )
+            # Development on Linux: let the container reach this server (see core/bridge.py).
+            ensure_relay(port)
             return redirect(start_ide(request.user, folder))
         except IdeError as error:
             messages.error(request, str(error))

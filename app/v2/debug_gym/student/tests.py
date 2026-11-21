@@ -1,5 +1,6 @@
 # [Student Dev] Tests for the student pages
 import json
+import os
 import shutil
 import tempfile
 import urllib.error
@@ -232,7 +233,6 @@ class AssignmentPagesTests(StudentTestCase):
         self.assertContains(self.get(), reverse("student:assignment_detail", args=[a.pk]))
 
 
-@override_settings(DEBUG_GYM_IDE_SERVER_URL="http://host.docker.internal:8002")
 class WorkspaceTests(StudentTestCase):
     """The bug page and Open in VS Code (Docker is faked)."""
 
@@ -292,7 +292,8 @@ class WorkspaceTests(StudentTestCase):
         self.assertEqual((folder / "main.py").read_text(), self.bug.buggy_code + "\n")
         self.assertIn("def test_x", (folder / "test_main.py").read_text())
         config = json.loads((folder / ".debug-gym" / "config.json").read_text())
-        self.assertEqual(config["server"], "http://host.docker.internal:8002")
+        # The address follows the port this server runs on (the test client uses 80).
+        self.assertEqual(config["server"], "http://host.docker.internal:80")
         self.assertEqual(config["file"], "main.py")
         self.assertTrue(config["tests"])
         self.assertTrue(config["site"].endswith(self.ws_url(a)))
@@ -1041,3 +1042,74 @@ class BestSubmissionTests(StudentTestCase):
         submission = Submission.objects.get(student=self.student, assignment=a)
         self.assertIsNone(submission.tests_passed)
         self.assertIsNone(submission.tests_total)
+
+
+class BridgeTests(TestCase):
+    """core/bridge.py: VS Code containers reach the development server."""
+
+    def test_server_url_follows_the_running_port(self):
+        from core.bridge import ide_server_url
+
+        with patch.dict("os.environ", {}, clear=False):
+            os.environ.pop("DEBUG_GYM_IDE_SERVER_URL", None)
+            self.assertEqual(ide_server_url(8000), "http://host.docker.internal:8000")
+
+    @override_settings(DEBUG_GYM_IDE_SERVER_URL="https://gym.example.org")
+    def test_explicit_setting_wins(self):
+        from core.bridge import ide_server_url
+
+        with patch.dict("os.environ", {"DEBUG_GYM_IDE_SERVER_URL": "https://gym.example.org"}):
+            self.assertEqual(ide_server_url(8000), "https://gym.example.org")
+
+    def test_runserver_port_parsing(self):
+        from core.bridge import runserver_port
+
+        self.assertEqual(runserver_port(["manage.py", "runserver"]), 8000)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "8001"]), 8001)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "127.0.0.1:8002", "--noreload"]), 8002)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "--noreload"]), 8000)
+
+    def test_no_relay_outside_development(self):
+        from core.bridge import ensure_relay
+
+        with override_settings(DEBUG=False):
+            self.assertFalse(ensure_relay(8000, address="127.0.0.2"))
+
+    def test_relay_forwards_to_the_local_server(self):
+        """A server on 127.0.0.1 answers through the relay on another local address."""
+        import socket
+        import threading
+        import urllib.request
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        from core.bridge import ensure_relay
+
+        class Hello(BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = self.rfile.read(int(self.headers["Content-Length"]))
+                self.send_response(201)
+                self.end_headers()
+                self.wfile.write(b"got " + body)
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), Hello)
+        port = server.server_address[1]
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        probe = socket.socket()
+        try:
+            probe.bind(("127.0.0.2", 0))
+        except OSError:
+            self.skipTest("127.0.0.2 is not available on this machine")
+        finally:
+            probe.close()
+
+        with override_settings(DEBUG=True):
+            self.assertTrue(ensure_relay(port, address="127.0.0.2"))
+            self.assertTrue(ensure_relay(port, address="127.0.0.2"))  # second call reuses it
+        with urllib.request.urlopen(urllib.request.Request(
+            f"http://127.0.0.2:{port}/", data=b"fix", method="POST"), timeout=5) as response:
+            self.assertEqual(response.status, 201)
+            self.assertEqual(response.read(), b"got fix")

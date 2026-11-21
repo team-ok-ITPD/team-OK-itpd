@@ -84,7 +84,7 @@ def workspace_dir(student, bug, assignment=None):
     return Path(settings.STUDENT_WORKSPACES_DIR) / str(student.pk) / work
 
 
-def write_workspace(student, bug, *, assignment=None, start_code, site_url):
+def write_workspace(student, bug, *, assignment=None, start_code, site_url, server_url=None):
     """Prepare the folder and return it. `start_code` fills the entry file the first time only."""
     files = project_files(bug)
     entry = entry_path(bug)
@@ -126,7 +126,7 @@ def write_workspace(student, bug, *, assignment=None, start_code, site_url):
     record.write_text(json.dumps(sorted(current)))
 
     _write_vscode_config(folder, bug)
-    _write_extension_config(folder, student, bug, assignment, site_url)
+    _write_extension_config(folder, student, bug, assignment, site_url, server_url)
     return folder
 
 
@@ -148,10 +148,10 @@ def _write_vscode_config(folder, bug):
     (folder / ".vscode" / "settings.json").write_text(json.dumps(workspace_settings, indent=2) + "\n")
 
 
-def _write_extension_config(folder, student, bug, assignment, site_url):
+def _write_extension_config(folder, student, bug, assignment, site_url, server_url=None):
     """Tell the extension where and as whom to submit; replaces any older token."""
     config = {
-        "server": settings.DEBUG_GYM_IDE_SERVER_URL,
+        "server": server_url or settings.DEBUG_GYM_IDE_SERVER_URL,
         "site": site_url,
         "title": assignment.title if assignment else bug.title,
         "file": code_file_name(bug),
