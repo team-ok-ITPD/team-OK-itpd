@@ -569,3 +569,119 @@ Provide professors with an export of assignment submission and test results.
 - **Source:** [the Week 7 customer meeting](../reports/week-07/meeting-report.md#decisions)
 - **Why:** Professors need to use assignment outcomes in downstream grading
   workflows. The exact CSV columns and Moodle process remain open.
+
+## DEC-044
+
+Keep course management outside Debug GYM and put the course name first in the
+group description.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** The university manages courses through its existing systems. Debug
+  GYM continues to organise teaching work through groups; administrators
+  should include the course name at the beginning of the group description so
+  teachers can identify the relevant course without a separate course model.
+
+## DEC-045
+
+Manage an exercise assignment separately for each target group, including its
+deadline.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** A teacher needs to assign the same exercise to different groups with
+  independent assignment state and deadlines. A shared assignment across
+  groups makes it unclear which group is affected by closing or changing it.
+
+## DEC-046
+
+Allow teachers to unassign an exercise from a group.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Teachers need to be able to remove an exercise assignment from a
+  group when it is no longer intended for that group. The effect on existing
+  student work still requires clarification.
+
+## DEC-047
+
+Treat closing an assignment as final and use it to make the assignment results
+available for review.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Closing finalises the assignment workflow and makes the collected
+  results available to the teacher. Reopening a closed assignment was not
+  required in the meeting; accidental-close protection remains an open
+  usability question.
+
+## DEC-048
+
+Accept student submission attempts even when the tests fail.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Students need to be able to submit their current work and have the
+  server report its test outcome. Passing every test must not be a prerequisite
+  for recording a submission attempt.
+
+## DEC-049
+
+Include assignment grades in the teacher's CSV export without calculating
+grades in Debug GYM.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Teachers use their own grading rules. The export should include the
+  grade recorded for an assignment alongside submission and test information,
+  without imposing a grade formula or automatic grading policy.
+
+## DEC-050
+
+Keep student-created exercises private and prevent students from publishing
+them to the public gallery.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Student-created code is not trusted for publication to other users.
+  Students may create private practice exercises, while public gallery
+  publication remains restricted to teachers under DEC-017.
+
+## DEC-051
+
+Use a Dockerfile rather than Docker Compose for the exercise container
+configuration discussed in the meeting.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** The exercise environment is intended to run as one task container.
+  Allowing a Compose file with multiple services and independently configured
+  resources would make validation and resource control more complicated.
+  Exact Dockerfile validation and resource limits remain open.
+
+## DEC-052
+
+Present manual exercise creation and agent-assisted generation as separate tabs.
+
+- **Status:** Active
+- **Date:** 2026-11-20
+- **Made by:** Customer
+- **Source:** [the Week 8 customer meeting](../reports/week-08/meeting-report.md#3-decisions)
+- **Why:** Separate tabs make the two exercise-creation routes easier to
+  understand and avoid presenting them as one confusing form.
