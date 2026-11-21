@@ -2,14 +2,14 @@
 {% extends "base.html" %}
 {% block title %}Teaching groups · Debug Gym{% endblock %}
 {% block content %}
-<header class="page-header"><div><p class="eyebrow">Administration</p><h1>Teaching groups</h1></div></header>
+<header class="page-header"><div><p class="eyebrow">Administration</p><h1>Teaching groups</h1></div><a class="button primary" href="{% url 'admin_panel:group-create' %}">Create group</a></header>
 {% include "admin_panel/components/navigation.html" %}
-<p class="lede">Add and remove students from existing teaching groups. Group creation and teaching work remain with professors.</p>
+<p class="lede">Create teaching groups, assign one teacher and manage student membership.</p>
 <form class="row admin-search" method="get"><label class="field search-field"><input aria-label="Search groups" name="q" value="{{ query }}" placeholder="Group or teacher"></label><button class="button secondary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url 'admin_panel:groups' %}">Clear</a>{% endif %}</form>
 {% if groups %}
   <section class="card"><table class="table"><thead><tr><th>Group</th><th>Teacher</th><th>Students</th><th>Actions</th></tr></thead><tbody>{% for group in groups %}<tr><td>{{ group.name }}</td><td>{{ group.professor.name }}</td><td>{{ group.students.count }}</td><td><a class="button small secondary" href="{% url 'admin_panel:group-detail' group.pk %}">Manage members</a></td></tr>{% endfor %}</tbody></table></section>
 {% else %}
-  <section class="empty">{% if query %}<strong>No groups match “{{ query }}”.</strong><span>Try another group or teacher name, or clear the search.</span>{% else %}<strong>No teaching groups yet.</strong><span>Group creation remains part of the teacher workflow.</span>{% endif %}</section>
+  <section class="empty">{% if query %}<strong>No groups match “{{ query }}”.</strong><span>Try another group or teacher name, or clear the search.</span>{% else %}<strong>No teaching groups yet.</strong><span>Create a group and select its teacher.</span>{% endif %}</section>
 {% endif %}
 {% include "components/pagination.html" %}
 {% endblock %}

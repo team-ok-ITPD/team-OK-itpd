@@ -1,0 +1,26 @@
+<!-- [Admin Dev] Administrator-provisioned student and administrator accounts -->
+{% extends "base.html" %}
+{% block title %}{{ account_label }} accounts · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts</h1></div>
+  <a class="button primary" href="{% url create_url_name %}">Create {{ account_label|lower }}</a>
+</header>
+{% include "admin_panel/components/navigation.html" %}
+<form class="row admin-search" method="get">
+  <label class="field search-field"><input aria-label="Search accounts" name="q" value="{{ query }}" placeholder="Name or email"></label>
+  <button class="button secondary" type="submit">Search</button>
+  {% if query %}<a class="button ghost" href="{% url list_url_name %}">Clear</a>{% endif %}
+</form>
+{% if accounts %}
+<section class="card">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for account in accounts %}<tr><td>{{ account.name }}</td><td>{{ account.email }}</td><td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td><td><a class="button small secondary" href="{% url edit_url_name account.pk %}">Edit</a></td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% else %}
+<section class="empty"><strong>{% if query %}No accounts match “{{ query }}”.{% else %}No {{ account_label|lower }} accounts yet.{% endif %}</strong></section>
+{% endif %}
+{% include "components/pagination.html" %}
+{% endblock %}
