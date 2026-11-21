@@ -125,12 +125,11 @@ No quality requirement was checked in this sprint, and the rows that are not `Pa
 
 ### SPRINT-08
 
-Run UT-01 sessions, publish sanitized results and triage findings while settling QR-07.
+Run the UT-01 sessions, publish their sanitized results and findings and settle QR-07, review the project configuration against its goals, and record the Week 8 Customer review's decisions.
 
 - **Due:** 2026-11-21
 - **Sprint Backlog:** [the issues scheduled into SPRINT-08](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/1)
-- **Planned Velocity:** 0; the scheduled work is task work while product stories
-  remain to be refined and scheduled.
+- **Planned Velocity:** 0; the scheduled work is task work, because no product story was scheduled into the sprint.
 
 #### REL-08
 
@@ -138,7 +137,7 @@ Planned: the release that carries the `UT-01` results and the `QR-07 QRT-01` ver
 
 ### SPRINT-09
 
-Provisional: the release candidate meets the agreed threshold measures available by code freeze.
+Provisional: freeze the final repository state, present the 7-minute deck and write the reflection, and finish the work the Week 8 review set for the next review: the group and assignment requirements, the submission acceptance fix, the CSV export sample, the extension usage guide and any `UT-01` fix that did not land in `REL-08`.
 
 - **Due:** 2026-11-28
 - **Sprint Backlog:** [the issues scheduled into SPRINT-09](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/6)
