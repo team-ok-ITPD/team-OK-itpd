@@ -2,6 +2,65 @@
 
 ## Tools
 
+- OpenCode prepared the #193 commit and pull request at the user's request,
+  updated task scope and sprint/project metadata, and requested independent
+  review from the three non-author repository collaborators. Review requests
+  do not constitute approval or Customer acceptance.
+- OpenCode fetched `origin/main` on 2026-11-22 and verified that both it and the
+  working branch were based on `41c9dd87b04ee37d9a8b08f5a0aae45ebd3a5a7d`;
+  no merge or stash operation was needed and existing local work was preserved.
+  Two professor tests still posted code to the IDE-launch page; they now use
+  the actual token-authenticated submission endpoints, retaining closure and
+  trusted-verification assertions. Added cross-role regressions for admin-created
+  accounts, teacher assignments, student submissions, deadline-gated teacher
+  results, membership removal/re-enrollment and revocation of web sessions and
+  both IDE token types. External verification is mocked, not live evidence.
+  Removed duplicated IDE image configuration while preserving its effective
+  default and made both launchers honor the configured workspace root.
+  Docker was unavailable, so real container launch, live AI and SMTP delivery
+  remain unverified. No standalone testing report was created.
+  Final checks passed: 190 Django tests, 11 root product tests, migration-drift
+  check, strict MkDocs build, repository Markdown lint and `git diff --check`.
+  Git reported no unmerged files.
+- OpenCode simplified the selection counter to the total selected only, keeping
+  off-page selections included in that total and in bulk actions.
+- OpenCode verified the counters end to end using a disposable 45-student
+  database: three selected on page one plus student 45 on page two yielded
+  `4 selected / 1 outside` on page one and `4 selected / 3 outside` when
+  searching for student 45. A confirmed test deactivation affected all four,
+  then reset selection to zero. The working demo database was not modified.
+  Added a regression test for 45 total students, 30/15 pagination and off-page
+  bulk processing.
+- OpenCode added automatic student-search reset when an applied query is
+  cleared; the explicit group filter and persisted student selection remain.
+- OpenCode changed student pagination to 30 per page at the user's request;
+  pagination for other account roles remains unchanged.
+- OpenCode retained 20-account pagination and implemented tab/account-scoped
+  student selection across search, filters and pagination, with an off-page
+  counter, explicit clear, confirmation count and reset after successful actions.
+  Search remains explicit; large-dataset performance has not been benchmarked.
+  Browser checks verified selection across two searches, restoration, submitted
+  off-page IDs, confirmation count and clear; the action was cancelled.
+  The administrator/accounts/core suite passed 80 tests.
+- OpenCode made the bulk-action target group initially empty and reset after
+  submission, without displaying a blank dropdown item. Group membership
+  actions still require an explicit group selection.
+- OpenCode removed the empty bulk-action group option and hid/disabled the
+  target group for activation/deactivation. Server validation ignores submitted
+  groups for these actions; regression tests cover status and membership safety.
+- OpenCode versioned the shared CSS and JavaScript URLs to refresh stale
+  browser assets. Browser checks on the actual student bulk-action and account
+  deletion pages verified the styled dialog and equal button vertical positions;
+  the confirmation was cancelled and no account was deleted.
+- OpenCode removed automatic target-group filtering after student bulk actions,
+  retained explicit list filters, aligned deletion actions horizontally and
+  replaced browser confirmations with a keyboard-accessible native dialog.
+- OpenCode restyled the CSV import confirmation as an inline, clickable
+  checkbox row with token-based checked and keyboard-focus states.
+- OpenCode prepared a synthetic 10-student import CSV and verified the exact
+  file in a disposable database: creation, password checks, repeat-import
+  idempotency and rollback on invalid input. The administrator suite passed
+  all 37 tests; the running demo database was not changed by these checks.
 - Codex implemented and tested the local v2 professor group, catalog,
   assignment, result export and project import workflows, browser VS Code
   authoring, server verification, generation integration, encrypted personal
@@ -20,6 +79,56 @@
   enforcement and form accessibility fixes.
 
 ## Review And Use
+
+OpenCode removed the empty teacher option from existing-group edit forms at the
+user's request, retaining required-field validation for tampered empty requests.
+
+On 2026-11-22 the user clarified that the existing Name field represents the
+course and a separate group number is needed. OpenCode added a text group-number
+field, a non-destructive migration, form/database duplicate checks, combined
+display labels and course/number-aware CSV enrollment. Existing names and
+descriptions were preserved and legacy numbers were left blank, not fabricated.
+Historical Customer decisions were not edited.
+The migration preserved all three pre-existing groups in the local demo database.
+Browser checks created and edited a synthetic numbered group, retaining leading
+zeroes. The focused administrator/accounts/core suite passed 76 tests. The full
+suite passed 180 of 182; the same two previously recorded professor submission
+failures remain outside this change.
+
+OpenCode synchronized merged PR #195 while preserving the local administrator
+work. It made group rows clickable, replaced separate teacher-search input with
+a keyboard-accessible searchable dropdown, and combined student filters and
+batch actions in a compact responsive toolbar with inset select arrows. The
+user's group-number/course-field wording needs clarification before schema
+changes; technical implementation notes were removed from the group form.
+
+At the user's explicit follow-up request, OpenCode added the administrator-set
+initial password to enabled account-creation emails for all three roles and
+CSV-created students. Original password text is passed only from the creation
+request; only hashes are stored. Link-only creation without a password,
+manual resend and password-update messages retain their earlier behavior.
+Regression coverage checks delivery content, login with the initial password,
+disabled/inactive/invalid accounts, generic delivery-failure warnings, refusal
+to print credentials and no duplicate email on repeated CSV imports.
+
+OpenCode removed the student-list explanatory paragraph, retaining a compact
+count badge, and made Cancel right-aligned with the same secondary style as
+access email. The password edit field is explicitly labelled New password;
+stored passwords remain irreversible hashes and are not displayed.
+
+OpenCode made newly entered administrator-managed passwords visible by default,
+without redisplaying saved hashes or submitted passwords. It grouped edit actions
+beside Save/Cancel while retaining a separate CSRF-protected form for access
+email, and aligned account filters and student batch controls in responsive grids.
+
+On 2026-11-21, OpenCode implemented task #193 using the merged Week 8 transcript:
+central student membership/batch management, atomic student/group CSV import,
+removal of administrator assignment/group-member pages, teacher lookup,
+single-field password entry and guarded account deletion. It added optional
+one-time access-link email, keeping passwords hashed and refusing token logging,
+and revoked web/IDE credentials on deactivation. DEC-044 storage was preserved;
+separate-course-field and data-retention policy need confirmation. Actual SMTP
+delivery requires owner configuration and is not claimed as verified.
 
 OpenCode inspected PR #190's failed CI logs and corrected README whitespace.
 It replaced three administrator template URL interpolations with Django's

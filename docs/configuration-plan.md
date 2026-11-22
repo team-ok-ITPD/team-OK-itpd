@@ -92,6 +92,10 @@ The deployment runbook and public configuration shape.
 - **Owner:** Team deployment owner.
 - **Where:** `docs/deployment.md`, `docs/setup.md`, `.env.example` and the
   private environment settings described in the Moodle wrapper.
+  The v2 account-mail environment shape and delivery-disabled default are in
+  [Administrator workflows](admin-workflows.md#optional-account-email).
+  The shared v2 IDE image and workspace-root settings are documented in
+  `app/v2/debug_gym/docs/setup.md`; both launchers honor the configured root.
 - **Connections:**
   - `reads` [CFG-05](#cfg-05): the runbook deploys the Compose services and
     dependency versions; a service-name or variable mismatch makes deployment

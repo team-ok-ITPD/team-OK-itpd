@@ -3,6 +3,8 @@ from django.test import TestCase
 
 from core.models import User
 from datetime import timedelta
+import hashlib
+import json
 from io import BytesIO
 from zipfile import ZipFile
 from unittest.mock import patch
@@ -12,7 +14,8 @@ from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import Assignment, Bug, StudyGroup, Submission
+from core.models import Assignment, Bug, StudyGroup, Submission, WorkspaceSession
+from student.models import IdeToken
 
 
 class DashboardAccessTests(TestCase):
@@ -299,11 +302,21 @@ class TeachingWorkflowTests(TestCase):
         self.client.force_login(self.student)
         url = reverse("student:assignment_workspace", args=[assignment.pk])
         self.assertEqual(self.client.get(url).status_code, 200)
-        self.client.post(url, {"code": "fixed code"})
+        token = IdeToken.issue(self.student, self.bug, assignment)
+        submit_url = reverse("student:ide_submit")
+        response = self.client.post(
+            submit_url, json.dumps({"code": "fixed code"}), content_type="application/json",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(assignment.submissions.count(), 1)
         assignment.status = "closed"
         assignment.save()
-        self.client.post(url, {"code": "another fix"})
+        response = self.client.post(
+            submit_url, json.dumps({"code": "another fix"}), content_type="application/json",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(assignment.submissions.count(), 1)
 
     def test_invalid_test_counts_are_rejected(self):
@@ -392,11 +405,23 @@ class TeachingWorkflowTests(TestCase):
         self.assertTrue(response.context["form"].errors)
         self.assertFalse(Assignment.objects.exists())
 
-    def test_fake_student_test_counts_are_not_saved(self):
+    @patch("core.workspace_api.verify", return_value=(1, 1))
+    def test_fake_student_test_counts_are_not_saved(self, verify):
         assignment = self.assignment()
         self.client.force_login(self.student)
-        url = reverse("student:assignment_workspace", args=[assignment.pk])
-        self.client.post(url, {"code": "fixed", "tests_passed": 999, "tests_total": 999})
+        token = "verified-submission-token"
+        WorkspaceSession.objects.create(
+            user=self.student, bug=self.bug, assignment=assignment, revision=self.bug.revision,
+            token_digest=hashlib.sha256(token.encode()).hexdigest(),
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
+        response = self.client.post(
+            reverse("ide-submit"),
+            json.dumps({"bug": self.bug.pk, "code": "fixed", "tests_passed": 999, "tests_total": 999}),
+            content_type="application/json", headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        verify.assert_called_once_with(self.bug, "fixed")
         submission = assignment.submissions.get()
         self.assertEqual(submission.tests_passed, 1)
         self.assertEqual(submission.tests_total, 1)

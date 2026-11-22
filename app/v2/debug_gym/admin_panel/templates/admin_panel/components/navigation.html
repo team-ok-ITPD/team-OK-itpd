@@ -1,8 +1,7 @@
 <!-- [Admin Dev] Local navigation for approved administrator workflows -->
 <nav class="admin-nav" aria-label="Administration navigation">
   <a class="admin-nav-link {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user-create' or request.resolver_match.url_name == 'user-edit' %}is-active{% endif %}" href="{% url 'admin_panel:users' %}">Teachers</a>
-  <a class="admin-nav-link {% if request.resolver_match.url_name == 'students' or request.resolver_match.url_name == 'student-create' or request.resolver_match.url_name == 'student-edit' %}is-active{% endif %}" href="{% url 'admin_panel:students' %}">Students</a>
+  <a class="admin-nav-link {% if request.resolver_match.url_name == 'students' or request.resolver_match.url_name == 'student-create' or request.resolver_match.url_name == 'student-edit' or request.resolver_match.url_name == 'student-import' %}is-active{% endif %}" href="{% url 'admin_panel:students' %}">Students</a>
   <a class="admin-nav-link {% if request.resolver_match.url_name == 'administrators' or request.resolver_match.url_name == 'administrator-create' or request.resolver_match.url_name == 'administrator-edit' %}is-active{% endif %}" href="{% url 'admin_panel:administrators' %}">Administrators</a>
-  <a class="admin-nav-link {% if request.resolver_match.url_name == 'groups' or request.resolver_match.url_name == 'group-detail' %}is-active{% endif %}" href="{% url 'admin_panel:groups' %}">Groups</a>
-  <a class="admin-nav-link {% if request.resolver_match.url_name == 'assignments' or request.resolver_match.url_name == 'assignment-detail' %}is-active{% endif %}" href="{% url 'admin_panel:assignments' %}">Assignments</a>
+  <a class="admin-nav-link {% if request.resolver_match.url_name == 'groups' or request.resolver_match.url_name == 'group-create' or request.resolver_match.url_name == 'group-edit' %}is-active{% endif %}" href="{% url 'admin_panel:groups' %}">Groups</a>
 </nav>

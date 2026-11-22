@@ -2,6 +2,7 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.db.models import F, Q
+from django.db.models.functions import Lower
 
 
 class UserManager(BaseUserManager):
@@ -89,6 +90,7 @@ class StudyGroup(models.Model):
     """Table 2: groups. One professor -> many groups."""
 
     name = models.CharField(max_length=100)
+    group_number = models.CharField(max_length=50, blank=True, default="")
     description = models.TextField(null=True, blank=True)
     professor = models.ForeignKey(
         User,
@@ -108,9 +110,16 @@ class StudyGroup(models.Model):
     class Meta:
         db_table = "groups"
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"), Lower("group_number"),
+                condition=~Q(group_number=""),
+                name="unique_course_group_number",
+            ),
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} · {self.group_number}" if self.group_number else self.name
 
 
 class GroupStudent(models.Model):

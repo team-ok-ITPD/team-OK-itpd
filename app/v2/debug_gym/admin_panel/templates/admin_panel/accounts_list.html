@@ -1,26 +1,65 @@
-<!-- [Admin Dev] Administrator-provisioned student and administrator accounts -->
+<!-- [Admin Dev] Account lists and centralized multi-student group management -->
 {% extends "base.html" %}
 {% block title %}{{ account_label }} accounts · Debug Gym{% endblock %}
 {% block content %}
+<div class="stack">
 <header class="page-header">
-  <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts</h1></div>
-  <a class="button primary" href="{% url create_url_name %}">Create {{ account_label|lower }}</a>
+  <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts{% if is_student_list %} <span class="badge" aria-label="{{ student_total }} students">{{ student_total }}</span>{% endif %}</h1></div>
+  <div class="row">
+    {% if is_student_list %}<a class="button secondary" href="{% url 'admin_panel:student-import' %}">Import CSV</a>{% endif %}
+    <a class="button primary" href="{% url create_url_name %}">Create {{ account_label|lower }}</a>
+  </div>
 </header>
 {% include "admin_panel/components/navigation.html" %}
-<form class="row admin-search" method="get">
-  <label class="field search-field"><input aria-label="Search accounts" name="q" value="{{ query }}" placeholder="Name or email"></label>
-  <button class="button secondary" type="submit">Search</button>
-  {% if query %}<a class="button ghost" href="{% url list_url_name %}">Clear</a>{% endif %}
+{% if is_student_list %}
+<div class="card admin-student-toolbar" role="region" aria-label="Student filters and bulk actions">
+<form class="admin-toolbar-filters" method="get" aria-label="Account filters">
+  <label class="field search-field">Search<input name="q" value="{{ query }}" placeholder="Name or email"></label>
+  <label class="field" for="student-group-filter">Group<select id="student-group-filter" name="group" data-searchable-select="Search groups"><option value="">All groups</option>{% for group in groups %}<option value="{{ group.pk }}"{% if selected_group == group.pk|stringformat:"s" %} selected{% endif %}>{{ group }} · {{ group.professor.name }}</option>{% endfor %}</select></label>
+  <div class="row admin-filter-actions">
+    <button class="button secondary" type="submit">Search</button>
+    {% if query or selected_group %}<a class="button ghost" href="{% url list_url_name %}">Clear</a>{% endif %}
+  </div>
 </form>
+<form id="student-batch" class="admin-toolbar-batch" method="post" action="{% url 'admin_panel:student-batch' %}" data-confirm="Apply this action to the selected students?" data-selection-key="student-selection-{{ request.user.pk }}" data-reset-selection="{{ reset_student_selection|yesno:'true,false' }}">
+  {% csrf_token %}
+  <input type="hidden" name="filter_q" value="{{ query }}">
+  <input type="hidden" name="filter_group" value="{{ selected_group }}">
+  <input type="hidden" name="filter_page" value="{{ request.GET.page }}">
+  <label class="field" for="{{ batch_form.action.id_for_label }}">Action{{ batch_form.action }}</label>
+  <label class="field" data-batch-group for="{{ batch_form.group.id_for_label }}">Target group{{ batch_form.group }}</label>
+  <button class="button primary admin-batch-apply" type="submit" aria-label="Apply to selected students">Apply</button>
+</form>
+</div>
+<div class="admin-selection-summary" aria-label="Selected students">
+  <span data-selection-summary role="status" aria-live="polite">Select students to apply a bulk action.</span>
+  <button type="button" class="button ghost small" data-clear-student-selection>Clear selection</button>
+</div>
+{% else %}
+<form class="card admin-account-filters admin-account-filters-simple" method="get" aria-label="Account filters">
+  <label class="field search-field">Search<input name="q" value="{{ query }}" placeholder="Name or email"></label>
+  <div class="row"><button class="button secondary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url list_url_name %}">Clear</a>{% endif %}</div>
+</form>
+{% endif %}
 {% if accounts %}
-<section class="card">
+<section class="card table-wrap">
   <table class="table">
-    <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
-    <tbody>{% for account in accounts %}<tr><td>{{ account.name }}</td><td>{{ account.email }}</td><td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td><td><a class="button small secondary" href="{% url edit_url_name account.pk %}">Edit</a></td></tr>{% endfor %}</tbody>
+    <thead><tr>
+      {% if is_student_list %}<th><input type="checkbox" data-select-students aria-label="Select all students on this page"></th>{% endif %}
+      <th>Name</th><th>Email</th><th>Status</th>{% if is_student_list %}<th>Groups / teachers</th>{% endif %}<th>Actions</th>
+    </tr></thead>
+    <tbody>{% for account in accounts %}<tr>
+      {% if is_student_list %}<td><input type="checkbox" name="students" value="{{ account.pk }}" form="student-batch" aria-label="Select {{ account.name }}"></td>{% endif %}
+      <td>{{ account.name }}</td><td>{{ account.email }}</td>
+      <td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+      {% if is_student_list %}<td>{% for group in account.study_groups.all %}<p>{{ group }} · {{ group.professor.name }}</p>{% empty %}<span class="text-subtle">No groups</span>{% endfor %}</td>{% endif %}
+      <td><a class="button small secondary" href="{% url edit_url_name account.pk %}">Edit</a></td>
+    </tr>{% endfor %}</tbody>
   </table>
 </section>
 {% else %}
-<section class="empty"><strong>{% if query %}No accounts match “{{ query }}”.{% else %}No {{ account_label|lower }} accounts yet.{% endif %}</strong></section>
+<section class="empty"><strong>{% if query or selected_group %}No accounts match the filters.{% else %}No {{ account_label|lower }} accounts yet.{% endif %}</strong></section>
 {% endif %}
 {% include "components/pagination.html" %}
+</div>
 {% endblock %}

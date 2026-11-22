@@ -1,8 +1,8 @@
 <!-- [Professor Dev] Group detail with students and group performance -->
 {% extends "base.html" %}
-{% block title %}{{ group.name }} · Debug Gym{% endblock %}
+{% block title %}{{ group }} · Debug Gym{% endblock %}
 {% block content %}
-<header class="page-header"><div><p class="eyebrow">Professor / Group</p><h1>{{ group.name }}</h1></div>
+<header class="page-header"><div><p class="eyebrow">Professor / Group</p><h1>{{ group }}</h1></div>
 <div class="row"><a class="button secondary" href="{% url 'professor:assign' group.pk %}">Assign exercise</a>
 <a class="button primary" href="{% url 'professor:create' %}?group={{ group.pk }}">Create exercise for group</a></div></header>
 <p class="lede">{{ group.description|default:"Manage assignments and follow this group's progress." }}</p>

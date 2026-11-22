@@ -133,6 +133,12 @@ These are future verification scenarios, not passed tests or newly issued FR ide
 
 ## Current Implementation And Next Records
 
+The Week 8 administrator follow-up centralizes membership management and CSV
+import in Students, removes administrator assignment inspection, and adds
+history-protected account deletion and optional one-time access email.
+The exact scope, CSV schema, course-description decision conflict and unverified
+SMTP configuration are documented in [Administrator workflows](admin-workflows.md).
+
 The administrator UI additionally supports student and administrator account
 creation and editing, group creation, and assignment of one active teacher to a group.
 These capabilities implement the explicit 2026-11-20 development request;

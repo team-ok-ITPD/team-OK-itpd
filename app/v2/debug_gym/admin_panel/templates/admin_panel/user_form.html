@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% block title %}{% if object %}Edit{% else %}Create{% endif %} {{ account_label }} · Debug Gym{% endblock %}
 {% block content %}
+<div class="stack">
 <header class="page-header"><div><p class="eyebrow">Administration</p><h1>{% if object %}Edit{% else %}Create{% endif %} {{ account_label }}</h1></div></header>
 {% include "admin_panel/components/navigation.html" %}
 <p class="lede">{% if object %}Edit the {{ account_label }} account. Leave the password blank to keep it unchanged.{% else %}Create an account with the {{ account_label }} role.{% endif %} Roles cannot be changed through this form.</p>
@@ -12,10 +13,23 @@
   {% for field in form %}
     {% if field.name == "is_active" %}
       <label class="field form-check{% if field.errors %} has-error{% endif %}">{{ field }}<span>{{ field.label }}</span><small class="field-hint">Inactive accounts cannot sign in.</small>{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
+    {% elif field.name == "password" %}
+      <div class="field{% if field.errors %} has-error{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label><div class="password-wrap">{{ field }}<button class="password-toggle" type="button" data-toggle-password="{{ field.id_for_label }}" aria-pressed="true">Hide</button></div><small class="field-hint">{{ field.help_text }} The stored password cannot be viewed.</small>{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
     {% else %}
       <label class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
     {% endif %}
   {% endfor %}
-  <div class="row"><button class="button primary" type="submit">Save {{ account_label }}</button><a class="button ghost" href="{% url account_list_url_name %}">Cancel</a></div>
+  <div class="row admin-account-actions">
+    <button class="button primary" type="submit">Save {{ account_label }}</button>
+    {% if object %}
+      <button class="button secondary" type="submit" form="account-access-link-form">Send access link</button>
+      {% if can_delete %}<a class="button danger" href="{% url 'admin_panel:account-delete' object.pk %}">Delete account</a>{% endif %}
+    {% endif %}
+    <a class="button secondary admin-account-cancel" href="{% url account_list_url_name %}">Cancel</a>
+  </div>
 </form>
+{% if object %}
+<form id="account-access-link-form" method="post" action="{% url 'admin_panel:account-access-link' object.pk %}" hidden>{% csrf_token %}</form>
+{% endif %}
+</div>
 {% endblock %}

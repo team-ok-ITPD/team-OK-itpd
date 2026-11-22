@@ -1,0 +1,21 @@
+<!-- [Admin Dev] Account deletion with explicit scope and history protection -->
+{% extends "base.html" %}
+{% block title %}Delete account · Debug Gym{% endblock %}
+{% block content %}
+<div class="stack account-delete-confirmation">
+<header class="page-header"><h1>Delete account</h1></header>
+<section class="card">
+  <p>{{ account.name }} · {{ account.email }} · {{ account.get_role_display }}</p>
+  {% if error %}<p class="alert error">{{ error }}</p>{% endif %}
+  {% if blocked %}
+    <p class="alert warning">Deletion is unavailable for your own account or an account with groups, authored exercises, assignments or submissions. Deactivate the account instead; teaching history will not be silently deleted.</p>
+  {% else %}
+    <p>This permanently deletes the account, its {{ membership_count }} group memberships and access tokens. It does not delete groups or files in learner workspaces. This cannot be undone.</p>
+  {% endif %}
+  <div class="confirmation-actions">
+    {% if not blocked %}<form method="post">{% csrf_token %}<input type="hidden" name="confirm" value="yes"><button class="button danger" type="submit">Permanently delete account</button></form>{% endif %}
+    <a class="button secondary" href="{% url list_url_name %}">Cancel</a>
+  </div>
+</section>
+</div>
+{% endblock %}

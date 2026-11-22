@@ -2,15 +2,17 @@
 {% extends "base.html" %}
 {% block title %}{% if object %}Edit{% else %}Create{% endif %} group · Debug Gym{% endblock %}
 {% block content %}
+<div class="stack">
 <header class="page-header"><div><p class="eyebrow">Administration / Groups</p><h1>{% if object %}Edit{% else %}Create{% endif %} group</h1></div></header>
 {% include "admin_panel/components/navigation.html" %}
-<p class="lede">Each group has one active teacher. Add students from the group's membership page after saving. Changing the teacher does not transfer existing assignments or exercises.</p>
+<p class="lede">Set group details and choose a teacher.</p>
 <form method="post" class="card form">
   {% csrf_token %}
   {{ form.non_field_errors }}
   {% for field in form %}
-    <label class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
+    <label for="{{ field.id_for_label }}" class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
   {% endfor %}
   <div class="row"><button class="button primary" type="submit">Save group</button><a class="button ghost" href="{% url 'admin_panel:groups' %}">Cancel</a></div>
 </form>
+</div>
 {% endblock %}

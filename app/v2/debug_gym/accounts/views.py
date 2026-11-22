@@ -1,6 +1,6 @@
 # [Backend Dev] Views for login, logout, register, profile and password reset
 from django.conf import settings
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordResetConfirmView
 from django.urls import NoReverseMatch, reverse
 
 from core.management.commands.seed_demo import DEFAULT_PASSWORD as DEMO_PASSWORD
@@ -63,3 +63,12 @@ class SignInView(LoginView):
 
 class SignOutView(LogoutView):
     next_page = "accounts:login"
+
+
+class SetAccountPasswordView(PasswordResetConfirmView):
+    template_name = "accounts/set_password.html"
+    success_url = "/accounts/login/"
+
+    def get_user(self, uidb64):
+        user = super().get_user(uidb64)
+        return user if user is not None and user.is_active else None
