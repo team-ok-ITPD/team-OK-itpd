@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import tempfile
+import threading
 import urllib.error
 from datetime import timedelta
 from pathlib import Path
@@ -1068,6 +1069,23 @@ class BridgeTests(TestCase):
         self.assertEqual(runserver_port(["manage.py", "runserver", "8001"]), 8001)
         self.assertEqual(runserver_port(["manage.py", "runserver", "127.0.0.1:8002", "--noreload"]), 8002)
         self.assertEqual(runserver_port(["manage.py", "runserver", "--noreload"]), 8000)
+
+    def test_relay_only_for_servers_on_localhost(self):
+        """On 0.0.0.0 the server is reachable already; a relay would block its own bind."""
+        from core.bridge import runserver_address, start_with_runserver
+
+        self.assertEqual(runserver_address(["manage.py", "runserver"]), ("127.0.0.1", 8000))
+        self.assertEqual(runserver_address(["manage.py", "runserver", "0.0.0.0:8000"]), ("0.0.0.0", 8000))
+        self.assertEqual(runserver_address(["manage.py", "runserver", "8001"]), ("127.0.0.1", 8001))
+        with patch("core.bridge.ensure_relay") as relay, patch.dict(os.environ, {"RUN_MAIN": "true"}):
+            start_with_runserver(["manage.py", "runserver", "0.0.0.0:8000"])
+            start_with_runserver(["manage.py", "runserver", "172.17.0.1:8000"])
+            relay.assert_not_called()
+            start_with_runserver(["manage.py", "runserver", "127.0.0.1:8000"])
+            for thread in threading.enumerate():
+                if thread.name.startswith("Thread") and thread is not threading.current_thread():
+                    thread.join(timeout=2)
+            relay.assert_called_once_with(8000)
 
     def test_no_relay_outside_development(self):
         from core.bridge import ensure_relay

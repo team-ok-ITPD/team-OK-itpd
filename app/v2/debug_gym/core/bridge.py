@@ -37,13 +37,21 @@ def site_url(request):
     return request.build_absolute_uri("/").rstrip("/")
 
 
-def runserver_port(argv):
-    """The port from `manage.py runserver [addr:]port`, or Django's default 8000."""
+LOCAL_ADDRESSES = ("127.0.0.1", "localhost", "::1", "[::1]")
+
+
+def runserver_address(argv):
+    """(address, port) from `manage.py runserver [addr:]port`; Django's default is 127.0.0.1:8000."""
     args = [a for a in argv[argv.index("runserver") + 1:] if not a.startswith("-")]
     if not args:
-        return 8000
-    port = args[0].rsplit(":", 1)[-1]
-    return int(port) if port.isdigit() else None
+        return "127.0.0.1", 8000
+    address, _, port = args[0].rpartition(":")
+    return address or "127.0.0.1", int(port) if port.isdigit() else None
+
+
+def runserver_port(argv):
+    """The port from `manage.py runserver [addr:]port`, or Django's default 8000."""
+    return runserver_address(argv)[1]
 
 
 def start_with_runserver(argv):
@@ -52,8 +60,11 @@ def start_with_runserver(argv):
         return
     if os.environ.get("RUN_MAIN") != "true" and "--noreload" not in argv:
         return
-    port = runserver_port(argv)
-    if port:
+    address, port = runserver_address(argv)
+    # Only a server on localhost needs the relay. On 0.0.0.0 (or the bridge address)
+    # containers already reach it, and a relay on the same port would make the
+    # server's own bind fail with "That port is already in use".
+    if port and address in LOCAL_ADDRESSES:
         threading.Thread(target=ensure_relay, args=(port,), daemon=True).start()
 
 
