@@ -90,8 +90,17 @@ LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
-# Password reset emails are printed to the console during development
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Account mail is opt-in. Access links are never printed by the application.
+ACCOUNT_EMAIL_ENABLED = os.environ.get("DJANGO_ACCOUNT_EMAIL_ENABLED", "0") == "1"
+ACCOUNT_PUBLIC_URL = os.environ.get("DJANGO_ACCOUNT_PUBLIC_URL", "")
+EMAIL_BACKEND = os.environ.get("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("DJANGO_EMAIL_USE_TLS", "1") == "1"
+EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", "")
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "noreply@example.com")
 
 # --- Internationalization -------------------------------------------------
 LANGUAGE_CODE = "en-us"
@@ -106,15 +115,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # --- VS Code (code-server) for solving bugs -------------------------------
 # Image built from app/v2/ide/Dockerfile.
-DEBUG_GYM_IDE_IMAGE = os.environ.get("DEBUG_GYM_IDE_IMAGE", "debug-gym-v2-ide")
+DEBUG_GYM_IDE_IMAGE = os.environ.get("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
 # One folder per student and bug; mounted into the student's VS Code container.
 WORKSPACES_DIR = Path(os.environ.get("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "workspaces")).resolve()
 # How the VS Code container reaches this Django server to submit. Django must also
 # listen on Docker's bridge address (172.17.0.1) for this to work.
 DEBUG_GYM_IDE_SERVER_URL = os.environ.get("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8002")
-DEBUG_GYM_IDE_IMAGE = os.getenv("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
 DEBUG_GYM_SITE_URL = os.getenv("DEBUG_GYM_SITE_URL", "http://localhost:8002")
-DEBUG_GYM_WORKSPACES_DIR = BASE_DIR / "workspaces"
+DEBUG_GYM_WORKSPACES_DIR = WORKSPACES_DIR
 DEBUG_GYM_AGENT_URL = os.getenv("DEBUG_GYM_AGENT_URL", "https://api.openai.com/v1/chat/completions")
 DEBUG_GYM_AGENT_MODEL = os.getenv("DEBUG_GYM_AGENT_MODEL", "gpt-4.1-mini")
 DEBUG_GYM_AGENT_KEY = os.getenv("DEBUG_GYM_AGENT_KEY", "")

@@ -18,7 +18,7 @@
   <article class="card stack"><h2 class="card-title">{{ bug.title }}</h2><p>{{ bug.description|urlize|linebreaksbr }}</p>
     <div class="row"><span class="badge">{{ bug.language }}</span><span class="badge">{{ bug.get_visibility_display }}</span></div>
     <a class="button secondary" href="{% url 'professor:bug' bug.pk %}">{% if bug.created_by_id == request.user.pk %}Open exercise{% else %}View details{% endif %}</a>
-    {% if group %}<a class="button primary" href="{% url 'professor:assign' group.pk %}?bug={{ bug.pk }}">Assign to {{ group.name }}</a>{% endif %}
+    {% if group %}<a class="button primary" href="{% url 'professor:assign' group.pk %}?bug={{ bug.pk }}">Assign to {{ group }}</a>{% endif %}
     {% if bug.created_by_id == request.user.pk %}
     {% if bug.visibility == "private" %}
     <form method="post" action="{% url 'professor:publish' bug.pk %}">{% csrf_token %}<button class="button secondary">Publish exercise</button></form>

@@ -1,0 +1,10 @@
+<!-- [Admin Dev] Safe validation feedback for selected-student operations -->
+{% extends "base.html" %}
+{% block title %}Action not applied · Debug Gym{% endblock %}
+{% block content %}
+<div class="stack">
+<header class="page-header"><h1>Action not applied</h1></header>
+<section class="card"><p>No students were changed. Correct the selection or target group and try again.</p>{{ form.errors }}</section>
+<div><a class="button secondary" href="{% url 'admin_panel:students' %}">Back to students</a></div>
+</div>
+{% endblock %}

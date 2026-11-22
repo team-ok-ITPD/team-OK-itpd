@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% block title %}{{ assignment.title }} · Debug Gym{% endblock %}
 {% block content %}
-<header class="page-header"><div><p class="eyebrow">{{ group.name }}</p><h1>{{ assignment.title }}</h1></div>
+<header class="page-header"><div><p class="eyebrow">{{ group }}</p><h1>{{ assignment.title }}</h1></div>
 <a class="button ghost" href="{% url 'professor:group' group.pk %}">Back to group</a></header>
 <div class="stack">
 <section class="card stack">

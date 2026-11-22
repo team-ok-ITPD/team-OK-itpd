@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=admin-selection-5">
     {% block head %}{% endblock %}
   </head>
   <body class="{% block body_class %}{% endblock %}">
@@ -21,7 +21,18 @@
       </main>
       {% if request.user.is_professor %}</div>{% endif %}
     {% endblock %}
-    <script src="{% static 'js/main.js' %}" defer></script>
+    <dialog class="action-confirmation" id="action-confirmation" aria-labelledby="action-confirmation-title" aria-describedby="action-confirmation-description">
+      <form method="dialog">
+        <p class="eyebrow">Confirmation</p>
+        <h2 id="action-confirmation-title">Confirm action</h2>
+        <p id="action-confirmation-description"></p>
+        <div class="confirmation-actions">
+          <button class="button primary" value="confirm">Confirm</button>
+          <button class="button secondary" value="cancel" autofocus>Cancel</button>
+        </div>
+      </form>
+    </dialog>
+    <script src="{% static 'js/main.js' %}?v=admin-selection-total-7" defer></script>
     <script src="{% static 'js/workspace-launch.js' %}" defer></script>
   </body>
 </html>

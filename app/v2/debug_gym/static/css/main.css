@@ -117,6 +117,7 @@ pre {
 
 .admin-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-5);
   margin-bottom: var(--space-4);
 }
@@ -1472,40 +1473,346 @@ pre {
   row-gap: var(--space-2);
 }
 
-/* Page: admin_panel/group_students */
+/* Page: admin_panel/user_form */
 
-.admin-group-members {
-  align-items: stretch;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.admin-account-actions .admin-account-cancel {
+  margin-inline-start: auto;
 }
 
-.admin-group-members > .card,
-.admin-group-members .field {
-  align-content: start;
+/* Page: admin_panel/accounts_list */
+
+.admin-account-filters {
+  align-items: end;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.admin-account-filters-simple {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-account-filters .field {
   min-width: 0;
 }
 
-.admin-group-members > .card > .button {
-  align-self: end;
-  justify-self: start;
+.admin-account-filters .search-field {
+  min-width: 0;
 }
 
-.admin-group-members > .card:not(.admin-group-roster) {
-  align-items: start;
-  gap: var(--space-4);
-  grid-template-rows: auto 1fr auto;
-}
-
-.admin-group-members > .card > p {
-  overflow-wrap: anywhere;
-}
-
-.admin-group-roster {
-  grid-column: 1 / -1;
+.admin-account-filters :is(input, select, .button) {
+  height: var(--control-height);
+  padding-block: var(--space-1);
 }
 
 @media (max-width: 48rem) {
-  .admin-group-members {
+  .admin-account-filters {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.admin-student-toolbar {
+  align-items: end;
+  gap: var(--space-3);
+  grid-template-columns: minmax(8rem, 1.2fr) minmax(8rem, 1fr) auto minmax(8rem, 1fr) minmax(8rem, 1fr) auto;
+  padding: var(--space-3);
+}
+
+.admin-toolbar-filters,
+.admin-toolbar-batch {
+  display: contents;
+}
+
+.admin-student-toolbar .field {
+  font-size: var(--text-xs);
+  min-width: 0;
+}
+
+.admin-student-toolbar .search-field {
+  min-width: 0;
+}
+
+.admin-student-toolbar :is(input, select, .button, .searchable-select-trigger) {
+  height: var(--control-height);
+  padding-block: var(--space-1);
+}
+
+.admin-student-toolbar select,
+.admin-account-filters select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+    linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+  background-position:
+    right calc(var(--space-4) + var(--space-1)) center,
+    right var(--space-4) center;
+  background-repeat: no-repeat;
+  background-size: var(--space-1) var(--space-1);
+  padding-inline-end: var(--space-8);
+}
+
+.admin-batch-apply {
+  justify-self: start;
+}
+
+.admin-selection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+@media (min-width: 60.01rem) {
+  .admin-student-toolbar.status-action {
+    grid-template-columns: minmax(8rem, 1.2fr) minmax(8rem, 1fr) auto minmax(8rem, 1fr) auto;
+  }
+}
+
+@media (max-width: 60rem) {
+  .admin-student-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .admin-student-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-student-toolbar .admin-filter-actions,
+  .admin-student-toolbar .admin-batch-apply {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 28rem) {
+  .admin-student-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Page: admin_panel/group_form and admin_panel/accounts_list */
+
+.searchable-select {
+  min-width: 0;
+  position: relative;
+}
+
+.searchable-select-trigger {
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
+  position: relative;
+  text-align: start;
+  width: 100%;
+}
+
+.searchable-select-trigger::after {
+  border-block-end: 1px solid var(--color-text-muted);
+  border-inline-end: 1px solid var(--color-text-muted);
+  content: "";
+  height: var(--space-2);
+  inset-inline-end: var(--space-4);
+  position: absolute;
+  transform: translateY(-25%) rotate(45deg);
+  width: var(--space-2);
+}
+
+.searchable-select-trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.searchable-select-trigger[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.searchable-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchable-select-popup {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-overlay);
+  display: grid;
+  gap: var(--space-2);
+  inset-block-start: calc(100% + var(--space-2));
+  inset-inline-start: 0;
+  padding: var(--space-2);
+  position: absolute;
+  width: 100%;
+  z-index: 20;
+}
+
+.searchable-select-popup[hidden] {
+  display: none;
+}
+
+.searchable-select-options {
+  max-height: min(20rem, 50vh);
+  overflow-y: auto;
+}
+
+.searchable-select-option {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  font-size: var(--text-sm);
+  min-height: var(--control-height);
+  overflow-wrap: anywhere;
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  width: 100%;
+}
+
+.searchable-select-option[aria-selected="true"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+
+.searchable-select-option:hover,
+.searchable-select-option:focus-visible {
+  background: var(--color-surface-2);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.searchable-select-empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+  padding: var(--space-2);
+}
+
+/* Page: admin_panel/groups_list */
+
+.admin-group-row {
+  cursor: pointer;
+}
+
+.admin-group-row:hover,
+.admin-group-row:focus-visible {
+  background: var(--color-surface-2);
+}
+
+.admin-group-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* Shared: action confirmations */
+
+.action-confirmation {
+  width: min(var(--content-narrow), calc(100% - var(--space-8)));
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-overlay);
+}
+
+.action-confirmation::backdrop {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(4px);
+}
+
+.action-confirmation h2 {
+  font-size: var(--text-xl);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.confirmation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.confirmation-actions form {
+  margin: 0;
+}
+
+.confirmation-actions > :last-child {
+  margin-left: auto;
+}
+
+/* Page: admin_panel/account_delete */
+
+.account-delete-confirmation {
+  max-width: var(--content-narrow);
+  margin: var(--space-8) auto;
+}
+
+/* Page: admin_panel/student_import */
+
+.student-import-form .form-check {
+  padding: var(--space-4);
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.student-import-form .form-check:has(input:checked) {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-border);
+}
+
+.student-import-form .form-check:hover {
+  border-color: var(--color-accent);
+}
+
+.student-import-form .form-check input[type="checkbox"] {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  margin: 0;
+  border: 2px solid var(--color-text-subtle);
+  border-radius: var(--space-1);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.student-import-form .form-check input:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.student-import-form .form-check input:checked::after {
+  content: "";
+  width: var(--space-1);
+  height: var(--space-2);
+  border: solid var(--color-on-accent);
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.student-import-form .form-check input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
