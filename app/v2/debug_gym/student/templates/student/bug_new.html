@@ -1,0 +1,34 @@
+<!-- [Student Dev] Create a bug: choose a public bug, or create one with AI -->
+{% extends "base.html" %}
+{% block title %}Create a bug · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Student / Create a bug</p>
+    <h1>How do you want to start?</h1>
+  </div>
+</header>
+<p class="lede">Practise on a bug someone already wrote, or describe one and let an AI write it for you. Practice is never graded.</p>
+
+<div class="bug-choice">
+  <a class="card bug-choice-card" href="{% url 'student:public_bugs' %}">
+    <span class="bug-choice-icon" aria-hidden="true">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    </span>
+    <h2 class="card-title">Choose from public bugs</h2>
+    <p class="text-muted">Browse bugs shared by professors and other students. Filter by language and difficulty, then open one in VS Code.</p>
+    <span class="text-subtle">{{ public_count }} public bug{{ public_count|pluralize }}</span>
+    <span class="button secondary">Browse public bugs</span>
+  </a>
+
+  <a class="card bug-choice-card" href="{% url 'student:bug_create' %}">
+    <span class="bug-choice-icon" aria-hidden="true">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17l.7 1.8L21.5 19.5l-1.8.7L19 22l-.7-1.8-1.8-.7 1.8-.7z"/></svg>
+    </span>
+    <h2 class="card-title">Create with AI</h2>
+    <p class="text-muted">Describe the bug you want to practise. An AI writes the buggy code and tests, using your own endpoint and API key.</p>
+    <span class="text-subtle">{% if my_bug_count %}You have created {{ my_bug_count }} bug{{ my_bug_count|pluralize }}{% else %}Your bugs stay private unless you share them{% endif %}</span>
+    <span class="button brand">Create with AI</span>
+  </a>
+</div>
+{% endblock %}

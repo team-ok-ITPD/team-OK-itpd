@@ -812,21 +812,39 @@ FAKE_BUG = {
 }
 
 
-class AIBugTests(StudentTestCase):
+def public_dns(host, port, *args, **kwargs):
+    """Fake DNS: every name resolves to a public address."""
+    return [(2, 1, 6, "", ("93.184.216.34", port))]
+
+
+class AIKeyFileMixin:
+    """Encrypt saved keys with a throwaway key file, not the real one."""
+
+    def setUp(self):
+        super().setUp()
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        override = override_settings(DEBUG_GYM_KEY_FILE=Path(tmp) / "key")
+        override.enable()
+        self.addCleanup(override.disable)
+
+
+class AIBugTests(AIKeyFileMixin, StudentTestCase):
     url = reverse("student:bug_create")
 
     def form_data(self, **extra):
         data = {
-            "provider": "anthropic",
+            "endpoint": "https://api.example.com/v1/chat/completions",
+            "model": "test-model",
             "api_key": "sk-test-key",
-            "model": "",
+            "remember": "on",
             "prompt": "second largest number in a list",
             "language": " Python ",
             "difficulty": Bug.Difficulty.MEDIUM,
             "visibility": Bug.Visibility.PRIVATE,
         }
         data.update(extra)
-        return data
+        return {k: v for k, v in data.items() if v is not None}
 
     def post(self, fake=None, **extra):
         self.client.force_login(self.student)
@@ -839,13 +857,14 @@ class AIBugTests(StudentTestCase):
         self.client.force_login(self.prof)
         self.assertEqual(self.client.get(self.url).status_code, 403)
 
-    def test_form_offers_providers_and_hides_nothing_secret(self):
+    def test_form_asks_for_endpoint_model_and_key(self):
         self.client.force_login(self.student)
         page = self.client.get(self.url)
-        for label in ("Claude (Anthropic)", "OpenAI", "Google Gemini"):
-            self.assertContains(page, label)
-        self.assertContains(page, 'type="password"')
-        self.assertContains(page, "Pick one of the public bugs")
+        for name in ('name="endpoint"', 'name="model"', 'name="api_key"', 'type="password"', 'name="remember"'):
+            self.assertContains(page, name)
+        self.assertNotContains(page, 'name="provider"')
+        # Prefilled with the platform's default endpoint and model.
+        self.assertEqual(page.context["form"].initial["endpoint"], ai.default_endpoint())
 
     def test_generates_and_saves_my_bug(self):
         response, mocked = self.post()
@@ -853,107 +872,170 @@ class AIBugTests(StudentTestCase):
         self.assertRedirects(response, reverse("student:practice_workspace", args=[bug.pk]),
                              fetch_redirect_response=False)
         mocked.assert_called_once_with(
-            provider="anthropic", api_key="sk-test-key", prompt="second largest number in a list",
-            language="python", difficulty="medium", model="",
+            endpoint="https://api.example.com/v1/chat/completions", api_key="sk-test-key",
+            prompt="second largest number in a list", language="python", difficulty="medium",
+            model="test-model",
         )
         self.assertEqual(bug.created_by, self.student)
-        self.assertEqual(bug.visibility, Bug.Visibility.PRIVATE)
         self.assertEqual(bug.language, "python")
-        self.assertNotIn("solution_code", {f.name for f in Bug._meta.fields})
-        page = self.client.get(response["Location"])
-        self.assertContains(page, "AI created")
-        self.assertNotContains(page, "sorted(xs)[-2]")  # the fix stays hidden in the workspace
 
-    def test_public_choice_is_kept(self):
-        self.post(visibility=Bug.Visibility.PUBLIC)
-        self.assertEqual(Bug.objects.get(title="Second largest").visibility, Bug.Visibility.PUBLIC)
+    def test_remembered_key_is_encrypted_and_reused(self):
+        from core.models import AgentCredential
 
-    def test_ai_error_is_shown_and_nothing_saved(self):
+        self.post()
+        record = AgentCredential.objects.get(user=self.student)
+        self.assertEqual(record.endpoint, "https://api.example.com/v1/chat/completions")
+        self.assertEqual(record.model, "test-model")
+        self.assertNotIn("sk-test-key", record.encrypted_key)
+        self.assertEqual(ai.saved_key(self.student), "sk-test-key")
+        # The next time the key field can stay empty.
+        page = self.client.get(self.url)
+        self.assertContains(page, "Key saved")
+        self.assertNotContains(page, "sk-test-key")
+        _, mocked = self.post(api_key="")
+        self.assertEqual(mocked.call_args.kwargs["api_key"], "sk-test-key")
+
+    def test_untick_remember_forgets_the_key(self):
+        from core.models import AgentCredential
+
+        self.post()
+        self.post(remember=None)
+        self.assertFalse(AgentCredential.objects.filter(user=self.student).exists())
+
+    def test_forget_button(self):
+        from core.models import AgentCredential
+
+        self.post()
+        response = self.client.post(self.url, {"forget": "1"})
+        self.assertRedirects(response, self.url, fetch_redirect_response=False)
+        self.assertFalse(AgentCredential.objects.filter(user=self.student).exists())
+
+    def test_failed_generation_saves_nothing(self):
+        from core.models import AgentCredential
+
         def fail(**kwargs):
-            raise ai.AIError("Claude rejected this API key. Check it and try again.")
+            raise ai.AIError("The endpoint rejected this API key. Check it and try again.")
 
         response, _ = self.post(fake=fail)
-        self.assertContains(response, "Claude rejected this API key.")
+        self.assertContains(response, "The endpoint rejected this API key.")
         self.assertFalse(Bug.objects.filter(created_by=self.student).exists())
-
-    def test_api_key_is_never_sent_back_or_stored(self):
-        response, _ = self.post(fake=lambda **kw: (_ for _ in ()).throw(ai.AIError("boom")))
+        self.assertFalse(AgentCredential.objects.filter(user=self.student).exists())
         self.assertNotContains(response, "sk-test-key")
-        self.post()
-        bug = Bug.objects.get(title="Second largest")
-        self.assertNotIn("sk-test-key", str(vars(bug)))
 
-    def test_required_fields(self):
+    def test_key_required_when_none_saved(self):
         response, mocked = self.post(api_key="", prompt="")
         mocked.assert_not_called()
         self.assertEqual(set(response.context["form"].errors), {"api_key", "prompt"})
 
 
-class AIClientTests(TestCase):
-    """student/ai.py without any network: provider answers are faked."""
+class AIClientTests(AIKeyFileMixin, TestCase):
+    """student/ai.py with fake DNS and HTTP: nothing leaves the machine."""
 
     def test_clean_result_checks_the_answer(self):
         self.assertEqual(ai.clean_result(dict(FAKE_BUG))["title"], "Second largest")
-        for bad in ({}, {**FAKE_BUG, "title": 5}, {**FAKE_BUG, "buggy_code": "  "},
-                    {**FAKE_BUG, "buggy_code": "x" * (ai.MAX_CODE + 1)}):
+        for bad in ({}, {**FAKE_BUG, "title": 5}, {**FAKE_BUG, "buggy_code": "  "}):
             with self.assertRaises(ai.AIError):
                 ai.clean_result(bad)
 
-    def test_unknown_provider_and_unsafe_model_name(self):
-        with self.assertRaises(ai.AIError):
-            ai.generate_bug("nope", "k", "p", "python", "easy")
-        with self.assertRaisesMessage(ai.AIError, "model name"):
-            ai.generate_bug("gemini", "k", "p", "python", "easy", model="../../other?x=1")
-
-    def test_default_models(self):
-        self.assertEqual(ai.default_model("anthropic"), "claude-opus-5-5")
+    def test_endpoint_must_be_public_https(self):
+        bad = [
+            "http://api.example.com/v1/chat/completions",   # not https
+            "https://user:key@api.example.com/v1",           # key in the address
+            "ftp://api.example.com/",
+            "",
+        ]
+        for url in bad:
+            with self.assertRaises(ai.AIError, msg=url):
+                ai.check_endpoint(url)
+        for address in ("127.0.0.1", "10.0.0.5", "192.168.1.10", "172.17.0.1", "169.254.169.254", "::1", "fd00::1"):
+            fake = [(2, 1, 6, "", (address, 443))]
+            with patch("student.ai.socket.getaddrinfo", return_value=fake):
+                with self.assertRaisesMessage(ai.AIError, "public internet address", msg=address):
+                    ai.check_endpoint("https://looks-public.example.com/v1/chat/completions")
+        with patch("student.ai.socket.getaddrinfo", side_effect=public_dns):
+            ai.check_endpoint("https://api.example.com/v1/chat/completions")
 
     def fake_http(self, payload):
         response = MagicMock()
         response.read.return_value = json.dumps(payload).encode()
         response.__enter__.return_value = response
-        return patch("student.ai.urllib.request.urlopen", return_value=response)
+        return patch("student.ai._opener.open", return_value=response)
 
-    def test_openai_answer_is_parsed(self):
+    def test_answer_is_parsed_and_key_sent_as_bearer(self):
         payload = {"choices": [{"message": {"content": json.dumps(FAKE_BUG)}}]}
-        with self.fake_http(payload) as urlopen:
-            result = ai.generate_bug("openai", "sk-o", "topic", "python", "easy")
+        with patch("student.ai.socket.getaddrinfo", side_effect=public_dns), self.fake_http(payload) as opened:
+            result = ai.generate_bug("https://api.example.com/v1/chat/completions", "sk-o", "topic", "python", "easy", "m1")
         self.assertEqual(result["title"], "Second largest")
-        request = urlopen.call_args.args[0]
-        self.assertEqual(request.full_url, "https://api.openai.com/v1/chat/completions")
+        request = opened.call_args.args[0]
+        self.assertEqual(request.full_url, "https://api.example.com/v1/chat/completions")
         self.assertEqual(request.get_header("Authorization"), "Bearer sk-o")
+        self.assertEqual(json.loads(request.data)["model"], "m1")
 
-    def test_gemini_answer_is_parsed(self):
-        payload = {"candidates": [{"content": {"parts": [{"text": json.dumps(FAKE_BUG)}]}}]}
-        with self.fake_http(payload) as urlopen:
-            result = ai.generate_bug("gemini", "g-key", "topic", "dart", "hard")
-        self.assertEqual(result["buggy_code"], FAKE_BUG["buggy_code"])
-        self.assertIn("gemini-2.5-flash:generateContent", urlopen.call_args.args[0].full_url)
+    def test_defaults_used_when_empty(self):
+        payload = {"choices": [{"message": {"content": json.dumps(FAKE_BUG)}}]}
+        with override_settings(DEBUG_GYM_AGENT_URL="https://gateway.example.org/v1/chat/completions",
+                               DEBUG_GYM_AGENT_MODEL="school-model"), \
+                patch("student.ai.socket.getaddrinfo", side_effect=public_dns), self.fake_http(payload) as opened:
+            ai.generate_bug("", "k", "topic", "python", "easy", "")
+        request = opened.call_args.args[0]
+        self.assertEqual(request.full_url, "https://gateway.example.org/v1/chat/completions")
+        self.assertEqual(json.loads(request.data)["model"], "school-model")
 
-    def test_rejected_key_gives_a_clear_message(self):
-        error = urllib.error.HTTPError("u", 401, "Unauthorized", {}, None)
-        with patch("student.ai.urllib.request.urlopen", side_effect=error):
-            with self.assertRaisesMessage(ai.AIError, "rejected this API key"):
-                ai.generate_bug("openai", "bad", "topic", "python", "easy")
+    def test_rejected_key_and_redirects_give_clear_messages(self):
+        for code, text in ((401, "rejected this API key"), (302, "tried to redirect"), (404, "not found")):
+            error = urllib.error.HTTPError("u", code, "x", {}, None)
+            with patch("student.ai.socket.getaddrinfo", side_effect=public_dns), \
+                    patch("student.ai._opener.open", side_effect=error):
+                with self.assertRaisesMessage(ai.AIError, text):
+                    ai.generate_bug("https://api.example.com/v1/chat/completions", "bad", "t", "python", "easy", "m")
 
-    def test_anthropic_answer_is_parsed(self):
-        text_block = MagicMock(type="text", text=json.dumps(FAKE_BUG))
-        fake_response = MagicMock(stop_reason="end_turn", content=[text_block])
-        with patch("student.ai.anthropic.Anthropic") as client_class:
-            client_class.return_value.beta.messages.create.return_value = fake_response
-            result = ai.generate_bug("anthropic", "sk-ant", "topic", "python", "easy")
-        self.assertEqual(result["title"], "Second largest")
-        client_class.assert_called_once_with(api_key="sk-ant", timeout=ai.TIMEOUT_SECONDS, max_retries=1)
-        kwargs = client_class.return_value.beta.messages.create.call_args.kwargs
-        self.assertEqual(kwargs["model"], "claude-opus-5-5")
-        self.assertEqual(kwargs["output_config"]["format"]["schema"], ai.BUG_SCHEMA)
+    def test_redirects_are_not_followed(self):
+        handler = ai._NoRedirects()
+        self.assertIsNone(handler.redirect_request(None, None, 302, "Found", {}, "http://10.0.0.1/"))
 
-    def test_anthropic_refusal(self):
-        fake_response = MagicMock(stop_reason="refusal", content=[])
-        with patch("student.ai.anthropic.Anthropic") as client_class:
-            client_class.return_value.beta.messages.create.return_value = fake_response
-            with self.assertRaisesMessage(ai.AIError, "declined"):
-                ai.generate_bug("anthropic", "sk-ant", "topic", "python", "easy")
+    def test_not_a_chat_completion(self):
+        with patch("student.ai.socket.getaddrinfo", side_effect=public_dns), self.fake_http({"hello": 1}):
+            with self.assertRaisesMessage(ai.AIError, "OpenAI-style"):
+                ai.generate_bug("https://api.example.com/v1/chat/completions", "k", "t", "python", "easy", "m")
+
+
+class StudentNavigationTests(StudentTestCase):
+    """The sidebar on student pages and the "Create a bug" choice page."""
+
+    def page(self, name, *args):
+        self.client.force_login(self.student)
+        return self.client.get(reverse(f"student:{name}", args=args))
+
+    def test_sidebar_on_every_student_page_with_active_link(self):
+        for name, label in (("dashboard", "Dashboard"), ("assignments_list", "My assignments"),
+                            ("public_bugs", "Practice bugs"), ("bug_new", "Create a bug"),
+                            ("results", "My results")):
+            response = self.page(name)
+            html = response.content.decode()
+            self.assertIn('class="student-nav"', html)
+            nav = html[html.index('class="student-nav"'):html.index("</nav>", html.index('class="student-nav"'))]
+            self.assertEqual(nav.count('aria-current="page"'), 1, name)
+            self.assertIn(label, nav.split('aria-current="page"')[1][:400])
+
+    def test_todo_count_badge(self):
+        self.assignment("Open one")
+        self.assignment("Another")
+        self.assertContains(self.page("dashboard"), 'title="Assignments to do">2<')
+
+    def test_other_roles_do_not_get_the_student_sidebar(self):
+        self.client.force_login(self.prof)
+        self.assertNotContains(self.client.get(reverse("professor:dashboard")), 'class="student-nav"')
+
+    def test_create_a_bug_offers_both_ways(self):
+        response = self.page("bug_new")
+        self.assertContains(response, "Choose from public bugs")
+        self.assertContains(response, reverse("student:public_bugs"))
+        self.assertContains(response, "Create with AI")
+        self.assertContains(response, reverse("student:bug_create"))
+
+    def test_create_a_bug_needs_a_student(self):
+        self.client.force_login(self.prof)
+        self.assertEqual(self.client.get(reverse("student:bug_new")).status_code, 403)
 
 
 class BestSubmissionTests(StudentTestCase):

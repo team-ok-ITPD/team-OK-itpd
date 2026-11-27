@@ -11,6 +11,7 @@ urlpatterns = [
     path("assignments/<int:pk>/", views.assignment_detail, name="assignment_detail"),
     path("assignments/<int:pk>/solve/", views.assignment_workspace, name="assignment_workspace"),
     path("practice/", views.public_bugs, name="public_bugs"),
+    path("practice/create/", views.bug_new, name="bug_new"),
     path("practice/new/", views.bug_create, name="bug_create"),
     path("practice/<int:pk>/", views.practice_workspace, name="practice_workspace"),
     path("practice/<int:pk>/edit/", views.bug_edit, name="bug_edit"),
