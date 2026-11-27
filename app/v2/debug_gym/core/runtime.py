@@ -14,7 +14,7 @@ from django.conf import settings
 
 from app.adel_b.bugs.ide import IdeError, start_ide
 from app.adel_b.bugs.verification import VerificationGate
-from .projects import entry_path, project_files, validate_project
+from .projects import entry_path, project_files, python_test_files, validate_project
 
 gate = VerificationGate(concurrency=2, queue_size=8, wait_timeout=10)
 workspace_lock = threading.Lock()
@@ -37,7 +37,7 @@ def verify(bug, code):
         entrypoint = ["/usr/lib/code-server/lib/node"]
         command = ["--test", "--test-reporter=junit", "--test-reporter-destination=/tmp/report.xml"]
     else:
-        test_files = [name for name in files if PurePosixPath(name).name.startswith("test_") and name.endswith(".py")]
+        test_files = python_test_files(files)
         entrypoint = ["/opt/debug-gym/bin/python"]
         command = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "--junitxml=/tmp/report.xml"]
     if not test_files:

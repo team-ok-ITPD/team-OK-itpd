@@ -1,8 +1,13 @@
 # [Backend Dev] Shared models: User, StudyGroup, Bug, Assignment, Submission
+import hashlib
+import secrets
+from datetime import timedelta
+
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -327,6 +332,34 @@ class WorkspaceSession(models.Model):
     expires_at = models.DateTimeField()
     last_request = models.CharField(max_length=64, blank=True)
     last_response = models.JSONField(default=dict, blank=True)
+
+
+class WorkspacePairingCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="workspace_pairing_codes")
+    bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(Assignment, null=True, blank=True, on_delete=models.CASCADE)
+    code_digest = models.CharField(max_length=64, unique=True)
+    site_url = models.URLField(max_length=500)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @staticmethod
+    def digest(code):
+        return hashlib.sha256(code.encode("ascii")).hexdigest()
+
+    @classmethod
+    def issue(cls, user, bug, assignment, site_url):
+        code = secrets.token_hex(12).upper()
+        cls.objects.create(
+            user=user,
+            bug=bug,
+            assignment=assignment,
+            code_digest=cls.digest(code),
+            site_url=site_url,
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+        return code
 
 
 class AssignmentReview(models.Model):

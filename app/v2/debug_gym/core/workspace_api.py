@@ -2,6 +2,7 @@
 from datetime import timedelta
 import hashlib
 import json
+import re
 import secrets
 
 from django.contrib.auth.decorators import login_required
@@ -14,8 +15,8 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.debug import sensitive_variables
 from django.conf import settings
 
-from .models import Assignment, Bug, Submission, User, WorkspaceSession
-from .projects import ProjectError, entry_path, validate_project
+from .models import Assignment, Bug, Submission, User, WorkspacePairingCode, WorkspaceSession
+from .projects import ProjectError, entry_path, project_files, python_test_files, validate_project
 from .runtime import IdeError, RuntimeError, open_workspace, verify
 from app.adel_b.bugs.verification import VerificationBusy
 
@@ -37,6 +38,87 @@ def session_allowed(session):
             and (assignment.deadline is None or assignment.deadline >= timezone.now())
         )
     return bug.visibility == Bug.Visibility.PUBLIC
+
+
+@csrf_exempt
+@require_POST
+@sensitive_variables()
+def pair(request):
+    if len(request.body) > 1024:
+        return JsonResponse({"error": "Invalid pairing request."}, status=400)
+    try:
+        payload = json.loads(request.body)
+        code = payload["code"]
+        if not isinstance(code, str):
+            raise ValueError
+        code = re.sub(r"[\s-]", "", code).upper()
+        if not re.fullmatch(r"[0-9A-F]{24}", code):
+            raise ValueError
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        return JsonResponse({"error": "Enter a valid pairing code."}, status=400)
+
+    now = timezone.now()
+    token = secrets.token_urlsafe(32)
+    with transaction.atomic():
+        pairing = (
+            WorkspacePairingCode.objects.select_for_update()
+            .select_related("user", "bug", "assignment")
+            .filter(code_digest=WorkspacePairingCode.digest(code))
+            .first()
+        )
+        if pairing is None or pairing.used_at is not None or pairing.expires_at <= now:
+            return JsonResponse(
+                {"error": "This pairing code is invalid, expired, or already used."}, status=401
+            )
+
+        if pairing.bug.language.lower() not in ("python", "python3", "python 3"):
+            return JsonResponse({"error": "Local VS Code pairing currently supports Python exercises only."}, status=400)
+
+        files = project_files(pairing.bug)
+        try:
+            validate_project(files, entry_path(pairing.bug))
+        except ProjectError as error:
+            return JsonResponse({"error": str(error)}, status=400)
+
+        session = WorkspaceSession(
+            user=pairing.user,
+            bug=pairing.bug,
+            assignment=pairing.assignment,
+            revision=pairing.bug.revision,
+            expires_at=now + timedelta(hours=8),
+        )
+        if not session_allowed(session):
+            pairing.used_at = now
+            pairing.save(update_fields=("used_at",))
+            return JsonResponse({"error": "You no longer have access to this exercise."}, status=403)
+
+        latest = pairing.bug.submissions.filter(
+            student=pairing.user, assignment=pairing.assignment
+        ).order_by("-submitted_at", "-pk").first()
+        if latest:
+            files[entry_path(pairing.bug)] = latest.submitted_code
+
+        session.token_digest = hashlib.sha256(token.encode()).hexdigest()
+        session.save()
+        pairing.used_at = now
+        pairing.save(update_fields=("used_at",))
+
+    entry = entry_path(pairing.bug)
+    test_files = python_test_files(files)
+    return JsonResponse({
+        "token": token,
+        "site": pairing.site_url,
+        "exercise": {
+            "id": pairing.bug_id,
+            "title": pairing.assignment.title if pairing.assignment else pairing.bug.title,
+            "language": "python",
+            "entryFile": entry,
+            "tests": bool(test_files),
+            "testRoot": entry.rsplit("/", 1)[0] if "/" in entry else ".",
+            "revision": pairing.bug.revision,
+        },
+        "files": files,
+    })
 
 
 @login_required
@@ -112,6 +194,11 @@ def submit(request):
             if files[entry_path(session.bug)] != code:
                 raise ProjectError("The source and project snapshot do not match.")
             passed, total = 0, 0
+        elif (
+            session.bug.language.lower() in ("python", "python3", "python 3")
+            and not python_test_files(project_files(session.bug))
+        ):
+            passed, total = None, None
         else:
             passed, total = verify(session.bug, code)
         with transaction.atomic():
@@ -139,9 +226,10 @@ def submit(request):
                     student=session.user, assignment=session.assignment, bug=bug,
                     submitted_code=code, tests_passed=passed, tests_total=total,
                 )
-                result = {"attempt": {
-                    "id": submission.pk, "passed": passed, "total": total, "solved": passed == total,
-                }}
+                attempt = {"id": submission.pk, "verified": total is not None}
+                if total is not None:
+                    attempt.update({"passed": passed, "total": total, "solved": passed == total})
+                result = {"attempt": attempt}
             session.last_request = digest
             session.last_response = result
             session.save(update_fields=("last_request", "last_response", "revision"))

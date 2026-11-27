@@ -6,6 +6,7 @@ from core import workspace_api
 
 urlpatterns = [
     path("api/workspaces/<int:pk>/", workspace_api.launch, name="workspace-launch"),
+    path("api/ide/pair/", workspace_api.pair, name="ide-pair"),
     path("api/ide/submit/", workspace_api.submit, name="ide-submit"),
     # Site root: send visitors to login until role dashboards exist
     path("", RedirectView.as_view(url="/accounts/login/", permanent=False), name="home"),
