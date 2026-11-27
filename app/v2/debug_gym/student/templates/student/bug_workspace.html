@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}{% if assignment %}Solve{% else %}Practice{% endif %}: {{ bug.title }} · Debug Gym{% endblock %}
-{% block head %}<script src="{% static 'student/busy-button.js' %}" defer></script>{% endblock %}
+{% block head %}<script src="{% static 'student/busy-button.js' %}" defer></script><script src="{% static 'student/workspace-updates.js' %}" defer></script>{% endblock %}
 {% block content %}
 {% if assignment %}
   <header class="page-header">
@@ -52,7 +52,7 @@
       <dl class="meta-list">
         {% if assignment %}
           <dt>Status</dt>
-          <dd><span class="badge {{ assignment.status_badge }}">{{ assignment.status_label }}</span></dd>
+          <dd><span class="badge {{ assignment.status_badge }}" data-submission-status>{{ assignment.status_label }}</span></dd>
           <dt>Deadline</dt>
           <dd>{% if assignment.deadline %}{{ assignment.deadline|date:"M j, Y H:i" }}{% else %}No deadline{% endif %}</dd>
         {% else %}
@@ -65,23 +65,23 @@
           <dt>Attempt status</dt>
           <dd>
             {% if latest %}
-              <span class="badge {% if latest.status == 'graded' %}success{% else %}warning{% endif %}">{{ latest.get_status_display }}</span>
+              <span class="badge {% if latest.status == 'graded' %}success{% else %}warning{% endif %}" data-submission-status>{{ latest.get_status_display }}</span>
             {% else %}
-              <span class="text-subtle">Not submitted</span>
+              <span class="text-subtle" data-submission-status>Not submitted</span>
             {% endif %}
           </dd>
           {% if latest and latest.tests_total != None %}
             <dt>Tests passed</dt>
-            <dd>{{ latest.tests_passed }} / {{ latest.tests_total }}</dd>
+            <dd data-test-count>{{ latest.tests_passed }} / {{ latest.tests_total }}</dd>
           {% elif latest and has_tests %}
             <dt>Tests passed</dt>
-            <dd class="text-subtle">Not recorded for this attempt</dd>
+            <dd class="text-subtle" data-test-count>Not recorded for this attempt</dd>
           {% elif latest %}
             <dt>Tests</dt>
-            <dd class="text-subtle">No automated tests for this exercise</dd>
+            <dd class="text-subtle" data-test-count>No automated tests for this exercise</dd>
           {% endif %}
           <dt>Last submitted</dt>
-          <dd>{{ latest.submitted_at|date:"M j, H:i"|default:"Never" }}</dd>
+          <dd data-submitted-at>{% if latest %}{{ latest.submitted_at|date:"M j, H:i" }}{% else %}Never{% endif %}</dd>
         {% endif %}
       </dl>
     </section>
@@ -124,18 +124,16 @@
           {% endif %}
         {% endif %}
       {% endif %}
-      {% if project_has_tests %}
-        <p class="alert info" data-progress-url="{% url 'student:progress' bug.pk %}{% if assignment %}?assignment={{ assignment.pk }}{% endif %}">Checking your latest result…</p>
-      {% endif %}
+      <p class="alert info" role="status" aria-live="polite"
+         data-progress-url="{% url 'student:progress' bug.pk %}{% if assignment %}?assignment={{ assignment.pk }}{% endif %}"
+         data-has-tests="{% if project_has_tests %}true{% else %}false{% endif %}">Checking for updates…</p>
     </section>
 
-    {% if latest %}
-      <section class="card">
-        <h2 class="card-title">Your last {% if assignment %}submission{% else %}attempt{% endif %}</h2>
-        <p class="text-subtle">{{ latest.submitted_at|date:"M j, Y H:i" }}</p>
-        <pre class="code"><code>{{ latest.submitted_code }}</code></pre>
-      </section>
-    {% endif %}
+    <section class="card" data-latest-submission {% if not latest %}hidden{% endif %}>
+      <h2 class="card-title">Your last {% if assignment %}submission{% else %}attempt{% endif %}</h2>
+      <p class="text-subtle" data-latest-submitted-at>{% if latest %}{{ latest.submitted_at|date:"M j, Y H:i" }}{% endif %}</p>
+      <pre class="code"><code data-latest-submitted-code>{% if latest %}{{ latest.submitted_code }}{% endif %}</code></pre>
+    </section>
   </div>
 </div>
 {% endblock %}
