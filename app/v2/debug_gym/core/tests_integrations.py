@@ -29,7 +29,7 @@ class IntegrationTests(TestCase):
         self.bug = Bug.objects.create(
             title="Counter", description="Fix the result", language="python", difficulty="easy",
             visibility="private", created_by=self.teacher, entry_file="main.py",
-            buggy_code="def count(): return 0", solution_code="def count(): return 1",
+            buggy_code="def count(): return 0",
             project_files={
                 "main.py": "def count(): return 0",
                 "test_main.py": "from main import count\ndef test_count(): assert count() == 1\n",
@@ -61,7 +61,7 @@ class IntegrationTests(TestCase):
         return raw, session
 
     def send(self, token, **data):
-        payload = {"bug": self.bug.pk, "code": self.bug.solution_code, **data}
+        payload = {"bug": self.bug.pk, "code": "def count(): return 1", **data}
         return self.client.post(
             "/api/ide/submit/", json.dumps(payload), content_type="application/json",
             headers={"Authorization": f"Bearer {token}"},
@@ -185,7 +185,7 @@ class IntegrationTests(TestCase):
 
     def test_settings_never_echo_the_key(self):
         self.client.force_login(self.teacher)
-        self.client.post(reverse("professor:settings"), {"key": "private-test-key"})
+        self.client.post(reverse("professor:settings"), {"key": "private-test-key", "provider": "openai"})
         page = self.client.get(reverse("professor:settings"))
         self.assertContains(page, "Personal key saved")
         self.assertNotContains(page, "private-test-key")
@@ -273,13 +273,13 @@ class IntegrationTests(TestCase):
         self.assertEqual(self.send(token).status_code, 400)
         self.assertFalse(Submission.objects.exists())
 
-    @patch("professor.agent_tasks.verify", side_effect=[(1, 1), (0, 1)])
+    @patch("professor.agent_tasks.verify", return_value=(0, 1))
     @patch("professor.agent_tasks.ask_agent")
-    def test_generation_validates_reference_and_assigns_group(self, agent, verify):
+    def test_generation_validates_bug_tests_and_assigns_group(self, agent, verify):
         agent.return_value = {
             "title": "Generated counter", "description": "Fix this",
             "entry_file": "main.py", "project_files": self.bug.project_files,
-            "solution_code": self.bug.solution_code,
+
         }
         self.client.force_login(self.teacher)
         response = self.client.post(reverse("professor:generate"), {
@@ -296,7 +296,7 @@ class IntegrationTests(TestCase):
         agent.return_value = {
             "title": "Invalid generated", "description": "Fix this",
             "entry_file": "main.py", "project_files": self.bug.project_files,
-            "solution_code": self.bug.solution_code,
+
         }
         self.client.force_login(self.teacher)
         page = self.client.post(reverse("professor:generate"), {

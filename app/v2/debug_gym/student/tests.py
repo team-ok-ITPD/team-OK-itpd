@@ -1,13 +1,14 @@
 # [Student Dev] Tests for the student pages
 import json
 import hashlib
+import os
 import shutil
 import tempfile
+import threading
 import urllib.error
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -17,6 +18,8 @@ from core.models import Assignment, Bug, StudyGroup, Submission, User, Workspace
 from student import ai, ide
 from student.ide import IdeError
 from student.models import IdeToken
+from app.adel_b.bugs.verification import VerificationBusy
+from core.runtime import RuntimeError as VerificationError
 
 PASSWORD = "debug-gym-pass"
 
@@ -42,7 +45,7 @@ class StudentTestCase(TestCase):
             title="Off by one",
             description="Loop skips the last item",
             buggy_code="for i in range(len(x) - 1): pass",
-            solution_code="for i in range(len(x)): pass",
+
             language="python",
             difficulty=Bug.Difficulty.EASY,
             visibility=Bug.Visibility.PRIVATE,
@@ -130,7 +133,7 @@ class DashboardTests(StudentTestCase):
 
     def test_solution_code_is_never_shown(self):
         self.assignment("Due soon", days=1)
-        self.assertNotContains(self.get(), self.bug.solution_code)
+        self.assertNotContains(self.get(), "REMOVED_REFERENCE_SENTINEL")
 
 
 class AssignmentPagesTests(StudentTestCase):
@@ -208,7 +211,7 @@ class AssignmentPagesTests(StudentTestCase):
         self.assertContains(response, self.bug.description)
         self.assertContains(response, self.bug.buggy_code)
         self.assertContains(response, "Not submitted yet.")
-        self.assertNotContains(response, self.bug.solution_code)
+        self.assertNotContains(response, "REMOVED_REFERENCE_SENTINEL")
 
     def test_detail_of_another_groups_assignment_is_404(self):
         a = self.assignment("Not mine", group=self.other_group)
@@ -232,7 +235,6 @@ class AssignmentPagesTests(StudentTestCase):
         self.assertContains(self.get(), reverse("student:assignment_detail", args=[a.pk]))
 
 
-@override_settings(DEBUG_GYM_IDE_SERVER_URL="http://host.docker.internal:8002")
 class WorkspaceTests(StudentTestCase):
     """The bug page and Open in VS Code (Docker is faked)."""
 
@@ -240,10 +242,14 @@ class WorkspaceTests(StudentTestCase):
         super().setUp()
         self.tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
-        override = override_settings(WORKSPACES_DIR=Path(self.tmp))
+        override = override_settings(STUDENT_WORKSPACES_DIR=Path(self.tmp))
         override.enable()
         self.addCleanup(override.disable)
-        self.bug.tests_code = "from main import *\n\n\ndef test_x():\n    assert True\n"
+        self.bug.project_files = {
+            "main.py": self.bug.buggy_code,
+            "test_main.py": "from main import *\n\n\ndef test_x():\n    assert True\n",
+        }
+        self.bug.entry_file = "main.py"
         self.bug.save()
 
     def ws_url(self, assignment):
@@ -276,7 +282,7 @@ class WorkspaceTests(StudentTestCase):
         self.assertContains(page, "Get a code for local VS Code")
         self.assertContains(page, "<code>main.py</code>", html=False)
         self.assertContains(page, "<strong>Test</strong>", html=False)
-        self.assertNotContains(page, self.bug.solution_code)
+        self.assertNotContains(page, "REMOVED_REFERENCE_SENTINEL")
         self.assertNotContains(page, "<textarea")
 
     def test_local_vscode_code_is_shown_once_and_only_its_hash_is_stored(self):
@@ -307,12 +313,13 @@ class WorkspaceTests(StudentTestCase):
         self.assertEqual((folder / "main.py").read_text(), self.bug.buggy_code + "\n")
         self.assertIn("def test_x", (folder / "test_main.py").read_text())
         config = json.loads((folder / ".debug-gym" / "config.json").read_text())
-        self.assertEqual(config["server"], "http://host.docker.internal:8002")
+        # The address follows the port this server runs on (the test client uses 80).
+        self.assertEqual(config["server"], "http://host.docker.internal:80")
         self.assertEqual(config["file"], "main.py")
         self.assertTrue(config["tests"])
         self.assertTrue(config["site"].endswith(self.ws_url(a)))
         self.assertEqual(IdeToken.find(config["token"]).assignment, a)
-        self.assertNotIn(self.bug.solution_code, "".join(p.read_text() for p in folder.rglob("*") if p.is_file()))
+        self.assertNotIn("REMOVED_REFERENCE_SENTINEL", "".join(p.read_text() for p in folder.rglob("*") if p.is_file()))
 
     def test_reopening_keeps_my_edits_and_replaces_the_token(self):
         a = self.assignment("Task")
@@ -349,6 +356,8 @@ class WorkspaceTests(StudentTestCase):
 
     def test_non_python_bug_has_no_tests(self):
         self.bug.language = "dart"
+        self.bug.project_files = {"main.dart": "void main() {}"}
+        self.bug.entry_file = "main.dart"
         self.bug.save()
         a = self.assignment("Dart task")
         self.open_vscode(a)
@@ -357,10 +366,20 @@ class WorkspaceTests(StudentTestCase):
         self.assertFalse((folder / "test_main.py").exists())
         self.assertFalse(json.loads((folder / ".debug-gym" / "config.json").read_text())["tests"])
 
+    def test_my_own_test_files_are_kept(self):
+        a = self.assignment("Task")
+        self.open_vscode(a)
+        (self.folder(a) / "test_mine.py").write_text("def test_mine():\n    pass\n")
+        self.bug.project_files = {"main.py": self.bug.buggy_code}
+        self.bug.save()
+        self.open_vscode(a)
+        self.assertTrue((self.folder(a) / "test_mine.py").exists())
+        self.assertFalse((self.folder(a) / "test_main.py").exists())
+
     def test_removed_tests_disappear_from_the_folder(self):
         a = self.assignment("Task")
         self.open_vscode(a)
-        self.bug.tests_code = ""
+        self.bug.project_files = {"main.py": self.bug.buggy_code}
         self.bug.save()
         self.open_vscode(a)
         self.assertFalse((self.folder(a) / "test_main.py").exists())
@@ -422,7 +441,7 @@ class IdeSubmitTests(StudentTestCase):
 
     def test_practice_submission(self):
         public = Bug.objects.create(
-            title="Public", description="d", buggy_code="x = 1", solution_code="x = 2", language="python",
+            title="Public", description="d", buggy_code="x = 1", language="python",
             difficulty=Bug.Difficulty.EASY, visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
         )
         response = self.send(IdeToken.issue(self.student, public), code="x = 2")
@@ -431,6 +450,51 @@ class IdeSubmitTests(StudentTestCase):
         self.assertIsNone(Submission.objects.get().assignment)
         # A private bug the student cannot practise.
         self.assertEqual(self.send(IdeToken.issue(self.student, self.bug), code="y").status_code, 403)
+
+    def with_tests(self):
+        self.bug.project_files = {"main.py": self.bug.buggy_code, "test_main.py": "def test_x():\n    assert True\n"}
+        self.bug.entry_file = "main.py"
+        self.bug.save()
+
+    def test_server_verification_result_is_stored(self):
+        self.with_tests()
+        a = self.assignment("Task")
+        with patch("student.views.verify", return_value=(2, 3)) as verify:
+            response = self.send(IdeToken.issue(self.student, self.bug, a))
+        self.assertEqual(response.status_code, 201)
+        verify.assert_called_once()
+        self.assertIn("2/3 tests pass", response.json()["message"])
+        self.assertEqual(self.mine(a).get().test_result, "2/3")
+
+    def test_bug_without_tests_is_not_verified(self):
+        a = self.assignment("Task")
+        with patch("student.views.verify") as verify:
+            self.send(IdeToken.issue(self.student, self.bug, a))
+        verify.assert_not_called()
+        self.assertIsNone(self.mine(a).get().tests_total)
+
+    def test_verification_busy_or_broken_saves_nothing(self):
+        self.with_tests()
+        a = self.assignment("Task")
+        key = IdeToken.issue(self.student, self.bug, a)
+        with patch("student.views.verify", side_effect=VerificationBusy("Busy, try again.")):
+            self.assertEqual(self.send(key).status_code, 503)
+        with patch("student.views.verify", side_effect=VerificationError("Docker is down.")):
+            self.assertEqual(self.send(key).status_code, 503)
+        self.assertFalse(self.mine(a).exists())
+
+    def test_bug_changed_during_verification_is_refused(self):
+        self.with_tests()
+        a = self.assignment("Task")
+
+        def change_bug(bug, code):
+            Bug.objects.filter(pk=bug.pk).update(revision=bug.revision + 1)
+            return (1, 1)
+
+        with patch("student.views.verify", side_effect=change_bug):
+            response = self.send(IdeToken.issue(self.student, self.bug, a))
+        self.assertEqual(response.status_code, 409)
+        self.assertFalse(self.mine(a).exists())
 
     def test_non_student_token_is_refused(self):
         key = IdeToken.issue(self.prof, self.bug, self.assignment("Task"))
@@ -495,7 +559,7 @@ class PracticeTests(StudentTestCase):
         fields = {
             "description": f"{title} description",
             "buggy_code": "x = 1",
-            "solution_code": "x = 2  # SOLUTION",
+
             "language": "python",
             "difficulty": Bug.Difficulty.MEDIUM,
             "visibility": Bug.Visibility.PUBLIC,
@@ -645,7 +709,7 @@ class ResultsTests(StudentTestCase):
 
     def test_solution_code_is_never_shown(self):
         self.graded(7)
-        self.assertNotContains(self.get_results(), self.bug.solution_code)
+        self.assertNotContains(self.get_results(), "REMOVED_REFERENCE_SENTINEL")
 
     def test_dashboard_links_to_results(self):
         self.assertContains(self.get(), self.results_url)
@@ -663,7 +727,7 @@ class OwnBugTests(StudentTestCase):
             "difficulty": Bug.Difficulty.EASY,
             "visibility": Bug.Visibility.PRIVATE,
             "buggy_code": "for i in range(len(x) - 1):\r\n    pass\r\n",
-            "solution_code": "MY_SECRET_FIX",
+
         }
         data.update(extra)
         return data
@@ -674,7 +738,7 @@ class OwnBugTests(StudentTestCase):
 
     def my_bug(self, **extra):
         fields = {
-            "title": "Ali bug", "description": "d", "buggy_code": "x = 1", "solution_code": "",
+            "title": "Ali bug", "description": "d", "buggy_code": "x = 1",
             "language": "python", "difficulty": Bug.Difficulty.EASY,
             "visibility": Bug.Visibility.PRIVATE, "created_by": self.student,
         }
@@ -698,10 +762,10 @@ class OwnBugTests(StudentTestCase):
         bug = self.my_bug()
         self.client.force_login(self.student)
         self.client.post(reverse("student:bug_edit", args=[bug.pk]),
-                         self.form_data(buggy_code="    indented()\r\n", solution_code=""))
+                         self.form_data(buggy_code="    indented()\r\n"))
         bug.refresh_from_db()
         self.assertEqual(bug.buggy_code, "    indented()\n")
-        self.assertEqual(bug.solution_code, "")
+        self.assertNotIn("solution_code", {f.name for f in Bug._meta.fields})
         self.assertEqual(bug.language, "python")
         response = self.client.post(reverse("student:bug_edit", args=[bug.pk]), self.form_data(buggy_code="   "))
         self.assertContains(response, "Add the buggy code to practise on.")
@@ -724,7 +788,7 @@ class OwnBugTests(StudentTestCase):
     def test_only_mine_filter(self):
         self.my_bug(title="Mine")
         Bug.objects.create(
-            title="Prof public", description="d", buggy_code="x", solution_code="y",
+            title="Prof public", description="d", buggy_code="x",
             language="python", difficulty=Bug.Difficulty.EASY,
             visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
         )
@@ -782,7 +846,7 @@ FAKE_BUG = {
     "title": "Second largest",
     "description": "Should return the second largest number, but returns the largest.",
     "buggy_code": "def second(xs):\n    return sorted(xs)[-1]\n",
-    "solution_code": "def second(xs):\n    return sorted(xs)[-2]\n",
+
 }
 
 
@@ -833,7 +897,7 @@ class AIBugTests(StudentTestCase):
         self.assertEqual(bug.created_by, self.student)
         self.assertEqual(bug.visibility, Bug.Visibility.PRIVATE)
         self.assertEqual(bug.language, "python")
-        self.assertEqual(bug.solution_code, FAKE_BUG["solution_code"])
+        self.assertNotIn("solution_code", {f.name for f in Bug._meta.fields})
         page = self.client.get(response["Location"])
         self.assertContains(page, "AI created")
         self.assertNotContains(page, "sorted(xs)[-2]")  # the fix stays hidden in the workspace
@@ -869,7 +933,7 @@ class AIClientTests(TestCase):
     def test_clean_result_checks_the_answer(self):
         self.assertEqual(ai.clean_result(dict(FAKE_BUG))["title"], "Second largest")
         for bad in ({}, {**FAKE_BUG, "title": 5}, {**FAKE_BUG, "buggy_code": "  "},
-                    {**FAKE_BUG, "solution_code": FAKE_BUG["buggy_code"]}):
+                    {**FAKE_BUG, "buggy_code": "x" * (ai.MAX_CODE + 1)}):
             with self.assertRaises(ai.AIError):
                 ai.clean_result(bad)
 
@@ -928,3 +992,180 @@ class AIClientTests(TestCase):
             client_class.return_value.beta.messages.create.return_value = fake_response
             with self.assertRaisesMessage(ai.AIError, "declined"):
                 ai.generate_bug("anthropic", "sk-ant", "topic", "python", "easy")
+
+
+class BestSubmissionTests(StudentTestCase):
+    """DEC-022: the submission with the most passed tests counts, not the newest."""
+
+    def detail(self, assignment):
+        self.client.force_login(self.student)
+        return self.client.get(reverse("student:assignment_detail", args=[assignment.pk]))
+
+    def attempt(self, assignment, passed=None, total=None, code="fixed", **extra):
+        return Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=assignment,
+            submitted_code=code, tests_passed=passed, tests_total=total, **extra,
+        )
+
+    def counted(self, assignment):
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("student:assignments_list"))
+        return next(a for a in response.context["assignments"] if a.pk == assignment.pk)
+
+    def test_most_passed_tests_counts_even_when_older(self):
+        a = self.assignment("Best")
+        self.attempt(a, 1, 3)
+        best = self.attempt(a, 3, 3)
+        self.attempt(a, 2, 3)
+        self.assertEqual(self.counted(a).my_submission, best)
+        self.assertContains(self.detail(a), "Tests passed: 3/3")
+
+    def test_equal_counts_newest_counts(self):
+        a = self.assignment("Tie")
+        self.attempt(a, 2, 3)
+        newest = self.attempt(a, 2, 3)
+        self.assertEqual(self.counted(a).my_submission, newest)
+
+    def test_without_counts_latest_counts(self):
+        a = self.assignment("No counts")
+        self.attempt(a)
+        latest = self.attempt(a)
+        self.assertEqual(self.counted(a).my_submission, latest)
+
+    def test_attempt_with_counts_beats_one_without(self):
+        a = self.assignment("Mixed")
+        verified = self.attempt(a, 0, 3)
+        self.attempt(a)
+        self.assertEqual(self.counted(a).my_submission, verified)
+
+    def test_status_follows_the_counted_submission(self):
+        a = self.assignment("Status")
+        self.attempt(a, 3, 3, status=Submission.Status.GRADED, grade=9, graded_at=timezone.now())
+        self.attempt(a, 1, 3)
+        self.assertEqual(self.counted(a).my_status, "graded")
+
+    def test_classmate_results_do_not_count_for_me(self):
+        a = self.assignment("Mine only")
+        mine = self.attempt(a, 1, 3)
+        Submission.objects.create(
+            student=self.other, bug=self.bug, assignment=a, submitted_code="x",
+            tests_passed=3, tests_total=3,
+        )
+        self.assertEqual(self.counted(a).my_submission, mine)
+
+    def test_editor_reloads_latest_code_not_the_counted_one(self):
+        a = self.assignment("Editor")
+        self.attempt(a, 3, 3, code="best code")
+        self.attempt(a, 1, 3, code="newest code")
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("student:assignment_workspace", args=[a.pk]))
+        self.assertContains(response, "newest code")
+        self.assertNotContains(response, "best code")
+
+    def test_history_marks_the_counted_attempt(self):
+        a = self.assignment("History")
+        self.attempt(a, 3, 3)
+        self.attempt(a, 1, 3)
+        response = self.detail(a)
+        self.assertContains(response, "Counted", count=1)
+
+    def test_form_cannot_set_test_results(self):
+        # Students submit from VS Code now; extra fields in the request are ignored.
+        a = self.assignment("Forged")
+        self.client.post(
+            reverse("student:ide_submit"),
+            data=json.dumps({"code": "fixed", "tests_passed": 3, "tests_total": 3}),
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {IdeToken.issue(self.student, self.bug, a)}",
+        )
+        submission = Submission.objects.get(student=self.student, assignment=a)
+        self.assertIsNone(submission.tests_passed)
+        self.assertIsNone(submission.tests_total)
+
+
+class BridgeTests(TestCase):
+    """core/bridge.py: VS Code containers reach the development server."""
+
+    def test_server_url_follows_the_running_port(self):
+        from core.bridge import ide_server_url
+
+        with patch.dict("os.environ", {}, clear=False):
+            os.environ.pop("DEBUG_GYM_IDE_SERVER_URL", None)
+            self.assertEqual(ide_server_url(8000), "http://host.docker.internal:8000")
+
+    @override_settings(DEBUG_GYM_IDE_SERVER_URL="https://gym.example.org")
+    def test_explicit_setting_wins(self):
+        from core.bridge import ide_server_url
+
+        with patch.dict("os.environ", {"DEBUG_GYM_IDE_SERVER_URL": "https://gym.example.org"}):
+            self.assertEqual(ide_server_url(8000), "https://gym.example.org")
+
+    def test_runserver_port_parsing(self):
+        from core.bridge import runserver_port
+
+        self.assertEqual(runserver_port(["manage.py", "runserver"]), 8000)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "8001"]), 8001)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "127.0.0.1:8002", "--noreload"]), 8002)
+        self.assertEqual(runserver_port(["manage.py", "runserver", "--noreload"]), 8000)
+
+    def test_relay_only_for_servers_on_localhost(self):
+        """On 0.0.0.0 the server is reachable already; a relay would block its own bind."""
+        from core.bridge import runserver_address, start_with_runserver
+
+        self.assertEqual(runserver_address(["manage.py", "runserver"]), ("127.0.0.1", 8000))
+        self.assertEqual(runserver_address(["manage.py", "runserver", "0.0.0.0:8000"]), ("0.0.0.0", 8000))
+        self.assertEqual(runserver_address(["manage.py", "runserver", "8001"]), ("127.0.0.1", 8001))
+        with patch("core.bridge.ensure_relay") as relay, patch.dict(os.environ, {"RUN_MAIN": "true"}):
+            start_with_runserver(["manage.py", "runserver", "0.0.0.0:8000"])
+            start_with_runserver(["manage.py", "runserver", "172.17.0.1:8000"])
+            relay.assert_not_called()
+            start_with_runserver(["manage.py", "runserver", "127.0.0.1:8000"])
+            for thread in threading.enumerate():
+                if thread.name.startswith("Thread") and thread is not threading.current_thread():
+                    thread.join(timeout=2)
+            relay.assert_called_once_with(8000)
+
+    def test_no_relay_outside_development(self):
+        from core.bridge import ensure_relay
+
+        with override_settings(DEBUG=False):
+            self.assertFalse(ensure_relay(8000, address="127.0.0.2"))
+
+    def test_relay_forwards_to_the_local_server(self):
+        """A server on 127.0.0.1 answers through the relay on another local address."""
+        import socket
+        import threading
+        import urllib.request
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        from core.bridge import ensure_relay
+
+        class Hello(BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = self.rfile.read(int(self.headers["Content-Length"]))
+                self.send_response(201)
+                self.end_headers()
+                self.wfile.write(b"got " + body)
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), Hello)
+        port = server.server_address[1]
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+        probe = socket.socket()
+        try:
+            probe.bind(("127.0.0.2", 0))
+        except OSError:
+            self.skipTest("127.0.0.2 is not available on this machine")
+        finally:
+            probe.close()
+
+        with override_settings(DEBUG=True):
+            self.assertTrue(ensure_relay(port, address="127.0.0.2"))
+            self.assertTrue(ensure_relay(port, address="127.0.0.2"))  # second call reuses it
+        with urllib.request.urlopen(urllib.request.Request(
+            f"http://127.0.0.2:{port}/", data=b"fix", method="POST"), timeout=5) as response:
+            self.assertEqual(response.status, 201)
+            self.assertEqual(response.read(), b"got fix")

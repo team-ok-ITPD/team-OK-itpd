@@ -113,16 +113,20 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# --- VS Code (code-server) for solving bugs -------------------------------
-# Image built from app/v2/ide/Dockerfile.
-DEBUG_GYM_IDE_IMAGE = os.environ.get("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
-# One folder per student and bug; mounted into the student's VS Code container.
+# --- VS Code (code-server) --------------------------------------------------
+# One folder tree for all VS Code workspaces; DEBUG_GYM_WORKSPACES_DIR overrides it.
 WORKSPACES_DIR = Path(os.environ.get("DEBUG_GYM_WORKSPACES_DIR", BASE_DIR / "workspaces")).resolve()
-# How the VS Code container reaches this Django server to submit. Django must also
-# listen on Docker's bridge address (172.17.0.1) for this to work.
+# Image for professor authoring and server-side test verification (root Dockerfile).
+DEBUG_GYM_IDE_IMAGE = os.environ.get("DEBUG_GYM_IDE_IMAGE", "debug-gym-ide")
+# Image students solve bugs in (app/v2/ide/Dockerfile).
+DEBUG_GYM_STUDENT_IDE_IMAGE = os.environ.get("DEBUG_GYM_STUDENT_IDE_IMAGE", "debug-gym-v2-ide")
+# How VS Code containers reach this Django server. In development the request's own
+# port is used instead unless this is set (core/bridge.py).
 DEBUG_GYM_IDE_SERVER_URL = os.environ.get("DEBUG_GYM_IDE_SERVER_URL", "http://host.docker.internal:8002")
 DEBUG_GYM_SITE_URL = os.getenv("DEBUG_GYM_SITE_URL", "http://localhost:8002")
 DEBUG_GYM_WORKSPACES_DIR = WORKSPACES_DIR
+# Student folders live apart from the professors' authoring sessions.
+STUDENT_WORKSPACES_DIR = WORKSPACES_DIR / "students"
 DEBUG_GYM_AGENT_URL = os.getenv("DEBUG_GYM_AGENT_URL", "https://api.openai.com/v1/chat/completions")
 DEBUG_GYM_AGENT_MODEL = os.getenv("DEBUG_GYM_AGENT_MODEL", "gpt-4.1-mini")
 DEBUG_GYM_AGENT_KEY = os.getenv("DEBUG_GYM_AGENT_KEY", "")

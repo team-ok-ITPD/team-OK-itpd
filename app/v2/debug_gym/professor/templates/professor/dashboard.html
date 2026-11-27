@@ -21,6 +21,7 @@
 {% for group in groups %}
   <article class="card stack">
     <h2 class="card-title">{{ group }}</h2>
+    <p class="text-muted">Course: {{ group.course|default:"Not specified" }}</p>
     <p class="text-muted">{{ group.student_count }} students</p>
     <p class="text-muted">{{ group.description|default:"Students and assignments in one place." }}</p>
     <a class="button secondary" href="{% url 'professor:group' group.pk %}">Open group</a>

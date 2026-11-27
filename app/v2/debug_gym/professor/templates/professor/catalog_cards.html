@@ -1,0 +1,17 @@
+<!-- [Professor Dev] Authorized catalog cards refreshed by live filters -->
+<div class="grid-cards">{% for bug in bugs %}
+  <article class="card catalog-card"><h2 class="card-title">{{ bug.title }}</h2><p>{{ bug.description|urlize|linebreaksbr }}</p>
+    <p class="text-muted">Owner: {{ bug.created_by.name }}{% if bug.created_by_id == request.user.pk %} · Your exercise{% endif %}</p>
+    <div class="row"><span class="badge">{{ bug.language }}</span><span class="badge">{{ bug.get_visibility_display }}</span></div>
+    <footer class="catalog-card-actions">
+    <a class="button secondary" href="{% url 'professor:bug' bug.pk %}">{% if bug.created_by_id == request.user.pk %}Open exercise{% else %}View details{% endif %}</a>
+    {% if bug.created_by_id == request.user.pk %}
+    {% if bug.visibility == "private" %}
+    <form method="post" action="{% url 'professor:publish' bug.pk %}">{% csrf_token %}<button class="button secondary">Publish exercise</button></form>
+    {% else %}
+    <form method="post" action="{% url 'professor:unpublish' bug.pk %}">{% csrf_token %}<button class="button secondary">Unpublish</button></form>
+    {% endif %}
+    {% endif %}
+    </footer>
+  </article>
+{% empty %}<div class="empty"><strong>No exercises found.</strong><span>Public exercises and your private exercises appear here.</span></div>{% endfor %}</div>

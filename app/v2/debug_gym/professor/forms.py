@@ -2,9 +2,10 @@
 from django import forms
 from django.db.models import Q
 from pathlib import PurePosixPath
+import re
 from zipfile import BadZipFile, ZipFile
 
-from core.models import Assignment, Bug
+from core.models import AgentCredential, Assignment, Bug, StudyGroup
 from core.projects import ProjectError, validate_project
 
 LANGUAGES = [("python", "Python 3"), ("javascript", "JavaScript / Node.js")]
@@ -46,20 +47,24 @@ class ExerciseForm(forms.ModelForm):
     language = forms.ChoiceField(choices=LANGUAGES)
     project = forms.FileField(
         required=True, help_text="ZIP of the project folder. Text files only, up to 5 MB and 100 files.",
+        widget=forms.ClearableFileInput(attrs={"accept": ".zip,application/zip"}),
     )
-    entry_file = forms.CharField(help_text="Path to the file containing the buggy code inside the ZIP.")
-    compose_file = forms.FileField(required=False, help_text="Optional Docker Compose YAML file.")
+    entry_file = forms.CharField(required=False, help_text="Optional when there is one source file or a main.py/main.js. Otherwise enter its path inside the ZIP.")
+    dockerfile = forms.FileField(required=False, label="Dockerfile (optional)",
+                                help_text="Dockerfile as UTF-8 text, up to 50 KB. Stored with the project; automatic image builds are not enabled.")
 
     class Meta:
         model = Bug
-        fields = ("title", "description", "language", "difficulty", "solution_code")
+        fields = ("title", "description", "language", "difficulty")
+        labels = {"description": "Description (optional)", "difficulty": "Difficulty (optional)"}
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
-            "solution_code": forms.Textarea(attrs={"rows": 5}),
         }
 
     def clean_project(self):
         upload = self.cleaned_data["project"]
+        if not upload.name.lower().endswith(".zip"):
+            raise forms.ValidationError("Choose a .zip project archive.")
         if upload.size > 5_000_000:
             raise forms.ValidationError("The ZIP exceeds 5 MB.")
         files = {}
@@ -90,20 +95,37 @@ class ExerciseForm(forms.ModelForm):
             raise forms.ValidationError("The project is empty.")
         return files
 
-    def clean_compose_file(self):
-        upload = self.cleaned_data.get("compose_file")
+    def clean_dockerfile(self):
+        upload = self.cleaned_data.get("dockerfile")
         if not upload:
             return ""
-        if upload.size > 50_000 or not upload.name.lower().endswith((".yaml", ".yml")):
-            raise forms.ValidationError("Use a YAML file up to 50 KB.")
+        name = PurePosixPath(upload.name).name.lower()
+        if upload.size > 50_000 or not (name == "dockerfile" or name.startswith("dockerfile.") or name.endswith(".dockerfile")):
+            raise forms.ValidationError("Use Dockerfile, Dockerfile.<name> or a .dockerfile file up to 50 KB.")
         try:
-            return upload.read().decode("utf-8")
+            content = upload.read().decode("utf-8-sig")
         except UnicodeError:
             raise forms.ValidationError("Use UTF-8 text.")
+        if "\x00" in content or not re.search(r"^\s*FROM\s+\S+", content, re.MULTILINE | re.IGNORECASE):
+            raise forms.ValidationError("Upload a Dockerfile containing a FROM instruction.")
+        return content
 
     def clean(self):
         data = super().clean()
         files = data.get("project")
+        if files and not data.get("entry_file"):
+            extension = ".py" if data.get("language") == "python" else ".js"
+            preferred = "main" + extension
+            candidates = [name for name in files if name.endswith(extension)
+                          and not PurePosixPath(name).name.startswith("test")
+                          and not name.endswith((".test.js", ".spec.js"))
+                          and not any(part in ("tests", "test") for part in PurePosixPath(name).parts)]
+            if preferred in files:
+                data["entry_file"] = preferred
+            elif len(candidates) == 1:
+                data["entry_file"] = candidates[0]
+        if not data.get("difficulty"):
+            data["difficulty"] = Bug.Difficulty.EASY
         if files is not None and data.get("entry_file") not in files:
             self.add_error("entry_file", "Choose a file that exists in the uploaded project.")
         elif files is not None:
@@ -121,6 +143,7 @@ class GenerateForm(forms.Form):
 
 
 class KeyForm(forms.Form):
+    provider = forms.ChoiceField(choices=AgentCredential.Provider.choices)
     key = forms.CharField(
         required=False, max_length=512, strip=True,
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
@@ -132,6 +155,16 @@ class ExerciseDetailsForm(forms.ModelForm):
     class Meta:
         model = Bug
         fields = ("title", "description", "difficulty")
+        labels = {"description": "Description (optional)", "difficulty": "Difficulty (optional)"}
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
         }
+
+
+class CatalogAssignmentForm(forms.Form):
+    group = forms.ModelChoiceField(queryset=StudyGroup.objects.none())
+    deadline = forms.DateTimeField(required=False, widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
+
+    def __init__(self, *args, professor, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["group"].queryset = StudyGroup.objects.filter(professor=professor)

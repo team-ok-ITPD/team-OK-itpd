@@ -92,7 +92,11 @@ def verify(bug, code):
                     pass
 
 
-def open_workspace(session, token):
+def open_workspace(session, token, *, server_url=None, site_url=None):
+    """Write the session's folder and start VS Code. `server_url` and `site_url` default to
+    the settings; the launch view passes the running server's own addresses."""
+    server_url = server_url or settings.DEBUG_GYM_IDE_SERVER_URL
+    site_url = (site_url or settings.DEBUG_GYM_SITE_URL).rstrip("/")
     bug = session.bug
     folder = settings.DEBUG_GYM_WORKSPACES_DIR / str(session.pk)
     files = project_files(bug)
@@ -111,8 +115,8 @@ def open_workspace(session, token):
             if latest and not (folder / ".debug-gym/config.json").exists():
                 (folder / entry_path(bug)).write_text(latest.submitted_code, encoding="utf-8")
         config = {
-            "server": settings.DEBUG_GYM_IDE_SERVER_URL,
-            "site": settings.DEBUG_GYM_SITE_URL + (
+            "server": server_url,
+            "site": site_url + (
                 f"/professor/bugs/{bug.pk}/" if session.authoring else
                 f"/student/assignments/{session.assignment_id}/" if session.assignment_id else "/student/results/"
             ),

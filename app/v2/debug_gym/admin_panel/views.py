@@ -251,6 +251,7 @@ class GroupListView(RoleRequiredMixin, ListView):
                 Q(name__icontains=query) | Q(professor__name__icontains=query)
                 | Q(professor__email__icontains=query) | Q(description__icontains=query)
                 | Q(group_number__icontains=query)
+                | Q(course__icontains=query)
             )
         return queryset
 

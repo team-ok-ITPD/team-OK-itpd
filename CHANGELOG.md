@@ -8,9 +8,9 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Teaching groups have a separate group number; the existing Name field
-  represents the course. Lists, dropdowns and student/professor pages
-  distinguish groups by course and number; CSV import supports both fields.
+- Teaching groups have separate group name, course text and group number.
+  Lists and student/professor pages identify the group; CSV import supports
+  group name and number.
 
 - Administrator student management supports group filtering, batch membership
   and activity actions, and atomic, idempotent CSV imports. Groups have
@@ -50,6 +50,19 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Exercise creation uses separate upload/generation tabs and accepts optional
+  Dockerfiles instead of Compose uploads (storage only). The catalog filters
+  availability and ownership live; assignment is available only after opening
+  an exercise, through a group/deadline dialog. Personal generation credentials
+  include a provider selector.
+- Professor catalog includes a private-only filter, owner names and privacy
+  guidance. Group pages show an administrator-managed course and assignment
+  tables with independently editable group deadlines.
+- Closing an assignment requires confirmation; unassigning archives results
+  and revokes student access while retaining the exercise.
+- Exercise uploads accept ZIP only with explicit size/file limits, optional
+  description/difficulty and automatic entry-file detection. Reference solution
+  storage, editing and generation are removed from v2.
 - Administrator account forms use one password input with Show/Hide.
   Membership management is centralized in Students; administrator assignment
   inspection pages and separate group-member pages are removed.

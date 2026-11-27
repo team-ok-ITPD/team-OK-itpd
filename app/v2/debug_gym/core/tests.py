@@ -1,11 +1,51 @@
-# [Backend Dev] Tests for shared core pieces: the demo seed command
+# [Backend Dev] Tests for shared models and the demo seed command
 from io import StringIO
 
 from django.core.management import CommandError, call_command
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from core.models import Assignment, Bug, StudyGroup, Submission, User
 from student.views import attach_status, my_assignments
+
+from .models import Assignment, Bug, StudyGroup, Submission, User
+
+PASSWORD = "debug-gym-pass"
+
+
+class SubmissionTestCountsTests(TestCase):
+    def setUp(self):
+        self.student = User.objects.create_user("ali@example.com", "Ali", PASSWORD)
+        prof = User.objects.create_user("sara@example.com", "Sara", PASSWORD, role=User.Role.PROFESSOR)
+        self.bug = Bug.objects.create(
+            title="Off by one", description="d", buggy_code="a",
+            language="python", difficulty=Bug.Difficulty.EASY,
+            visibility=Bug.Visibility.PRIVATE, created_by=prof,
+        )
+
+    def make(self, passed, total):
+        return Submission(
+            student=self.student, bug=self.bug, submitted_code="x",
+            tests_passed=passed, tests_total=total,
+        )
+
+    def test_counts_default_to_empty(self):
+        submission = Submission.objects.create(student=self.student, bug=self.bug, submitted_code="x")
+        self.assertIsNone(submission.tests_passed)
+        self.assertIsNone(submission.test_result)
+
+    def test_valid_counts_are_stored(self):
+        submission = self.make(2, 3)
+        submission.save()
+        self.assertEqual(submission.test_result, "2/3")
+
+    def test_passed_cannot_exceed_total(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self.make(4, 3).save()
+
+    def test_counts_are_both_set_or_both_empty(self):
+        for passed, total in ((1, None), (None, 3)):
+            with self.assertRaises(IntegrityError), transaction.atomic():
+                self.make(passed, total).save()
 
 
 def seed(*args):
@@ -45,7 +85,7 @@ class SeedDemoTests(TestCase):
     def test_delete_only_touches_demo_data(self):
         real_prof = User.objects.create_user("real@school.edu", "Real Prof", "x", role=User.Role.PROFESSOR)
         real_bug = Bug.objects.create(
-            title="Real bug", description="d", buggy_code="x", solution_code="y", language="python",
+            title="Real bug", description="d", buggy_code="x",  language="python",
             difficulty="easy", visibility="public", created_by=real_prof,
         )
         seed()
@@ -54,3 +94,57 @@ class SeedDemoTests(TestCase):
         self.assertFalse(Assignment.objects.exists())
         self.assertTrue(User.objects.filter(pk=real_prof.pk).exists())
         self.assertTrue(Bug.objects.filter(pk=real_bug.pk).exists())
+
+
+class ProfessorWorkspaceAddressTests(TestCase):
+    """The professor's VS Code submits to this server's own port (core/bridge.py)."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        from django.test import override_settings
+
+        self.tmp = Path(tempfile.mkdtemp())
+        override = override_settings(DEBUG_GYM_WORKSPACES_DIR=self.tmp)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.prof = User.objects.create_user("sara@example.com", "Sara", "debug-gym-pass", role=User.Role.PROFESSOR)
+        self.bug = Bug.objects.create(
+            title="Authoring", description="d", buggy_code="x = 1\n",
+            language="python", difficulty=Bug.Difficulty.EASY, visibility=Bug.Visibility.PRIVATE,
+            created_by=self.prof, project_files={"main.py": "x = 1\n"}, entry_file="main.py",
+        )
+
+    def launch_config(self, env):
+        import json
+        import os
+        from unittest.mock import patch
+
+        from django.urls import reverse
+
+        from .models import WorkspaceSession
+
+        self.client.force_login(self.prof)
+        with patch.dict(os.environ, env), patch("core.runtime.start_ide", return_value=9000):
+            for name in ("DEBUG_GYM_IDE_SERVER_URL", "DEBUG_GYM_SITE_URL"):
+                if name not in env:
+                    os.environ.pop(name, None)
+            response = self.client.post(reverse("workspace-launch", args=[self.bug.pk]), {"mode": "author"})
+        self.assertEqual(response.status_code, 200)
+        session = WorkspaceSession.objects.get()
+        return json.loads((self.tmp / str(session.pk) / ".debug-gym" / "config.json").read_text())
+
+    def test_addresses_follow_the_running_server(self):
+        config = self.launch_config({})
+        self.assertEqual(config["server"], "http://host.docker.internal:80")
+        self.assertEqual(config["site"], f"http://testserver/professor/bugs/{self.bug.pk}/")
+
+    def test_explicit_settings_still_win(self):
+        from django.test import override_settings
+
+        env = {"DEBUG_GYM_IDE_SERVER_URL": "https://gym.example.org", "DEBUG_GYM_SITE_URL": "https://gym.example.org/"}
+        with override_settings(DEBUG_GYM_IDE_SERVER_URL=env["DEBUG_GYM_IDE_SERVER_URL"], DEBUG_GYM_SITE_URL=env["DEBUG_GYM_SITE_URL"]):
+            config = self.launch_config(env)
+        self.assertEqual(config["server"], "https://gym.example.org")
+        self.assertEqual(config["site"], f"https://gym.example.org/professor/bugs/{self.bug.pk}/")
