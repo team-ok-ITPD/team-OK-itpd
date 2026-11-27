@@ -43,6 +43,24 @@ from core.models import Assignment, Bug, StudyGroup, User
 
 PASSWORD = "{DEMO_PASSWORD}"
 
+OFF_BY_ONE_TESTS = (
+    "from main import total\\n\\n\\n"
+    "def test_sums_all_items():\\n    assert total([1, 2, 3]) == 6\\n\\n\\n"
+    "def test_single_item():\\n    assert total([5]) == 5\\n\\n\\n"
+    "def test_empty_list():\\n    assert total([]) == 0\\n"
+)
+MUTABLE_DEFAULT_TESTS = (
+    "from main import add\\n\\n\\n"
+    "def test_calls_without_items_get_fresh_lists():\\n"
+    "    assert add('first') == ['first']\\n"
+    "    assert add('second') == ['second']\\n\\n\\n"
+    "def test_given_list_is_updated():\\n"
+    "    items = ['first']\\n"
+    "    result = add('second', items)\\n"
+    "    assert result == ['first', 'second']\\n"
+    "    assert result is items\\n"
+)
+
 
 def account(email, name, role):
     user = User.objects.filter(email__iexact=email).first()
@@ -68,9 +86,13 @@ private_bug, _ = Bug.objects.get_or_create(
         difficulty=Bug.Difficulty.EASY,
         visibility=Bug.Visibility.PRIVATE,
         created_by=prof,
+        tests_code=OFF_BY_ONE_TESTS,
     ),
 )
-Bug.objects.get_or_create(
+if not private_bug.tests_code.strip():
+    private_bug.tests_code = OFF_BY_ONE_TESTS
+    private_bug.save(update_fields=["tests_code"])
+mutable_bug, _ = Bug.objects.get_or_create(
     title="Mutable default argument",
     defaults=dict(
         description="Calls share one list. Make each call start with its own empty list.",
@@ -79,8 +101,12 @@ Bug.objects.get_or_create(
         difficulty=Bug.Difficulty.MEDIUM,
         visibility=Bug.Visibility.PUBLIC,
         created_by=prof,
+        tests_code=MUTABLE_DEFAULT_TESTS,
     ),
 )
+if not mutable_bug.tests_code.strip():
+    mutable_bug.tests_code = MUTABLE_DEFAULT_TESTS
+    mutable_bug.save(update_fields=["tests_code"])
 
 assignment, created = Assignment.objects.get_or_create(
     title="Demo assignment: off by one",

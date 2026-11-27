@@ -10,12 +10,21 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 HERE = Path(__file__).resolve().parent
-FILES = ["package.json", "extension.js", "junit.js", "links.js"]
+FILES = [
+    "package.json",
+    "extension.js",
+    "junit.js",
+    "links.js",
+    "local-workspace.js",
+    "python-environment.js",
+    "media/debug-gym.svg",
+]
 
 CONTENT_TYPES = """<?xml version="1.0" encoding="utf-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension=".json" ContentType="application/json"/>
   <Default Extension=".js" ContentType="application/javascript"/>
+  <Default Extension=".svg" ContentType="image/svg+xml"/>
   <Default Extension=".vsixmanifest" ContentType="text/xml"/>
 </Types>
 """
@@ -33,7 +42,9 @@ MANIFEST = """<?xml version="1.0" encoding="utf-8"?>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Code"/>
   </Installation>
-  <Dependencies/>
+  <Dependencies>
+{dependencies}
+  </Dependencies>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/>
   </Assets>
@@ -50,6 +61,10 @@ def main(output):
         display=escape(package["displayName"]),
         description=escape(package["description"]),
         engine=escape(package["engines"]["vscode"]),
+        dependencies="\n".join(
+            f'    <Dependency Id="{escape(dependency)}"/>'
+            for dependency in package.get("extensionDependencies", [])
+        ),
     )
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("[Content_Types].xml", CONTENT_TYPES)

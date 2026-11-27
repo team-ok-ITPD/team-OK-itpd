@@ -11,7 +11,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .agents import AgentError, api_key, save_key
-from .models import AgentCredential, Assignment, Bug, StudyGroup, Submission, User, WorkspaceSession
+from .models import (
+    AgentCredential, Assignment, Bug, StudyGroup, Submission, User,
+    WorkspacePairingCode, WorkspaceSession,
+)
 from .projects import ProjectError, validate_project
 from .runtime import RuntimeError
 
@@ -63,6 +66,110 @@ class IntegrationTests(TestCase):
             "/api/ide/submit/", json.dumps(payload), content_type="application/json",
             headers={"Authorization": f"Bearer {token}"},
         )
+
+    def test_pairing_code_is_single_use_and_creates_a_scoped_submission_session(self):
+        code = WorkspacePairingCode.issue(
+            self.student, self.bug, self.assignment, "http://localhost:8000/student/assignments/1/"
+        )
+        response = self.client.post(
+            "/api/ide/pair/",
+            json.dumps({"code": f"{code[:8]}-{code[8:]}".lower()}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["files"], self.bug.project_files)
+        self.assertEqual(payload["exercise"]["entryFile"], "main.py")
+        self.assertTrue(payload["exercise"]["tests"])
+        self.assertNotIn(self.bug.solution_code, json.dumps(payload))
+        pairing = WorkspacePairingCode.objects.get()
+        self.assertNotEqual(pairing.code_digest, code)
+        self.assertIsNotNone(pairing.used_at)
+        session = WorkspaceSession.objects.get()
+        self.assertEqual(session.user, self.student)
+        self.assertEqual(session.bug, self.bug)
+        self.assertEqual(session.assignment, self.assignment)
+        self.assertEqual(
+            session.token_digest, hashlib.sha256(payload["token"].encode()).hexdigest()
+        )
+
+        with patch("core.workspace_api.verify", return_value=(1, 2)):
+            submitted = self.send(payload["token"])
+        self.assertEqual(submitted.status_code, 200)
+        self.assertEqual(submitted.json()["attempt"]["passed"], 1)
+        self.assertEqual(Submission.objects.count(), 1)
+
+        reused = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": code}), content_type="application/json"
+        )
+        self.assertEqual(reused.status_code, 401)
+
+    def test_pairing_code_expires_and_rechecks_assignment_access(self):
+        expired = WorkspacePairingCode.issue(
+            self.student, self.bug, self.assignment, "http://localhost:8000/"
+        )
+        expired_row = WorkspacePairingCode.objects.get()
+        expired_row.expires_at = timezone.now() - timedelta(seconds=1)
+        expired_row.save(update_fields=("expires_at",))
+        response = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": expired}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(WorkspaceSession.objects.exists())
+
+        active = WorkspacePairingCode.issue(
+            self.student, self.bug, self.assignment, "http://localhost:8000/"
+        )
+        self.group.students.remove(self.student)
+        response = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": active}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(WorkspaceSession.objects.exists())
+
+    def test_pairing_includes_legacy_test_code(self):
+        bug = Bug.objects.create(
+            title="Legacy test field", description="Find the issue", language="python",
+            difficulty="easy", visibility="public", created_by=self.teacher,
+            buggy_code="def solve(): return False",
+            solution_code="def solve(): return True",
+            tests_code="from main import solve\ndef test_solve(): assert solve()\n",
+        )
+        code = WorkspacePairingCode.issue(self.student, bug, None, "http://localhost:8000/")
+        response = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": code}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["files"]["test_main.py"], bug.tests_code)
+        self.assertTrue(response.json()["exercise"]["tests"])
+
+    def test_local_pairing_allows_submission_when_exercise_has_no_tests(self):
+        bug = Bug.objects.create(
+            title="Exercise without tests", description="Fix the result", language="python",
+            difficulty="easy", visibility="public", created_by=self.teacher,
+            buggy_code="def solve(): return False",
+            solution_code="def solve(): return True",
+        )
+        code = WorkspacePairingCode.issue(self.student, bug, None, "http://localhost:8000/")
+        paired = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": code}), content_type="application/json"
+        )
+        self.assertEqual(paired.status_code, 200)
+        self.assertFalse(paired.json()["exercise"]["tests"])
+
+        with patch("core.workspace_api.verify") as verify:
+            response = self.client.post(
+                "/api/ide/submit/",
+                json.dumps({"bug": bug.pk, "code": "def solve(): return True"}),
+                content_type="application/json",
+                headers={"Authorization": f"Bearer {paired.json()['token']}"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["attempt"]["verified"])
+        verify.assert_not_called()
+        submission = Submission.objects.get(bug=bug)
+        self.assertIsNone(submission.tests_passed)
+        self.assertIsNone(submission.tests_total)
 
     def test_encrypted_key_and_platform_fallback(self):
         save_key(self.teacher, "personal-key")

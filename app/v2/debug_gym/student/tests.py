@@ -1,5 +1,6 @@
 # [Student Dev] Tests for the student pages
 import json
+import hashlib
 import os
 import shutil
 import tempfile
@@ -13,7 +14,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import Assignment, Bug, StudyGroup, Submission, User
+from core.models import Assignment, Bug, StudyGroup, Submission, User, WorkspacePairingCode
 from student import ai, ide
 from student.ide import IdeError
 from student.models import IdeToken
@@ -277,11 +278,30 @@ class WorkspaceTests(StudentTestCase):
         a = self.assignment("Task")
         self.client.force_login(self.student)
         page = self.client.get(self.ws_url(a))
-        self.assertContains(page, "Open in VS Code</button>")
+        self.assertContains(page, "Open browser VS Code</button>")
+        self.assertContains(page, "Get a code for local VS Code")
         self.assertContains(page, "<code>main.py</code>", html=False)
         self.assertContains(page, "<strong>Test</strong>", html=False)
         self.assertNotContains(page, "REMOVED_REFERENCE_SENTINEL")
         self.assertNotContains(page, "<textarea")
+
+    def test_local_vscode_code_is_shown_once_and_only_its_hash_is_stored(self):
+        a = self.assignment("Task")
+        self.client.force_login(self.student)
+        response = self.client.post(self.ws_url(a), {"action": "pair"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Cache-Control"], "no-store")
+        pairing_code = response.context["pairing_code"].replace("-", "")
+        self.assertEqual(len(pairing_code), 24)
+        pairing = WorkspacePairingCode.objects.get()
+        self.assertEqual(
+            pairing.code_digest, WorkspacePairingCode.digest(pairing_code)
+        )
+        self.assertNotEqual(pairing.code_digest, pairing_code)
+        self.assertEqual(pairing.user, self.student)
+        self.assertEqual(pairing.bug, self.bug)
+        self.assertEqual(pairing.assignment, a)
+        self.assertNotContains(response, self.bug.solution_code)
 
     def test_open_writes_the_folder_and_redirects_to_vscode(self):
         a = self.assignment("Task")
@@ -590,9 +610,27 @@ class PracticeTests(StudentTestCase):
     def test_practice_page_offers_vscode(self):
         self.client.force_login(self.student)
         page = self.client.get(self.ws_url(self.public))
-        self.assertContains(page, "Open in VS Code</button>")
+        self.assertContains(page, "Open browser VS Code</button>")
+        self.assertContains(page, "Get a code for local VS Code")
         self.assertContains(page, "Practice is not graded")
+        self.assertContains(page, "Attempt status")
+        self.assertContains(page, "Not submitted")
         self.assertNotContains(page, "SOLUTION")
+
+    def test_practice_page_shows_latest_submission_and_test_results(self):
+        Submission.objects.create(
+            student=self.student,
+            bug=self.public,
+            submitted_code="fixed",
+            tests_passed=2,
+            tests_total=3,
+        )
+        self.client.force_login(self.student)
+        page = self.client.get(self.ws_url(self.public))
+        self.assertContains(page, "Attempt status")
+        self.assertContains(page, "Submitted")
+        self.assertContains(page, "Tests passed")
+        self.assertContains(page, "2 / 3")
 
     def test_attempt_count_is_mine_and_practice_only(self):
         Submission.objects.create(student=self.student, bug=self.public, submitted_code="a")

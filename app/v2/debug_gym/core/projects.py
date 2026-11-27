@@ -36,4 +36,17 @@ def entry_path(bug):
 
 
 def project_files(bug):
-    return bug.project_files or {entry_path(bug): bug.buggy_code}
+    files = dict(bug.project_files or {entry_path(bug): bug.buggy_code})
+    if bug.tests_code and not any(
+        name.endswith(".py") and PurePosixPath(name).name.startswith("test_")
+        for name in files
+    ):
+        files["test_main.py"] = bug.tests_code
+    return files
+
+
+def python_test_files(files):
+    return [
+        name for name in files
+        if name.endswith(".py") and PurePosixPath(name).name.startswith("test_")
+    ]
