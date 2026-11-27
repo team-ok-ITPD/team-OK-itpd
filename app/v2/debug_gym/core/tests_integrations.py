@@ -81,7 +81,7 @@ class IntegrationTests(TestCase):
         self.assertEqual(payload["files"], self.bug.project_files)
         self.assertEqual(payload["exercise"]["entryFile"], "main.py")
         self.assertTrue(payload["exercise"]["tests"])
-        self.assertNotIn(self.bug.solution_code, json.dumps(payload))
+        self.assertNotIn("solution_code", json.dumps(payload))
         pairing = WorkspacePairingCode.objects.get()
         self.assertNotEqual(pairing.code_digest, code)
         self.assertIsNotNone(pairing.used_at)
@@ -132,7 +132,6 @@ class IntegrationTests(TestCase):
             title="Legacy test field", description="Find the issue", language="python",
             difficulty="easy", visibility="public", created_by=self.teacher,
             buggy_code="def solve(): return False",
-            solution_code="def solve(): return True",
             tests_code="from main import solve\ndef test_solve(): assert solve()\n",
         )
         code = WorkspacePairingCode.issue(self.student, bug, None, "http://localhost:8000/")
@@ -148,7 +147,6 @@ class IntegrationTests(TestCase):
             title="Exercise without tests", description="Fix the result", language="python",
             difficulty="easy", visibility="public", created_by=self.teacher,
             buggy_code="def solve(): return False",
-            solution_code="def solve(): return True",
         )
         code = WorkspacePairingCode.issue(self.student, bug, None, "http://localhost:8000/")
         paired = self.client.post(
