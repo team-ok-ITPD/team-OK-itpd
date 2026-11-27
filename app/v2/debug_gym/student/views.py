@@ -11,23 +11,24 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
-from django.http import JsonResponse
+from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
-from django.db import transaction
 
 from core.models import Assignment, Bug, StudyGroup, Submission
 from core.permissions import student_required
+
+from app.adel_b.bugs.verification import VerificationBusy
+from core.runtime import RuntimeError as VerificationError
+from core.bridge import ensure_relay, ide_server_url
+from core.runtime import verify
 
 from . import ai
 from .forms import AIBugForm, StudentBugForm, SubmissionForm
 from .ide import IdeError, start_ide
 from .models import IdeToken
-from .workspaces import code_file_name, has_tests, write_workspace
-from .forms import SubmissionForm
-from core.runtime import RuntimeError, verify
-from app.adel_b.bugs.verification import VerificationBusy
+from .workspaces import build_project, code_file_name, has_tests, project_has_tests, write_workspace
 
 DUE_SOON = timedelta(hours=48)
 DASHBOARD_LIMIT = 5
@@ -214,12 +215,16 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
         if blocked:
             messages.error(request, blocked)
             return redirect(request.path)
+        port = int(request.get_port())
         try:
             folder = write_workspace(
                 request.user, bug, assignment=assignment,
                 start_code=latest.submitted_code if latest else bug.buggy_code,
                 site_url=request.build_absolute_uri(request.path),
+                server_url=ide_server_url(port),
             )
+            # Development on Linux: let the container reach this server (see core/bridge.py).
+            ensure_relay(port)
             return redirect(start_ide(request.user, folder))
         except IdeError as error:
             messages.error(request, str(error))
@@ -234,6 +239,7 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
             "blocked": blocked,
             "latest": latest,
             "has_tests": has_tests(bug),
+            "project_has_tests": project_has_tests(bug),
             "code_file": code_file_name(bug),
         },
     )
@@ -285,12 +291,44 @@ def ide_submit(request):
     if not form.is_valid():
         return JsonResponse({"error": " ".join(form.errors["code"])}, status=400)
 
-    Submission.objects.create(student=student, bug=bug, assignment=assignment, submitted_code=form.cleaned_data["code"])
+    code = form.cleaned_data["code"]
+
+    # Test results come only from server-side verification (DEC-037), never from VS Code.
+    passed = total = None
+    revision = bug.revision
+    if project_has_tests(bug):
+        try:
+            passed, total = verify(bug, code)
+        except VerificationBusy as error:
+            return JsonResponse({"error": str(error)}, status=503)
+        except VerificationError as error:
+            return JsonResponse({"error": str(error)}, status=503)
+
+    with transaction.atomic():
+        current = Bug.objects.select_for_update().get(pk=bug.pk)
+        if current.revision != revision:
+            return JsonResponse(
+                {"error": "The bug changed while the tests ran. Open it again from the website."}, status=409
+            )
+        if assignment is not None:
+            locked = Assignment.objects.select_for_update().get(pk=assignment.pk)
+            if not is_open(locked) or not locked.groups.filter(students=student).exists():
+                return JsonResponse(
+                    {"error": "The assignment closed or your access changed while the tests ran."}, status=403
+                )
+        elif not practice_bugs_qs(student).filter(pk=current.pk).exists():
+            return JsonResponse({"error": "You no longer have access to this bug."}, status=403)
+        Submission.objects.create(
+            student=student, bug=current, assignment=assignment, submitted_code=code,
+            tests_passed=passed, tests_total=total,
+        )
+
+    result = f" Server check: {passed}/{total} tests pass." if total else ""
     if assignment:
-        message = f'Fix submitted for "{assignment.title}". You can resubmit until the deadline.'
+        message = f'Fix submitted for "{assignment.title}".{result} You can resubmit until the deadline.'
     else:
-        message = f'Practice attempt saved for "{bug.title}". Practice is not graded.'
-    return JsonResponse({"message": message}, status=201)
+        message = f'Practice attempt saved for "{bug.title}".{result} Practice is not graded.'
+    return JsonResponse({"message": message, "passed": passed, "total": total}, status=201)
 
 
 def practice_bugs_qs(student):
@@ -381,8 +419,13 @@ def bug_create(request):
         except ai.AIError as error:
             form.add_error(None, str(error))
         else:
+            files, entry = build_project(data["language"], generated["buggy_code"], generated.get("tests_code", ""))
             bug = Bug.objects.create(
-                **generated,
+                title=generated["title"],
+                description=generated["description"],
+                buggy_code=generated["buggy_code"],
+                project_files=files,
+                entry_file=entry,
                 language=data["language"],
                 difficulty=data["difficulty"],
                 visibility=data["visibility"],
@@ -467,7 +510,7 @@ def progress(request, pk):
         bug = assignment.bug
     else:
         assignment = None
-        bug = get_object_or_404(public_bugs_qs(), pk=pk)
+        bug = get_object_or_404(practice_bugs_qs(request.user), pk=pk)
     latest = Submission.objects.filter(
         student=request.user, bug=bug, assignment=assignment,
     ).order_by("-submitted_at", "-pk").first()

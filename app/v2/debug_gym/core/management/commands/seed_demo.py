@@ -245,7 +245,8 @@ class Command(BaseCommand):
             bugs[title] = Bug.objects.create(
                 title=title, language=language, difficulty=difficulty, visibility=visibility,
                 created_by=users[author], description=description,
-                buggy_code=buggy, tests_code=TESTS.get(title, ""),
+                buggy_code=buggy,
+                project_files=_project(language, buggy, TESTS.get(title, "")), entry_file=_entry(language),
             )
 
         assignments = {}
@@ -288,3 +289,17 @@ class Command(BaseCommand):
             self.stdout.write(f"  {label}: " + ", ".join(email(handle) for handle, _ in people))
         self.stdout.write(f"\nTry {email('ali')}: this account has every assignment status, grades and practice attempts.")
 
+
+EXTENSIONS = {"python": "py", "javascript": "js", "dart": "dart"}
+
+
+def _entry(language):
+    return f"main.{EXTENSIONS.get(language, 'txt')}"
+
+
+def _project(language, buggy_code, tests_code):
+    """Project files as core.projects expects them: the code, plus test_main.py when there are tests."""
+    files = {_entry(language): buggy_code}
+    if tests_code:
+        files["test_main.py"] = tests_code
+    return files

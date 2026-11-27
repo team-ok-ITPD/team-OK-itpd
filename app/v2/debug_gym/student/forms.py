@@ -4,6 +4,7 @@ from django import forms
 from core.models import Bug
 
 from .ai import PROVIDER_CHOICES
+from .workspaces import bug_tests_code, build_project
 
 MAX_CODE_LENGTH = 50_000
 CODE_ATTRS = {"spellcheck": "false", "autocapitalize": "off", "rows": 10, "class": "code-input"}
@@ -38,27 +39,37 @@ class SubmissionForm(forms.Form):
 
 
 class StudentBugForm(forms.ModelForm):
-    """A bug a student writes for their own practice (created_by is set by the view)."""
+    """Edit a student's own practice bug (created_by is set by the view).
+
+    The code and tests are stored in the bug's project files (core.projects), the
+    same place the professor pages and server-side verification read them from.
+    """
+
+    # Not a model field: saved as test_main.py in the bug's project files.
+    tests_code = forms.CharField(
+        label="Tests (optional, Python only)",
+        required=False,
+        strip=False,
+        widget=forms.Textarea(attrs=CODE_ATTRS),
+        help_text="A pytest file. The code is saved as main.py, so start with: from main import *",
+    )
 
     class Meta:
         model = Bug
         fields = ["title", "description", "language", "difficulty", "visibility", "buggy_code", "tests_code"]
         labels = {
             "buggy_code": "Buggy code",
-            "tests_code": "Tests (optional, Python only)",
             "visibility": "Who can practise it",
         }
         help_texts = {
             "description": "What should the code do, and what goes wrong?",
             "language": "",  # the placeholder already gives examples
-            "tests_code": "A pytest file. The code is saved as main.py, so start with: from main import *",
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "language": forms.TextInput(attrs={"list": "language-options", "placeholder": "e.g. python"}),
             "visibility": forms.RadioSelect,
             "buggy_code": forms.Textarea(attrs=CODE_ATTRS),
-            "tests_code": forms.Textarea(attrs=CODE_ATTRS),
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,6 +83,8 @@ class StudentBugForm(forms.ModelForm):
         ]
         if not self.instance.pk:
             self.initial.setdefault("visibility", Bug.Visibility.PRIVATE)
+        else:
+            self.initial.setdefault("tests_code", bug_tests_code(self.instance))
 
     def clean_language(self):
         return self.cleaned_data["language"].strip().lower()
@@ -84,6 +97,17 @@ class StudentBugForm(forms.ModelForm):
 
     def clean_tests_code(self):
         return normalize_code(self.cleaned_data.get("tests_code") or "")
+
+    def save(self, commit=True):
+        bug = super().save(commit=False)
+        bug.project_files, bug.entry_file = build_project(
+            bug.language, bug.buggy_code, self.cleaned_data["tests_code"], base=bug.project_files,
+        )
+        if bug.pk:
+            bug.revision += 1  # open VS Code folders and running checks see the change
+        if commit:
+            bug.save()
+        return bug
 
 
 class AIBugForm(forms.Form):

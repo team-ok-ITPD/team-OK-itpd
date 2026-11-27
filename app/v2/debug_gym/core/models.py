@@ -159,18 +159,20 @@ class Bug(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     buggy_code = models.TextField(help_text="Code with the bug")
-    tests_code = models.TextField(
-        blank=True,
-        default="",
-        help_text="Optional pytest file for Python bugs. The code is saved as main.py, "
-        "so tests start with: from main import *",
-    )
     language = models.CharField(max_length=50, help_text="e.g. python, dart")
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices, blank=True, default=Difficulty.EASY)
     visibility = models.CharField(max_length=10, choices=Visibility.choices)
     project_files = models.JSONField(default=dict, blank=True)
     compose_config = models.TextField(blank=True)
     dockerfile_config = models.TextField(blank=True)
+    # Older single-file test field, still used by the professor pages. Tests also live
+    # in project_files (test_main.py), which VS Code and server verification read.
+    tests_code = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional pytest file for Python bugs. The code is saved as main.py, "
+        "so tests start with: from main import *",
+    )
     entry_file = models.CharField(max_length=255, blank=True)
     revision = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
@@ -283,8 +285,6 @@ class Submission(models.Model):
     tests_total = models.PositiveIntegerField(null=True, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     graded_at = models.DateTimeField(null=True, blank=True)
-    tests_passed = models.PositiveIntegerField(null=True, blank=True)
-    tests_total = models.PositiveIntegerField(null=True, blank=True)
     suspicion_status = models.CharField(max_length=16, default="unchecked")
     suspicion_reason = models.TextField(blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -312,6 +312,13 @@ class Submission(models.Model):
     @property
     def is_practice(self):
         return self.assignment_id is None
+
+    @property
+    def test_result(self):
+        """"3/5" when test counts are recorded, otherwise None."""
+        if self.tests_passed is None or self.tests_total is None:
+            return None
+        return f"{self.tests_passed}/{self.tests_total}"
 
 
 class AgentCredential(models.Model):

@@ -15,6 +15,7 @@ from django.views.decorators.debug import sensitive_variables
 from django.conf import settings
 
 from .models import Assignment, Bug, Submission, User, WorkspaceSession
+from .bridge import ensure_relay, ide_server_url, site_url
 from .projects import ProjectError, entry_path, validate_project
 from .runtime import IdeError, RuntimeError, open_workspace, verify
 from app.adel_b.bugs.verification import VerificationBusy
@@ -75,8 +76,11 @@ def launch(request, pk):
             pass
     session.token_digest = hashlib.sha256(token.encode()).hexdigest()
     session.save()
+    port = int(request.get_port())
     try:
-        url = open_workspace(session, token)
+        url = open_workspace(session, token, server_url=ide_server_url(port), site_url=site_url(request))
+        # Development on Linux: let the container reach this server (see core/bridge.py).
+        ensure_relay(port)
     except (IdeError, ProjectError, OSError) as error:
         session.delete()
         return JsonResponse({"error": str(error)}, status=503)
