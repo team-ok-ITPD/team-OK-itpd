@@ -1,12 +1,12 @@
 # [Professor Dev] Views for professor pages: groups, bugs, assignments, grading
 from django.views.generic import TemplateView
 import csv
-from copy import deepcopy
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -21,10 +21,11 @@ from core.runtime import RuntimeError
 from app.adel_b.bugs.verification import VerificationBusy
 
 from .forms import (
-    AssignmentForm, DeadlineForm, ExerciseDetailsForm, ExerciseForm,
+    AssignmentForm, CatalogAssignmentForm, DeadlineForm, ExerciseDetailsForm, ExerciseForm,
     GenerateForm, KeyForm, accessible_bugs,
 )
 from .agent_tasks import generate
+from .assignments import assign_exercise
 
 
 class DashboardView(RoleRequiredMixin, TemplateView):
@@ -63,7 +64,8 @@ def group_detail(request, pk):
     return render(request, "professor/group_detail.html", {
         "group": group,
         "students": group.students.order_by("name", "email"),
-        "assignments": group.assignments.filter(professor=request.user).select_related("bug"),
+        "assignments": group.assignments.filter(professor=request.user, is_withdrawn=False).select_related("bug"),
+        "archived_assignments": group.assignments.filter(professor=request.user, is_withdrawn=True).select_related("bug"),
     })
 
 
@@ -75,31 +77,13 @@ def assign(request, pk):
         initial={"bug": request.GET.get("bug")},
     )
     if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            # Recheck ownership in the transaction if an admin reassigns the group.
-            group = get_object_or_404(
-                StudyGroup.objects.select_for_update(), pk=pk, professor=request.user,
-            )
-            assignment = form.save(commit=False)
-            source = get_object_or_404(
-                accessible_bugs(request.user).select_for_update(), pk=assignment.bug_id,
-            )
-            if source.created_by_id != request.user.pk:
-                source_url = request.build_absolute_uri(reverse("professor:bug", args=[source.pk]))
-                assignment.bug = Bug.objects.create(
-                    title=source.title,
-                    description=f"{source.description}\n\nCopied from: {source_url}",
-                    buggy_code=source.buggy_code, solution_code=source.solution_code,
-                    language=source.language, difficulty=source.difficulty,
-                    project_files=deepcopy(source.project_files),
-                    compose_config=source.compose_config, entry_file=source.entry_file,
-                    visibility=Bug.Visibility.PRIVATE, created_by=request.user,
-                )
-            assignment.professor = request.user
-            assignment.save()
-            assignment.groups.add(group)
-        messages.success(request, "Exercise assigned to the group.")
-        return redirect("professor:group", pk=group.pk)
+        try:
+            assign_exercise(request, pk, form.save(commit=False))
+        except ValidationError as error:
+            form.add_error(None, error)
+        else:
+            messages.success(request, "Exercise assigned to the group.")
+            return redirect("professor:group", pk=group.pk)
     return render(request, "professor/assignment_form.html", {"group": group, "form": form})
 
 
@@ -113,7 +97,9 @@ def assignment_detail(request, group_pk, pk):
     )
     if request.method == "POST":
         # Older assignments can have several groups sharing one deadline.
-        if getattr(assignment, "agent_review", None):
+        if assignment.is_withdrawn:
+            form.add_error(None, "This assignment has been withdrawn and archived.")
+        elif getattr(assignment, "agent_review", None):
             form.add_error(None, "The one-time review has started. Create a new assignment to change its deadline.")
         elif assignment.groups.count() != 1:
             form.add_error(None, "This older assignment shares a deadline across groups.")
@@ -129,10 +115,13 @@ def assignment_detail(request, group_pk, pk):
 
 
 @professor_required
-@require_POST
 def close_assignment(request, group_pk, pk):
     group = owned_group(request.user, group_pk)
     assignment = owned_assignment(request.user, group, pk)
+    if request.method != "POST" or request.POST.get("confirm") != "yes":
+        return render(request, "professor/assignment_confirm.html", {
+            "assignment": assignment, "group": group, "action": "close",
+        })
     if assignment.groups.count() != 1:
         messages.error(request, "This older assignment is shared with several groups.")
     else:
@@ -140,6 +129,26 @@ def close_assignment(request, group_pk, pk):
         assignment.save(update_fields=("status", "updated_at"))
         messages.success(request, "Assignment closed. Results are now available.")
     return redirect("professor:assignment", group_pk=group.pk, pk=pk)
+
+
+@professor_required
+def unassign(request, group_pk, pk):
+    group = owned_group(request.user, group_pk)
+    with transaction.atomic():
+        assignment = get_object_or_404(
+            Assignment.objects.select_for_update(), pk=pk, groups=group, professor=request.user,
+        )
+        if request.method != "POST" or request.POST.get("confirm") != "yes":
+            return render(request, "professor/assignment_confirm.html", {
+                "assignment": assignment, "group": group, "action": "unassign",
+            })
+        if assignment.groups.count() != 1:
+            raise Http404("Split this legacy assignment into individual groups first.")
+        assignment.is_withdrawn = True
+        assignment.status = Assignment.Status.CLOSED
+        assignment.save(update_fields=("is_withdrawn", "status", "updated_at"))
+    messages.success(request, "Assignment withdrawn. Its submissions and results are retained in the archive.")
+    return redirect("professor:group", pk=group.pk)
 
 
 def result_rows(assignment, group):
@@ -204,17 +213,45 @@ def export_results(request, group_pk, pk):
 def catalog(request):
     bugs = accessible_bugs(request.user).select_related("created_by")
     scope = request.GET.get("scope", "all")
-    if scope == "mine":
+    visibility = request.GET.get("visibility", scope if scope in ("private", "public") else "all")
+    owner = request.GET.get("owner", "my" if scope == "mine" else "all")
+    if visibility not in ("all", "public", "private"):
+        visibility = "all"
+    if owner not in ("all", "my", "others"):
+        owner = "all"
+    if visibility != "all":
+        bugs = bugs.filter(visibility=visibility)
+    if owner == "my":
         bugs = bugs.filter(created_by=request.user)
-    elif scope == "public":
-        bugs = bugs.filter(visibility=Bug.Visibility.PUBLIC)
+    elif owner == "others":
+        bugs = bugs.exclude(created_by=request.user)
     query = request.GET.get("q", "").strip()
     if query:
         bugs = bugs.filter(title__icontains=query)
     group = owned_group(request.user, request.GET["group"]) if request.GET.get("group") else None
-    return render(request, "professor/bugs_list.html", {
-        "bugs": bugs.order_by("title"), "query": query, "scope": scope, "group": group,
+    template = "professor/catalog_cards.html" if request.GET.get("fragment") == "1" else "professor/bugs_list.html"
+    return render(request, template, {
+        "bugs": bugs.order_by("title"), "query": query, "visibility": visibility, "owner": owner, "group": group,
+        "groups": StudyGroup.objects.filter(professor=request.user).order_by("name", "group_number"),
     })
+
+
+@professor_required
+@require_POST
+def catalog_assign(request, pk):
+    bug = get_object_or_404(accessible_bugs(request.user), pk=pk)
+    form = CatalogAssignmentForm(request.POST, professor=request.user)
+    if not form.is_valid():
+        return JsonResponse({"error": " ".join(message for errors in form.errors.values() for message in errors)}, status=400)
+    group = form.cleaned_data["group"]
+    try:
+        assign_exercise(request, group.pk, Assignment(
+            bug=bug, title=bug.title, deadline=form.cleaned_data["deadline"],
+        ))
+    except ValidationError as error:
+        return JsonResponse({"error": " ".join(error.messages)}, status=400)
+    messages.success(request, "Exercise assigned to the group.")
+    return JsonResponse({"redirect": reverse("professor:group", args=[group.pk])})
 
 
 @professor_required
@@ -257,7 +294,7 @@ def create_exercise(request):
             bug.project_files = form.cleaned_data["project"]
             bug.entry_file = form.cleaned_data["entry_file"]
             bug.buggy_code = bug.project_files[form.cleaned_data["entry_file"]]
-            bug.compose_config = form.cleaned_data["compose_file"]
+            bug.dockerfile_config = form.cleaned_data["dockerfile"]
             bug.save()
             if group:
                 assignment = Assignment.objects.create(
@@ -274,9 +311,11 @@ def create_exercise(request):
 @professor_required
 @sensitive_post_parameters("key")
 def settings_page(request):
-    form = KeyForm(request.POST if request.method == "POST" else None)
+    credential = AgentCredential.objects.filter(user=request.user).first()
+    form = KeyForm(request.POST if request.method == "POST" else None,
+                   initial={"provider": credential.provider if credential else "openai"})
     if request.method == "POST" and form.is_valid():
-        save_key(request.user, form.cleaned_data["key"])
+        save_key(request.user, form.cleaned_data["key"], form.cleaned_data["provider"])
         messages.success(request, "Generation credentials updated.")
         return redirect("professor:settings")
     return render(request, "professor/settings.html", {
@@ -309,6 +348,7 @@ def bug_detail(request, pk):
                     return redirect("professor:bug", pk=pk)
     return render(request, "professor/bug_detail.html", {
         "bug": bug, "form": form, "can_edit": can_edit,
+        "groups": StudyGroup.objects.filter(professor=request.user).order_by("name", "group_number"),
     })
 
 
@@ -340,5 +380,5 @@ def generate_exercise(request):
         except (AgentError, RuntimeError, VerificationBusy) as error:
             form.add_error(None, str(error))
     return render(request, "professor/bug_form.html", {
-        "form": ExerciseForm(), "generate_form": form, "group": group,
+        "form": ExerciseForm(), "generate_form": form, "group": group, "active_tab": "generate",
     })

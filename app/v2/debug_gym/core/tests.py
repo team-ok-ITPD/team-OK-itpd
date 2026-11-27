@@ -45,7 +45,7 @@ class SeedDemoTests(TestCase):
     def test_delete_only_touches_demo_data(self):
         real_prof = User.objects.create_user("real@school.edu", "Real Prof", "x", role=User.Role.PROFESSOR)
         real_bug = Bug.objects.create(
-            title="Real bug", description="d", buggy_code="x", solution_code="y", language="python",
+            title="Real bug", description="d", buggy_code="x",  language="python",
             difficulty="easy", visibility="public", created_by=real_prof,
         )
         seed()

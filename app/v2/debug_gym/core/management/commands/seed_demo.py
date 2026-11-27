@@ -35,7 +35,7 @@ GROUPS = [
     ("Mobile Dev", "prof.sara", "Dart and Flutter basics.", ["rayan", "lina", "nour"]),
 ]
 
-# title, language, difficulty, visibility, author, description, buggy_code, solution_code
+# Exercise metadata, buggy source and sample student submission
 BUGS = [
     (
         "Sum skips the last item", "python", "easy", "public", "prof.karim",
@@ -239,29 +239,35 @@ class Command(BaseCommand):
             groups[name] = group
 
         bugs = {}
+        sample_submissions = {}
         for title, language, difficulty, visibility, author, description, buggy, solution in BUGS:
+            sample_submissions[title] = solution
             bugs[title] = Bug.objects.create(
                 title=title, language=language, difficulty=difficulty, visibility=visibility,
                 created_by=users[author], description=description,
-                buggy_code=buggy, solution_code=solution, tests_code=TESTS.get(title, ""),
+                buggy_code=buggy, tests_code=TESTS.get(title, ""),
             )
 
         assignments = {}
         for title, bug, prof, group_names, days, status, instructions in ASSIGNMENTS:
-            assignment = Assignment.objects.create(
-                title=title, bug=bugs[bug], professor=users[prof], status=status,
-                deadline=now + timedelta(days=days), instructions=instructions,
-            )
-            assignment.groups.add(*(groups[g] for g in group_names))
-            assignments[title] = assignment
+            assignments[title] = []
+            for group_name in group_names:
+                assignment = Assignment.objects.create(
+                    title=title, bug=bugs[bug], professor=users[prof], status=status,
+                    deadline=now + timedelta(days=days), instructions=instructions,
+                )
+                assignment.groups.add(groups[group_name])
+                assignments[title].append(assignment)
 
         for handle, assignment_title, practice_bug, fixed, status, grade, feedback, days_ago in SUBMISSIONS:
-            assignment = assignments[assignment_title] if assignment_title else None
+            candidates = assignments[assignment_title] if assignment_title else []
+            assignment = next((row for row in candidates if row.groups.filter(students=users[handle]).exists()),
+                              candidates[0] if candidates else None)
             bug = assignment.bug if assignment else bugs[practice_bug]
             submission = Submission.objects.create(
                 student=users[handle], bug=bug, assignment=assignment,
                 # Correct work submits the real fix; wrong work is still the buggy code.
-                submitted_code=bug.solution_code if fixed else bug.buggy_code,
+                submitted_code=sample_submissions[bug.title] if fixed else bug.buggy_code,
                 status=status, grade=Decimal(grade) if grade else None, feedback=feedback,
                 graded_at=now - timedelta(days=max(days_ago - 1, 0)) if status == "graded" else None,
             )

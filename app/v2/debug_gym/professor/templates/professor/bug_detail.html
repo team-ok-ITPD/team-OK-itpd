@@ -2,9 +2,14 @@
 {% extends "base.html" %}
 {% block title %}{{ bug.title }} · Debug Gym{% endblock %}
 {% block content %}
+{% load static %}
+<script src="{% static 'js/professor-catalog.js' %}" defer></script>
 <header class="page-header">
   <div><p class="eyebrow">Exercise catalog / {{ bug.get_visibility_display }}</p><h1>{{ bug.title }}</h1></div>
-  <a class="button ghost" href="{% url 'professor:bugs' %}">Back to catalog</a>
+  <div class="row" id="exercise-assignment-actions">
+    <button type="button" class="button primary" data-assign-url="{% url 'professor:catalog-assign' bug.pk %}" data-exercise-title="{{ bug.title }}">Assign to a group</button>
+    <a class="button ghost" href="{% url 'professor:bugs' %}">Back to catalog</a>
+  </div>
 </header>
 <div class="teaching-columns">
   <section class="card stack">
@@ -36,4 +41,22 @@
     {% endif %}
   </section>
 </div>
+<dialog id="catalog-assignment" class="action-confirmation" aria-labelledby="catalog-assignment-title">
+  <div class="stack">
+    <h2 id="catalog-assignment-title">Assign to group</h2>
+    <p id="catalog-exercise-title" class="text-muted"></p>
+    <p class="field-hint">Another author's public exercise will become your private copy, linked to the original.</p>
+    <form id="catalog-assignment-form" class="form" method="post">{% csrf_token %}
+      <label class="field">Group<select name="group" required>
+        <option value="">Choose a group</option>
+        {% for choice in groups %}<option value="{{ choice.pk }}" {% if group.pk == choice.pk %}selected{% endif %}>{{ choice }}{% if choice.course %} · {{ choice.course }}{% endif %}</option>{% endfor %}
+      </select></label>
+      {% if not groups %}<p class="alert info">No groups assigned to you yet. Ask your administrator to assign a group.</p>{% endif %}
+      <label class="field">Deadline (optional, UTC)<input type="datetime-local" name="deadline"></label>
+      <p id="catalog-assignment-error" role="alert" hidden></p>
+      <div class="row"><button type="submit" class="button primary" {% if not groups %}disabled{% endif %}>Assign exercise</button>
+      <button type="button" class="button secondary" data-close-assignment>Cancel</button></div>
+    </form>
+  </div>
+</dialog>
 {% endblock %}

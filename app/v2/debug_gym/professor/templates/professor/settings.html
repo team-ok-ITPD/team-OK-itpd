@@ -10,6 +10,8 @@
 <p><span class="badge {% if has_key %}success{% else %}accent{% endif %}">{% if has_key %}Personal key saved{% elif platform_key %}Platform key available{% else %}No key configured{% endif %}</span></p>
 <form class="form" method="post" autocomplete="off">{% csrf_token %}
 {{ form.non_field_errors }}
+<label class="field">Provider{{ form.provider }}{{ form.provider.errors }}</label>
+<p class="field-hint">Choose the service that issued your personal key. An empty key always uses the platform credentials and provider.</p>
 <label class="field">Personal API key{{ form.key }}{{ form.key.errors }}<small class="field-hint">{{ form.key.help_text }}</small></label>
 <p class="field-hint">Keys are encrypted at rest and never displayed again. Keep your key private.</p>
 <button class="button primary">Save credentials</button>

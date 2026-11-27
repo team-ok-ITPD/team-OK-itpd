@@ -42,10 +42,9 @@ class StudentBugForm(forms.ModelForm):
 
     class Meta:
         model = Bug
-        fields = ["title", "description", "language", "difficulty", "visibility", "buggy_code", "solution_code", "tests_code"]
+        fields = ["title", "description", "language", "difficulty", "visibility", "buggy_code", "tests_code"]
         labels = {
             "buggy_code": "Buggy code",
-            "solution_code": "Expected fix (optional)",
             "tests_code": "Tests (optional, Python only)",
             "visibility": "Who can practise it",
         }
@@ -53,23 +52,20 @@ class StudentBugForm(forms.ModelForm):
             "description": "What should the code do, and what goes wrong?",
             "language": "",  # the placeholder already gives examples
             "tests_code": "A pytest file. The code is saved as main.py, so start with: from main import *",
-            "solution_code": "Only you can see this. Other students never see it.",
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "language": forms.TextInput(attrs={"list": "language-options", "placeholder": "e.g. python"}),
             "visibility": forms.RadioSelect,
             "buggy_code": forms.Textarea(attrs=CODE_ATTRS),
-            "solution_code": forms.Textarea(attrs=CODE_ATTRS),
             "tests_code": forms.Textarea(attrs=CODE_ATTRS),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Keep code exactly as typed: stripping would remove the first line's indentation.
-        for name in ("buggy_code", "solution_code", "tests_code"):
+        for name in ("buggy_code", "tests_code"):
             self.fields[name].strip = False
-        self.fields["solution_code"].required = False
         self.fields["visibility"].choices = [
             (Bug.Visibility.PRIVATE, "Only me"),
             (Bug.Visibility.PUBLIC, "Every student"),
@@ -85,9 +81,6 @@ class StudentBugForm(forms.ModelForm):
         if not code.strip():
             raise forms.ValidationError("Add the buggy code to practise on.")
         return code
-
-    def clean_solution_code(self):
-        return normalize_code(self.cleaned_data.get("solution_code") or "")
 
     def clean_tests_code(self):
         return normalize_code(self.cleaned_data.get("tests_code") or "")

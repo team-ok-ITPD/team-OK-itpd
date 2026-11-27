@@ -61,15 +61,17 @@ JavaScript, the group-name link and native select remain available.
 Each group still has exactly one teacher. Changing it does not transfer exercise
 or assignment ownership. Membership is managed in Students, not in Groups.
 
-Following the user's explicit clarification on 2026-11-22, the existing `name`
-field is labelled **Course name**, and a separate **Group number** field
-(`group_number`) distinguishes groups within that course. The number is text
-so leading zeroes and identifiers such as `BS-23` are preserved. Course/number
-pairs must be unique ignoring case. Description is optional free-form notes.
+Following the user's updated clarification on 2026-11-27, groups have separate
+**Group name** (`name`), **Course** (`course`) and **Group number**
+(`group_number`) fields. Course is optional free text editable by administrators
+and read-only for professors. Existing course text is initialized from the old
+name so no existing name is lost. Group numbers preserve leading zeroes and
+identifiers such as `BS-23`; name/number pairs remain unique ignoring case.
+Description is optional free-form notes.
 
 Existing records retain their names and descriptions; their new group number
 starts blank rather than being guessed. Administrators must supply a number
-when creating or editing a group. Display labels include both course and
+when creating or editing a group. Display labels include both group name and
 number across administrator, professor and student pages.
 
 This is the current implementation direction from the user, not a rewrite of
@@ -87,7 +89,7 @@ Use **Students → Import CSV**. UTF-8 (optional BOM), comma-separated, at most
 | `email` | Yes | Valid email, up to 150 characters; case-insensitive account matching |
 | `is_active` | No | `true`/`false` or `1`/`0`; blank preserves existing state, defaults to active for a new account |
 | `password` | Conditional | At least eight characters; required for a new account when access email is disabled; blank preserves existing password |
-| `course` | For enrollment | Course name stored in the existing `name` field |
+| `course` | For enrollment | Legacy CSV group-name lookup in `name`; the separate course text is managed in the group form |
 | `group_number` | For a new group; when course is ambiguous | One group per row; up to 50 characters |
 | `teacher_email` | For a new group | Must identify one existing active teacher |
 
