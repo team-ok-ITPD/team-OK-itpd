@@ -47,7 +47,7 @@ class CrossRoleWorkflowTests(TestCase):
         )
         self.bug = Bug.objects.create(
             title="Integration exercise", description="Fix it", buggy_code="broken",
-            solution_code="fixed", language="python", created_by=self.teacher,
+             language="python", created_by=self.teacher,
             visibility=Bug.Visibility.PRIVATE,
         )
         self.client.force_login(self.admin)
@@ -118,7 +118,7 @@ class CrossRoleWorkflowTests(TestCase):
         self.assertEqual(Submission.objects.filter(assignment=self.assignment).count(), 1)
         response = self.teacher_client.post(reverse(
             "professor:close", args=[self.group.pk, self.assignment.pk],
-        ))
+        ), {"confirm": "yes"})
         self.assertEqual(response.status_code, 302)
         results = self.teacher_client.get(reverse(
             "professor:assignment", args=[self.group.pk, self.assignment.pk],

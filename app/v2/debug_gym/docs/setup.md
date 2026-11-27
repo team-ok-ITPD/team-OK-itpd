@@ -120,7 +120,8 @@ Sign in at `http://127.0.0.1:8000/`. Each role lands on its own dashboard.
     keep it. Administrators cannot deactivate or delete themselves. Use
     **Students** to filter by group, select students for batch membership or
     activity changes, or import a CSV. **Groups** creates/edits groups and
-    their active teacher. The existing Name field is labelled **Course name**;
+    their active teacher. **Group name** and **Course** are separate text fields;
+    the professor can read the course but only an administrator can edit it.
     **Group number** is a separate required field. Existing records keep blank
     numbers until an administrator fills them in.
     Each group has one teacher.

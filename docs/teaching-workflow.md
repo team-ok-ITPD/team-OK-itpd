@@ -8,25 +8,30 @@ development chat. Customer decision records retain their own sources.
 
 | Capability | Local implementation |
 | --- | --- |
-| Groups and students | The professor sees only administrator-assigned groups and their members. |
+| Groups and students | The professor sees only administrator-assigned groups and their members. A separate free-text course field is editable only by administrators. |
 | Assigning an exercise | Assigning another author's public exercise creates an independent private copy owned by the professor, including code, tests and project configuration. Its description links to the original. Owned exercises are assigned directly. Each new assignment belongs to one group. |
-| Deadline | Optional, entered in UTC and stored independently for each group assignment. |
+| Deadline | Optional, entered in UTC and stored independently for each exercise/group assignment. Reassigning an active, unreviewed owned exercise updates that group's assignment. Legacy multi-group records are split with submission history retained. |
 | Result availability | After the deadline or manual closure. Without a deadline, manual closure is required. |
 | Result table | Student full name, email and best verified test counts. Missing counts show Awaiting verification. |
 | CSV export | The same availability and access checks apply to the downloadable result table. |
-| Exercise catalog | Own exercises and public exercises, title search, publication and unpublication of owned exercises. Another author's public exercise is read-only, including browser VS Code access. Unpublication retains existing assignments and copies. |
-| Project import | A ZIP containing UTF-8 source and test files, with a chosen source entry file. |
-| Creation from a group | Saves a private exercise and its assignment together, then returns to that group. |
-| Environment configuration | An optional Compose YAML is stored with the exercise for the runtime integration. |
-| Generation | A prompt, Python or JavaScript, and a test count. The reference solution must pass every generated test and the buggy source must fail at least one before the exercise is saved. |
-| Personal API key | Professor settings stores an encrypted personal key. An empty personal key uses the internal platform key. |
+| Exercise catalog | Live title search with independent availability (all/public/private) and owner (all/my/others) filters. Cards show owners and link to exercise details. Only the opened exercise page has Assign to a group, with an owned-group/optional-deadline dialog. Filtering remains scoped on the server. Owners can publish and unpublish; other authors' public exercises remain read-only. |
+| Project import | ZIP only, limited to 5 MB compressed, 5 MB expanded and 100 text files, checked on the server. Title, language and project are required; description and difficulty are optional. The entry file is detected when unambiguous. |
+| Creation from a group | Upload and generation use separate keyboard-accessible tabs. Saves a private exercise and its assignment together, then returns to that group. Validation errors keep the relevant tab open. |
+| Environment configuration | An optional UTF-8 Dockerfile up to 50 KB is stored with the exercise. It must contain FROM. Dockerfile upload replaces Compose upload; legacy stored Compose text is retained separately. Uploaded Dockerfiles are not built or executed yet. |
+| Generation | A prompt, Python or JavaScript, and a test count. Generated projects must run the requested number of tests and fail at least one on the buggy source. Reference solutions are neither requested nor stored; this check does not establish that the tests accept every correct implementation. |
+| Personal API key | Professor settings stores an encrypted personal key and provider choice (OpenAI, OpenRouter or the platform provider). An empty personal key uses both the internal platform key and its configured provider. |
 | Suspicion analysis | A worker reviews every submitted attempt once after the deadline, or after manual closure for an assignment without a deadline. Advisory findings appear beside the student and in CSV. |
 | Browser VS Code | Reuses code-server and the Debug GYM extension from the original app. Professors save project snapshots; students submit source for server verification. |
 | Verified results | Python uses pytest and JavaScript uses Node's test runner in fresh, network-isolated temporary containers. Open student pages poll their own result every three seconds. |
 
-Existing multi-group assignments retain their shared deadline. The professor UI
-declines deadline changes and closure for those records, avoiding changes to
-another group's work. Newly created assignments use one group per record.
+Closing requires explicit confirmation. Withdrawing an assignment removes
+student access and retains submissions/results in the professor's archive;
+it does not delete the exercise or change another group's assignment.
+
+The November 27 migration splits existing multi-group assignments and preserves
+attempts for each group's students. Completed review records are copied to avoid
+repeating a provider request for historical work. Historical migration files keep
+the removed field's definition so existing databases can be upgraded.
 
 ## Local Setup
 
@@ -72,6 +77,12 @@ The same [Chat Completions API contract](https://developers.openai.com/api/refer
 is used for generation and review. A configured compatible provider must support
 JSON object responses. Generated files are validated as untrusted projects.
 
+Personal OpenAI keys route to OpenAI. OpenRouter uses its documented
+[Chat Completions endpoint](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request).
+For OpenRouter, a model without a provider prefix receives `openai/`.
+The platform-provider option preserves the server-configured endpoint and model.
+Selecting a personal provider never routes the internal platform key to it.
+
 ## Verification And Limits
 
 Automated tests cover credentials, access, deadlines, retries, generation
@@ -86,5 +97,5 @@ The provider integration is tested with controlled responses. No live provider
 request has been verified because no key is configured. Visual browser QA was
 unavailable; page rendering and normal HTTP entry points were checked.
 
-Per-exercise dependency installation and running uploaded Compose files remain
+Per-exercise dependency installation and building uploaded Dockerfiles remain
 outside this iteration. Both language runners use the common prebuilt image.

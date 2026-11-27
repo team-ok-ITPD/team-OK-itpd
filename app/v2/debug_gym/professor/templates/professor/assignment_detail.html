@@ -9,22 +9,25 @@
   <h2 class="card-title">{{ assignment.bug.title }}</h2>
   <p>{{ assignment.instructions|default:"" }}</p>
   <p><span class="badge">{{ assignment.get_status_display }}</span></p>
+  {% if assignment.is_withdrawn %}<p class="alert info">Withdrawn assignment · Read-only archive. Student submissions are retained.</p>{% else %}
   <form class="form" method="post">{% csrf_token %}{{ form.non_field_errors }}
     <label class="field">Deadline (optional, UTC){{ form.deadline }}{{ form.deadline.errors }}</label>
     <button class="button secondary">Save deadline</button>
   </form>
   {% if assignment.status == "active" %}
-  <form method="post" action="{% url 'professor:close' group.pk assignment.pk %}">{% csrf_token %}
-    <button class="button danger">Close assignment</button>
+    <form method="post" action="{% url 'professor:close' group.pk assignment.pk %}" data-confirm="Close this assignment? Students in this group will no longer be able to submit. Results will become available. Other groups are unchanged.">{% csrf_token %}
+    <input type="hidden" name="confirm" value="yes"><button class="button danger" type="submit">Close assignment</button></form>
     <p class="field-hint">Stops submissions and opens the result table.</p>
-  </form>{% endif %}
+  {% endif %}
+  <a class="button ghost" href="{% url 'professor:unassign' group.pk assignment.pk %}">Unassign from this group</a>
+  {% endif %}
 </section>
 <section class="card stack">
 <h2 class="card-title">Student results</h2>
 {% if assignment.results_visible %}
   <a class="button secondary" href="{% url 'professor:export' group.pk assignment.pk %}">Export CSV</a>
-  <div class="alert info">{% if review %}Agent review: {{ review.status }}. {{ review.detail }}{% else %}A one-time agent review is queued. It starts automatically when a generation key is available.{% endif %}</div>
-  <p class="field-hint">The agent checks all submissions once after the deadline or manual closure. Findings are advisory and need your review.</p>
+  <div class="alert info">{% if review %}Agent review: {{ review.status }}. {{ review.detail }}{% elif assignment.is_withdrawn %}Archived. No new automated review will be scheduled.{% else %}A one-time agent review is queued. It starts automatically when a generation key is available.{% endif %}</div>
+  {% if not assignment.is_withdrawn %}<p class="field-hint">The agent checks all submissions once after the deadline or manual closure. Findings are advisory and need your review.</p>{% endif %}
   <div class="table-wrap"><table class="table">
   <thead><tr><th>Name</th><th>Email</th><th>Tests passed / total</th><th>Review</th></tr></thead>
   <tbody>{% for row in rows %}<tr>

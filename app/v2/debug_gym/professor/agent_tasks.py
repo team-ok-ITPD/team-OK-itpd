@@ -10,27 +10,26 @@ def generate(user, prompt, language, test_count):
         "Create a self-contained debugging exercise for the requested language. "
         "Use pytest for Python, or node:test and node:assert for JavaScript. "
         "Use .test.js names for JavaScript. Return title, description, "
-        "entry_file, project_files (relative path to UTF-8 source), solution_code. "
+        "entry_file, project_files (relative path to UTF-8 source). Do not return a reference solution. "
         "Include exactly the requested number of individual tests. "
-        "At least one test must fail on the buggy source, all must pass on the solution. "
+        "Tests must assert the intended behavior. At least one must fail on the buggy source. "
         "Use only the standard library and pytest. No installation or network access. "
         "The files should be at the project root, including the entry file."
     ), {"prompt": prompt, "language": language, "tests": test_count})
     try:
         files = validate_project(result["project_files"], result["entry_file"])
-        title, description, solution = result["title"], result["description"], result["solution_code"]
-        if not all(isinstance(text, str) and text.strip() for text in (title, description, solution)):
+        title, description = result["title"], result["description"]
+        if not all(isinstance(text, str) for text in (title, description)) or not title.strip():
             raise ValueError()
-        if len(title) > 200 or len(description) > 20_000 or len(solution) > 500_000:
+        if len(title) > 200 or len(description) > 20_000:
             raise ValueError()
         bug = Bug(
-            title=title, description=description, solution_code=solution, language=language,
+            title=title, description=description, language=language,
             entry_file=result["entry_file"], project_files=files, difficulty="easy",
             buggy_code=files[result["entry_file"]], visibility="private", created_by=user,
         )
-        passed, total = verify(bug, solution)
         broken_passed, broken_total = verify(bug, bug.buggy_code)
-        if total != test_count or passed != total or broken_total != total or broken_passed == total:
+        if broken_total != test_count or broken_passed == broken_total:
             raise AgentError("Generated tests did not validate the exercise. Try a more specific prompt.")
         return bug
     except (KeyError, TypeError, ValueError) as error:
@@ -52,7 +51,7 @@ def analyze(user, bug, submissions):
         "Do not accuse a student or assign a grade. Return reviews: an array with one object "
         "for every submission_id, suspicious (boolean), reason (short evidence-based text). "
         "Findings are advisory and require professor review."
-    ), {"description": bug.description, "reference": bug.solution_code, "submissions": snapshot})
+    ), {"description": bug.description, "tests": bug.project_files or bug.tests_code, "submissions": snapshot})
     try:
         reviews = result["reviews"]
         if not isinstance(reviews, list) or len(reviews) != len(submissions):

@@ -41,21 +41,21 @@ class Command(BaseCommand):
         python = Bug(
             title="Demo · The forgotten zero", description="Count all zeros, including the first item.",
             language="python", entry_file="main.py", difficulty="easy", visibility="private",
-            created_by=teacher, buggy_code=PYTHON_BUG, solution_code=PYTHON_FIX,
+            created_by=teacher, buggy_code=PYTHON_BUG,
             project_files={"main.py": PYTHON_BUG, "test_main.py": PYTHON_TESTS},
         )
         javascript = Bug(
             title="Demo · JavaScript zero counter", description="Investigate why the first element is skipped.",
             language="javascript", entry_file="main.js", difficulty="easy", visibility="public",
-            created_by=teacher, buggy_code=JS_BUG, solution_code=JS_FIX,
+            created_by=teacher, buggy_code=JS_BUG,
             project_files={"main.js": JS_BUG, "main.test.js": JS_TESTS},
         )
         python = Bug.objects.filter(title=python.title, created_by=teacher).first() or python
         javascript = Bug.objects.filter(title=javascript.title, created_by=teacher).first() or javascript
         # Run real tests before writing demo data, so fixture scores are observed results.
         scores = {
-            "fixed": verify(python, python.solution_code), "buggy": verify(python, python.buggy_code),
-            "js_fixed": verify(javascript, javascript.solution_code),
+            "fixed": verify(python, PYTHON_FIX), "buggy": verify(python, python.buggy_code),
+            "js_fixed": verify(javascript, JS_FIX),
             "js_buggy": verify(javascript, javascript.buggy_code),
         }
         credentials = []
@@ -98,7 +98,7 @@ class Command(BaseCommand):
                         "description": example.description, "language": example.language,
                         "entry_file": example.entry_file, "difficulty": example.difficulty,
                         "visibility": example.visibility, "buggy_code": example.buggy_code,
-                        "solution_code": example.solution_code, "project_files": example.project_files,
+                        "project_files": example.project_files,
                     },
                 )
                 example.pk = row.pk
@@ -119,7 +119,7 @@ class Command(BaseCommand):
                         passed, total = scores[key]
                         Submission.objects.get_or_create(
                             assignment=assignment, student=student, bug=bug,
-                            submitted_code=bug.solution_code if fixed else bug.buggy_code,
+                            submitted_code=(PYTHON_FIX if bug.language == "python" else JS_FIX) if fixed else bug.buggy_code,
                             defaults={"tests_passed": passed, "tests_total": total},
                         )
         path = settings.BASE_DIR / "DEMO_ACCOUNTS.md"

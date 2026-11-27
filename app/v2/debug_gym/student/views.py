@@ -45,7 +45,7 @@ STATUSES = {
 def my_assignments(student):
     """Every assignment sent to one of the student's groups."""
     return (
-        Assignment.objects.filter(groups__students=student)
+        Assignment.objects.filter(groups__students=student, is_withdrawn=False)
         .select_related("bug", "professor")
         .distinct()
     )

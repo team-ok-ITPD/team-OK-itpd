@@ -28,7 +28,7 @@
         {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
       </fieldset>
     {% else %}
-      <label class="field{% if field.errors %} has-error{% endif %}{% if field.name == 'description' or field.name == 'buggy_code' or field.name == 'solution_code' %} field-wide{% endif %}">
+      <label class="field{% if field.errors %} has-error{% endif %}{% if field.name == 'description' or field.name == 'buggy_code' %} field-wide{% endif %}">
         {{ field.label }}
         {{ field }}
         {% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}

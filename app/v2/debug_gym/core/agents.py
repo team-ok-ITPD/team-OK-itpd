@@ -28,32 +28,47 @@ def cipher():
 
 
 @sensitive_variables()
-def save_key(user, key):
+def save_key(user, key, provider=AgentCredential.Provider.PLATFORM):
+    if provider not in AgentCredential.Provider.values:
+        raise AgentError("Choose a supported provider.")
     if key:
         AgentCredential.objects.update_or_create(
-            user=user, defaults={"encrypted_key": cipher().encrypt(key.encode()).decode()},
+            user=user, defaults={"encrypted_key": cipher().encrypt(key.encode()).decode(), "provider": provider},
         )
     else:
         AgentCredential.objects.filter(user=user).delete()
 
 
-def api_key(user):
+@sensitive_variables()
+def api_credentials(user):
     record = AgentCredential.objects.filter(user=user).first()
     if record and record.encrypted_key:
         try:
-            return cipher().decrypt(record.encrypted_key.encode()).decode()
+            return cipher().decrypt(record.encrypted_key.encode()).decode(), record.provider
         except (InvalidToken, ValueError):
             raise AgentError("Your stored API key cannot be read. Save it again in Settings.")
     if not settings.DEBUG_GYM_AGENT_KEY:
         raise AgentError("Add your API key in Settings or ask the administrator to configure the platform key.")
-    return settings.DEBUG_GYM_AGENT_KEY
+    return settings.DEBUG_GYM_AGENT_KEY, AgentCredential.Provider.PLATFORM
+
+
+def api_key(user):
+    return api_credentials(user)[0]
 
 
 @sensitive_variables()
 def ask_agent(user, instruction, data):
-    key = api_key(user)
+    key, provider = api_credentials(user)
+    endpoint, model = settings.DEBUG_GYM_AGENT_URL, settings.DEBUG_GYM_AGENT_MODEL
+    if provider == AgentCredential.Provider.OPENAI:
+        endpoint = "https://api.openai.com/v1/chat/completions"
+    elif provider == AgentCredential.Provider.OPENROUTER:
+        endpoint = "https://openrouter.ai/api/v1/chat/completions"
+        model = model if "/" in model else "openai/" + model
+    elif provider != AgentCredential.Provider.PLATFORM:
+        raise AgentError("Choose a supported provider in Settings.")
     payload = {
-        "model": settings.DEBUG_GYM_AGENT_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": instruction + " Return a JSON object only."},
             {"role": "user", "content": json.dumps(data)},
@@ -61,7 +76,7 @@ def ask_agent(user, instruction, data):
         "response_format": {"type": "json_object"},
     }
     request = Request(
-        settings.DEBUG_GYM_AGENT_URL, data=json.dumps(payload).encode(),
+        endpoint, data=json.dumps(payload).encode(),
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
     )
     try:

@@ -228,7 +228,7 @@ class AdminPanelTests(TestCase):
     def test_course_and_group_number_are_separate_required_fields(self):
         url = reverse("admin_panel:group-create")
         response = self.client.get(url)
-        self.assertContains(response, "Course name")
+        self.assertContains(response, 'name="course"')
         self.assertContains(response, "Group number")
         response = self.client.post(url, {
             "name": "Programming", "professor": self.teacher.pk,
@@ -314,7 +314,7 @@ class AdminPanelTests(TestCase):
 
     def test_batch_add_repeat_remove_preserves_submissions(self):
         bug = Bug.objects.create(
-            title="Example", description="Fix", buggy_code="pass", solution_code="pass",
+            title="Example", description="Fix", buggy_code="pass",
             language="python", created_by=self.teacher,
         )
         submission = Submission.objects.create(
@@ -394,7 +394,7 @@ class AdminPanelTests(TestCase):
         from student.models import IdeToken
 
         bug = Bug.objects.create(
-            title="Example", description="Fix", buggy_code="pass", solution_code="pass",
+            title="Example", description="Fix", buggy_code="pass",
             language="python", created_by=self.teacher,
         )
         token = IdeToken.issue(self.student, bug)
@@ -530,7 +530,7 @@ class AdminPanelTests(TestCase):
 
         other = User.objects.create_user("other@example.com", "Other", role=User.Role.PROFESSOR)
         bug = Bug.objects.create(
-            title="Example", description="Fix", buggy_code="pass", solution_code="pass",
+            title="Example", description="Fix", buggy_code="pass",
             language="python", created_by=self.teacher,
         )
         assignment = Assignment.objects.create(title="Example", bug=bug, professor=self.teacher)
@@ -564,7 +564,7 @@ class AdminPanelTests(TestCase):
 
     def test_delete_protects_teacher_and_student_history(self):
         bug = Bug.objects.create(
-            title="Example", description="Fix", buggy_code="pass", solution_code="pass",
+            title="Example", description="Fix", buggy_code="pass",
             language="python", created_by=self.teacher,
         )
         Submission.objects.create(student=self.student, bug=bug, submitted_code="fixed")

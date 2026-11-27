@@ -90,6 +90,7 @@ class StudyGroup(models.Model):
     """Table 2: groups. One professor -> many groups."""
 
     name = models.CharField(max_length=100)
+    course = models.CharField(max_length=200, blank=True)
     group_number = models.CharField(max_length=50, blank=True, default="")
     description = models.TextField(null=True, blank=True)
     professor = models.ForeignKey(
@@ -156,9 +157,8 @@ class Bug(models.Model):
         PRIVATE = "private", "Private"
 
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     buggy_code = models.TextField(help_text="Code with the bug")
-    solution_code = models.TextField(help_text="Expected fix (hidden from students)")
     tests_code = models.TextField(
         blank=True,
         default="",
@@ -166,10 +166,11 @@ class Bug(models.Model):
         "so tests start with: from main import *",
     )
     language = models.CharField(max_length=50, help_text="e.g. python, dart")
-    difficulty = models.CharField(max_length=10, choices=Difficulty.choices)
+    difficulty = models.CharField(max_length=10, choices=Difficulty.choices, blank=True, default=Difficulty.EASY)
     visibility = models.CharField(max_length=10, choices=Visibility.choices)
     project_files = models.JSONField(default=dict, blank=True)
     compose_config = models.TextField(blank=True)
+    dockerfile_config = models.TextField(blank=True)
     entry_file = models.CharField(max_length=255, blank=True)
     revision = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
@@ -214,6 +215,7 @@ class Assignment(models.Model):
     )
     deadline = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    is_withdrawn = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -313,8 +315,14 @@ class Submission(models.Model):
 
 
 class AgentCredential(models.Model):
+    class Provider(models.TextChoices):
+        PLATFORM = "platform", "Platform provider"
+        OPENAI = "openai", "OpenAI"
+        OPENROUTER = "openrouter", "OpenRouter"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="agent_credential")
     encrypted_key = models.TextField(blank=True)
+    provider = models.CharField(max_length=20, choices=Provider.choices, default=Provider.PLATFORM)
 
 
 class WorkspaceSession(models.Model):

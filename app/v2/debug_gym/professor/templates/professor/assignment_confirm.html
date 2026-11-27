@@ -1,0 +1,13 @@
+<!-- [Professor Dev] Explicit confirmation before closing or withdrawing an assignment -->
+{% extends "base.html" %}
+{% block title %}Confirm assignment action · Debug Gym{% endblock %}
+{% block content %}
+<header class="page-header"><div><p class="eyebrow">{{ group }}</p><h1>{% if action == "close" %}Close assignment?{% else %}Unassign exercise?{% endif %}</h1></div></header>
+<section class="card stack"><h2 class="card-title">{{ assignment.title }}</h2>
+{% if action == "close" %}<p>Students in this group will no longer be able to submit. Results will become available and the one-time agent review will be eligible to run.</p>
+{% else %}<p>This assignment will disappear from the group's active assignments and student access will stop. The exercise remains in your catalog. All submissions and results will be kept in your archive.</p>{% endif %}
+<p class="field-hint">Assignments and deadlines for other groups are unchanged.</p>
+<form method="post" class="row">{% csrf_token %}<input type="hidden" name="confirm" value="yes">
+<button class="button danger" type="submit">{% if action == "close" %}Yes, close assignment{% else %}Yes, unassign{% endif %}</button>
+<a class="button secondary" href="{% url 'professor:assignment' group.pk assignment.pk %}">Cancel</a></form></section>
+{% endblock %}
