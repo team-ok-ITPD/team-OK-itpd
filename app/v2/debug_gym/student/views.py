@@ -17,7 +17,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 from django.db import transaction
 
-from core.models import Assignment, Bug, StudyGroup, Submission
+from core.models import Assignment, Bug, StudyGroup, Submission, WorkspacePairingCode
 from core.permissions import student_required
 
 from . import ai
@@ -214,6 +214,31 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
         if blocked:
             messages.error(request, blocked)
             return redirect(request.path)
+        if request.POST.get("action") == "pair":
+            if bug.language.lower() not in ("python", "python3", "python 3"):
+                messages.error(request, "Local VS Code pairing currently supports Python exercises only.")
+                return redirect(request.path)
+            code = WorkspacePairingCode.issue(
+                request.user,
+                bug,
+                assignment,
+                request.build_absolute_uri(request.path),
+            )
+            response = render(
+                request,
+                "student/bug_workspace.html",
+                {
+                    "assignment": assignment,
+                    "bug": bug,
+                    "blocked": blocked,
+                    "latest": latest,
+                    "has_tests": has_tests(bug),
+                    "code_file": code_file_name(bug),
+                    "pairing_code": "-".join(code[index:index + 4] for index in range(0, len(code), 4)),
+                },
+            )
+            response["Cache-Control"] = "no-store"
+            return response
         try:
             folder = write_workspace(
                 request.user, bug, assignment=assignment,

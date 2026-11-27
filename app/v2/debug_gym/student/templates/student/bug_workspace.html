@@ -62,7 +62,25 @@
             <dt>Written by</dt>
             <dd>You · {% if bug.visibility == "public" %}every student can practise it{% else %}only you can see it{% endif %}</dd>
           {% endif %}
-          <dt>Last saved</dt>
+          <dt>Attempt status</dt>
+          <dd>
+            {% if latest %}
+              <span class="badge {% if latest.status == 'graded' %}success{% else %}warning{% endif %}">{{ latest.get_status_display }}</span>
+            {% else %}
+              <span class="text-subtle">Not submitted</span>
+            {% endif %}
+          </dd>
+          {% if latest and latest.tests_total != None %}
+            <dt>Tests passed</dt>
+            <dd>{{ latest.tests_passed }} / {{ latest.tests_total }}</dd>
+          {% elif latest and has_tests %}
+            <dt>Tests passed</dt>
+            <dd class="text-subtle">Not recorded for this attempt</dd>
+          {% elif latest %}
+            <dt>Tests</dt>
+            <dd class="text-subtle">No automated tests for this exercise</dd>
+          {% endif %}
+          <dt>Last submitted</dt>
           <dd>{{ latest.submitted_at|date:"M j, H:i"|default:"Never" }}</dd>
         {% endif %}
       </dl>
@@ -89,9 +107,22 @@
         </ol>
         <form method="post" data-busy-form>
           {% csrf_token %}
-          <button class="button brand" type="submit" data-busy-label="Starting VS Code…">Open in VS Code</button>
+          <button class="button brand" type="submit" data-busy-label="Starting VS Code…">Open browser VS Code</button>
         </form>
-        <small class="text-subtle">VS Code keeps your changes between visits. Starting it can take a few seconds.</small>
+        <small class="text-subtle">The browser workspace keeps your changes between visits.</small>
+        {% if bug.language|lower == "python" or bug.language|lower == "python3" or bug.language|lower == "python 3" %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="pair">
+            <button class="button secondary" type="submit">Get a code for local VS Code</button>
+          </form>
+          {% if pairing_code %}
+            <p class="alert info" role="status">
+              Enter this one-time code in the Debug Gym VS Code extension within 10 minutes:
+              <code>{{ pairing_code }}</code>
+            </p>
+          {% endif %}
+        {% endif %}
       {% endif %}
     </section>
 
