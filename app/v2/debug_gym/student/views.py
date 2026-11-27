@@ -21,7 +21,7 @@ from core.permissions import student_required
 
 from app.adel_b.bugs.verification import VerificationBusy
 from core.runtime import RuntimeError as VerificationError
-from core.bridge import ensure_relay, ide_server_url
+from core.bridge import ensure_ide_relay, ide_server_url
 from core.runtime import verify
 
 from . import ai
@@ -249,7 +249,7 @@ def workspace(request, bug, *, assignment=None, latest=None, blocked=None):
                 server_url=ide_server_url(port),
             )
             # Development on Linux: let the container reach this server (see core/bridge.py).
-            ensure_relay(port)
+            ensure_ide_relay(port)
             return redirect(start_ide(request.user, folder))
         except IdeError as error:
             messages.error(request, str(error))

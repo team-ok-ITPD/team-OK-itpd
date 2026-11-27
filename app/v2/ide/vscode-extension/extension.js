@@ -284,6 +284,16 @@ function activate(context) {
   submitButton.tooltip = "Submit your fix to Debug Gym";
   submitButton.command = "debugGym.submit";
   const startConfig = workspaceFolder() && readConfig(workspaceFolder());
+  // A code-server workspace is provisioned by the website and already has a
+  // server-issued token. Pairing/pulling is only for a separate local VS Code.
+  function updateWorkspaceMode() {
+    const config = workspaceFolder() && readConfig(workspaceFolder());
+    const serverWorkspace = Boolean(config?.token && config?.server && config?.site);
+    void vscode.commands.executeCommand("setContext", "debugGym.serverWorkspace", serverWorkspace);
+    void vscode.commands.executeCommand("setContext", "debugGym.canPullExercise", !serverWorkspace);
+  }
+  updateWorkspaceMode();
+  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(updateWorkspaceMode));
   // Bugs without tests (or in languages the image cannot test) only get Submit.
   if (startConfig?.tests) {
     testButton.show();
@@ -431,7 +441,15 @@ function activate(context) {
     vscode.commands.registerCommand("debugGym.runTests", runTests),
     vscode.commands.registerCommand("debugGym.runTest", runTest),
     vscode.commands.registerCommand("debugGym.submit", submit),
-    vscode.commands.registerCommand("debugGym.pullExercise", () => pullExercise(context)),
+    vscode.commands.registerCommand("debugGym.pullExercise", () => {
+      const folder = workspaceFolder();
+      const config = folder && readConfig(folder);
+      if (config?.token && config?.server && config?.site) {
+        vscode.window.showInformationMessage("This exercise is already running in Debug Gym's browser VS Code. Use Test and Submit instead.");
+        return;
+      }
+      return pullExercise(context);
+    }),
   );
 }
 
