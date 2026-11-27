@@ -570,7 +570,9 @@ def progress(request, pk):
     ).order_by("-submitted_at", "-pk").first()
     return JsonResponse({
         "id": latest.pk if latest else None,
+        "status": latest.get_status_display() if latest else None,
         "passed": latest.tests_passed if latest else None,
         "total": latest.tests_total if latest else None,
         "submitted": latest.submitted_at.isoformat() if latest else None,
+        "submitted_code": latest.submitted_code if latest else None,
     })
