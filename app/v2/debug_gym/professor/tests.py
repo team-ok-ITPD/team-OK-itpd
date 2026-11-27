@@ -52,16 +52,16 @@ class TeachingWorkflowTests(TestCase):
         self.foreign_group = StudyGroup.objects.create(name="Foreign group", professor=self.other)
         self.bug = Bug.objects.create(
             title="My private exercise", description="Find the bug", buggy_code="return 0",
-            solution_code="return 1", language="python", difficulty="easy",
+             language="python", difficulty="easy",
             visibility="private", created_by=self.teacher,
         )
         self.foreign_bug = Bug.objects.create(
             title="Foreign private exercise", description="Private", buggy_code="x",
-            solution_code="y", language="python", difficulty="easy", visibility="private",
+             language="python", difficulty="easy", visibility="private",
             created_by=self.other,
         )
         self.public = Bug.objects.create(
-            title="Public exercise", description="Public", buggy_code="x", solution_code="y",
+            title="Public exercise", description="Public", buggy_code="x",
             language="python", difficulty="easy", visibility="public", created_by=self.other,
         )
         self.client.force_login(self.teacher)
@@ -130,13 +130,11 @@ class TeachingWorkflowTests(TestCase):
         self.assertEqual(self.bug.visibility, "public")
 
     def test_foreign_public_exercise_is_read_only_in_page_and_workspace(self):
-        self.public.solution_code = "secret reference implementation"
         self.public.save()
         url = reverse("professor:bug", args=[self.public.pk])
         page = self.client.get(url)
         self.assertContains(page, "read-only")
         self.assertNotContains(page, "Save details")
-        self.assertNotContains(page, self.public.solution_code)
         self.assertNotContains(page, "Save project")
         self.assertEqual(self.client.post(url, {
             "title": "Forged", "description": "Forged", "difficulty": "easy",
@@ -174,6 +172,7 @@ class TeachingWorkflowTests(TestCase):
         self.public.project_files = {"src/main.py": "broken", "tests/test_main.py": "test"}
         self.public.entry_file = "src/main.py"
         self.public.compose_config = "services: {}"
+        self.public.dockerfile_config = "FROM python:3.12\n"
         self.public.revision = 7
         self.public.save()
         deadline = (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M")
@@ -187,8 +186,8 @@ class TeachingWorkflowTests(TestCase):
         self.assertEqual(copy.created_by, self.teacher)
         self.assertEqual(copy.visibility, "private")
         self.assertEqual(copy.revision, 1)
-        for field in ("title", "buggy_code", "solution_code", "language", "difficulty",
-                      "project_files", "entry_file", "compose_config"):
+        for field in ("title", "buggy_code", "language", "difficulty",
+                      "project_files", "entry_file", "compose_config", "dockerfile_config"):
             self.assertEqual(getattr(copy, field), getattr(self.public, field), field)
         source_url = "http://testserver" + reverse("professor:bug", args=[self.public.pk])
         self.assertEqual(copy.description, f"{self.public.description}\n\nCopied from: {source_url}")
@@ -230,16 +229,15 @@ class TeachingWorkflowTests(TestCase):
         url = reverse("professor:bug", args=[self.bug.pk])
         page = self.client.get(url)
         self.assertNotContains(page, 'name="solution_code"')
-        self.assertNotContains(page, self.bug.solution_code)
         response = self.client.post(url, {
             "title": "Updated title", "description": "Updated description",
             "difficulty": "easy", "revision": self.bug.revision,
-            "solution_code": "forged reference",
+
         })
         self.assertRedirects(response, url)
         self.bug.refresh_from_db()
         self.assertEqual(self.bug.title, "Updated title")
-        self.assertEqual(self.bug.solution_code, "return 1")
+        self.assertNotIn("solution_code", {field.name for field in Bug._meta.fields})
 
     def test_manual_creation_uses_language_choices_and_rejects_unknown_language(self):
         page = self.client.get(reverse("professor:create"))
@@ -263,7 +261,7 @@ class TeachingWorkflowTests(TestCase):
                 self.assertEqual(self.client.get(
                     self.assignment_url("export", assignment),
                 ).status_code, 403)
-                self.client.post(self.assignment_url("close", assignment))
+                self.client.post(self.assignment_url("close", assignment), {"confirm": "yes"})
                 page = self.client.get(self.assignment_url("assignment", assignment))
                 self.assertContains(page, self.student.email)
                 self.assertContains(page, "0 / 5")
@@ -337,7 +335,7 @@ class TeachingWorkflowTests(TestCase):
     def exercise_data(self):
         return {
             "title": "Uploaded exercise", "description": "Fix this",
-            "language": "python", "difficulty": "easy", "solution_code": "fixed",
+            "language": "python", "difficulty": "easy",
             "entry_file": "project/main.py",
             "project": self.project_upload({"project/main.py": "buggy", "project/test_main.py": "tests"}),
         }
@@ -446,14 +444,15 @@ class TeachingWorkflowTests(TestCase):
             self.assertIn("project", response.context["form"].errors)
         self.assertFalse(Bug.objects.filter(title="Uploaded exercise").exists())
 
-    def test_compose_is_saved_per_exercise(self):
+    def test_dockerfile_is_saved_per_exercise(self):
         data = self.exercise_data()
-        data["compose_file"] = SimpleUploadedFile(
-            "compose.yaml", b"services:\n  workspace:\n    image: python:3.12\n",
+        data["dockerfile"] = SimpleUploadedFile(
+            "Dockerfile", b"FROM python:3.12\nRUN pip install pytest\n",
         )
         self.client.post(reverse("professor:create"), data)
         bug = Bug.objects.get(title="Uploaded exercise")
-        self.assertIn("python:3.12", bug.compose_config)
+        self.assertIn("python:3.12", bug.dockerfile_config)
+        self.assertEqual(bug.compose_config, "")
 
     def test_legacy_shared_assignment_cannot_change_another_groups_deadline(self):
         assignment = self.assignment()
@@ -461,6 +460,6 @@ class TeachingWorkflowTests(TestCase):
         assignment.groups.add(second)
         response = self.client.post(self.assignment_url("assignment", assignment), {})
         self.assertContains(response, "shares a deadline across groups")
-        self.client.post(self.assignment_url("close", assignment))
+        self.client.post(self.assignment_url("close", assignment), {"confirm": "yes"})
         assignment.refresh_from_db()
         self.assertEqual(assignment.status, "active")

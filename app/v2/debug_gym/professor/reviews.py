@@ -51,6 +51,7 @@ def review_due_assignments():
     due = Assignment.objects.filter(
         Q(deadline__lte=timezone.now()) | Q(status=Assignment.Status.CLOSED),
         agent_review__isnull=True,
+        is_withdrawn=False,
     ).select_related("professor", "bug")
     for assignment in due:
         try:

@@ -46,7 +46,7 @@ STATUSES = {
 def my_assignments(student):
     """Every assignment sent to one of the student's groups."""
     return (
-        Assignment.objects.filter(groups__students=student)
+        Assignment.objects.filter(groups__students=student, is_withdrawn=False)
         .select_related("bug", "professor")
         .distinct()
     )
@@ -424,7 +424,6 @@ def bug_create(request):
                 title=generated["title"],
                 description=generated["description"],
                 buggy_code=generated["buggy_code"],
-                solution_code=generated["solution_code"],
                 project_files=files,
                 entry_file=entry,
                 language=data["language"],

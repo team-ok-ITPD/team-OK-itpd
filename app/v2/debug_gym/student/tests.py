@@ -44,7 +44,7 @@ class StudentTestCase(TestCase):
             title="Off by one",
             description="Loop skips the last item",
             buggy_code="for i in range(len(x) - 1): pass",
-            solution_code="for i in range(len(x)): pass",
+
             language="python",
             difficulty=Bug.Difficulty.EASY,
             visibility=Bug.Visibility.PRIVATE,
@@ -132,7 +132,7 @@ class DashboardTests(StudentTestCase):
 
     def test_solution_code_is_never_shown(self):
         self.assignment("Due soon", days=1)
-        self.assertNotContains(self.get(), self.bug.solution_code)
+        self.assertNotContains(self.get(), "REMOVED_REFERENCE_SENTINEL")
 
 
 class AssignmentPagesTests(StudentTestCase):
@@ -210,7 +210,7 @@ class AssignmentPagesTests(StudentTestCase):
         self.assertContains(response, self.bug.description)
         self.assertContains(response, self.bug.buggy_code)
         self.assertContains(response, "Not submitted yet.")
-        self.assertNotContains(response, self.bug.solution_code)
+        self.assertNotContains(response, "REMOVED_REFERENCE_SENTINEL")
 
     def test_detail_of_another_groups_assignment_is_404(self):
         a = self.assignment("Not mine", group=self.other_group)
@@ -280,7 +280,7 @@ class WorkspaceTests(StudentTestCase):
         self.assertContains(page, "Open in VS Code</button>")
         self.assertContains(page, "<code>main.py</code>", html=False)
         self.assertContains(page, "<strong>Test</strong>", html=False)
-        self.assertNotContains(page, self.bug.solution_code)
+        self.assertNotContains(page, "REMOVED_REFERENCE_SENTINEL")
         self.assertNotContains(page, "<textarea")
 
     def test_open_writes_the_folder_and_redirects_to_vscode(self):
@@ -299,7 +299,7 @@ class WorkspaceTests(StudentTestCase):
         self.assertTrue(config["tests"])
         self.assertTrue(config["site"].endswith(self.ws_url(a)))
         self.assertEqual(IdeToken.find(config["token"]).assignment, a)
-        self.assertNotIn(self.bug.solution_code, "".join(p.read_text() for p in folder.rglob("*") if p.is_file()))
+        self.assertNotIn("REMOVED_REFERENCE_SENTINEL", "".join(p.read_text() for p in folder.rglob("*") if p.is_file()))
 
     def test_reopening_keeps_my_edits_and_replaces_the_token(self):
         a = self.assignment("Task")
@@ -421,7 +421,7 @@ class IdeSubmitTests(StudentTestCase):
 
     def test_practice_submission(self):
         public = Bug.objects.create(
-            title="Public", description="d", buggy_code="x = 1", solution_code="x = 2", language="python",
+            title="Public", description="d", buggy_code="x = 1", language="python",
             difficulty=Bug.Difficulty.EASY, visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
         )
         response = self.send(IdeToken.issue(self.student, public), code="x = 2")
@@ -539,7 +539,7 @@ class PracticeTests(StudentTestCase):
         fields = {
             "description": f"{title} description",
             "buggy_code": "x = 1",
-            "solution_code": "x = 2  # SOLUTION",
+
             "language": "python",
             "difficulty": Bug.Difficulty.MEDIUM,
             "visibility": Bug.Visibility.PUBLIC,
@@ -671,7 +671,7 @@ class ResultsTests(StudentTestCase):
 
     def test_solution_code_is_never_shown(self):
         self.graded(7)
-        self.assertNotContains(self.get_results(), self.bug.solution_code)
+        self.assertNotContains(self.get_results(), "REMOVED_REFERENCE_SENTINEL")
 
     def test_dashboard_links_to_results(self):
         self.assertContains(self.get(), self.results_url)
@@ -689,7 +689,7 @@ class OwnBugTests(StudentTestCase):
             "difficulty": Bug.Difficulty.EASY,
             "visibility": Bug.Visibility.PRIVATE,
             "buggy_code": "for i in range(len(x) - 1):\r\n    pass\r\n",
-            "solution_code": "MY_SECRET_FIX",
+
         }
         data.update(extra)
         return data
@@ -700,7 +700,7 @@ class OwnBugTests(StudentTestCase):
 
     def my_bug(self, **extra):
         fields = {
-            "title": "Ali bug", "description": "d", "buggy_code": "x = 1", "solution_code": "",
+            "title": "Ali bug", "description": "d", "buggy_code": "x = 1",
             "language": "python", "difficulty": Bug.Difficulty.EASY,
             "visibility": Bug.Visibility.PRIVATE, "created_by": self.student,
         }
@@ -724,10 +724,10 @@ class OwnBugTests(StudentTestCase):
         bug = self.my_bug()
         self.client.force_login(self.student)
         self.client.post(reverse("student:bug_edit", args=[bug.pk]),
-                         self.form_data(buggy_code="    indented()\r\n", solution_code=""))
+                         self.form_data(buggy_code="    indented()\r\n"))
         bug.refresh_from_db()
         self.assertEqual(bug.buggy_code, "    indented()\n")
-        self.assertEqual(bug.solution_code, "")
+        self.assertNotIn("solution_code", {f.name for f in Bug._meta.fields})
         self.assertEqual(bug.language, "python")
         response = self.client.post(reverse("student:bug_edit", args=[bug.pk]), self.form_data(buggy_code="   "))
         self.assertContains(response, "Add the buggy code to practise on.")
@@ -750,7 +750,7 @@ class OwnBugTests(StudentTestCase):
     def test_only_mine_filter(self):
         self.my_bug(title="Mine")
         Bug.objects.create(
-            title="Prof public", description="d", buggy_code="x", solution_code="y",
+            title="Prof public", description="d", buggy_code="x",
             language="python", difficulty=Bug.Difficulty.EASY,
             visibility=Bug.Visibility.PUBLIC, created_by=self.prof,
         )
@@ -808,7 +808,7 @@ FAKE_BUG = {
     "title": "Second largest",
     "description": "Should return the second largest number, but returns the largest.",
     "buggy_code": "def second(xs):\n    return sorted(xs)[-1]\n",
-    "solution_code": "def second(xs):\n    return sorted(xs)[-2]\n",
+
 }
 
 
@@ -859,7 +859,7 @@ class AIBugTests(StudentTestCase):
         self.assertEqual(bug.created_by, self.student)
         self.assertEqual(bug.visibility, Bug.Visibility.PRIVATE)
         self.assertEqual(bug.language, "python")
-        self.assertEqual(bug.solution_code, FAKE_BUG["solution_code"])
+        self.assertNotIn("solution_code", {f.name for f in Bug._meta.fields})
         page = self.client.get(response["Location"])
         self.assertContains(page, "AI created")
         self.assertNotContains(page, "sorted(xs)[-2]")  # the fix stays hidden in the workspace
@@ -895,7 +895,7 @@ class AIClientTests(TestCase):
     def test_clean_result_checks_the_answer(self):
         self.assertEqual(ai.clean_result(dict(FAKE_BUG))["title"], "Second largest")
         for bad in ({}, {**FAKE_BUG, "title": 5}, {**FAKE_BUG, "buggy_code": "  "},
-                    {**FAKE_BUG, "solution_code": FAKE_BUG["buggy_code"]}):
+                    {**FAKE_BUG, "buggy_code": "x" * (ai.MAX_CODE + 1)}):
             with self.assertRaises(ai.AIError):
                 ai.clean_result(bad)
 

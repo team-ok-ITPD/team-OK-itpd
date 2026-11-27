@@ -68,9 +68,9 @@ class AdministratorForm(TeacherForm):
 class GroupForm(forms.ModelForm):
     class Meta:
         model = StudyGroup
-        fields = ["name", "group_number", "description", "professor"]
+        fields = ["name", "course", "group_number", "description", "professor"]
         labels = {
-            "name": "Course name", "group_number": "Group number", "professor": "Teacher",
+            "name": "Group name", "course": "Course", "group_number": "Group number", "professor": "Teacher",
         }
         help_texts = {
             "description": "Optional notes about the group.",

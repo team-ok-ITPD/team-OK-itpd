@@ -33,6 +33,7 @@ def session_allowed(session):
         assignment = session.assignment
         return (
             assignment.bug_id == bug.pk
+            and not assignment.is_withdrawn
             and assignment.groups.filter(students=user).exists()
             and assignment.status == Assignment.Status.ACTIVE
             and (assignment.deadline is None or assignment.deadline >= timezone.now())

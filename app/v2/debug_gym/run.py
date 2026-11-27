@@ -64,7 +64,6 @@ private_bug, _ = Bug.objects.get_or_create(
     defaults=dict(
         description="The loop skips the last item. Fix it so every item is processed.",
         buggy_code="def total(xs):\\n    t = 0\\n    for i in range(len(xs) - 1):\\n        t += xs[i]\\n    return t\\n",
-        solution_code="def total(xs):\\n    t = 0\\n    for i in range(len(xs)):\\n        t += xs[i]\\n    return t\\n",
         language="python",
         difficulty=Bug.Difficulty.EASY,
         visibility=Bug.Visibility.PRIVATE,
@@ -76,7 +75,6 @@ Bug.objects.get_or_create(
     defaults=dict(
         description="Calls share one list. Make each call start with its own empty list.",
         buggy_code="def add(x, items=[]):\\n    items.append(x)\\n    return items\\n",
-        solution_code="def add(x, items=None):\\n    items = [] if items is None else items\\n    items.append(x)\\n    return items\\n",
         language="python",
         difficulty=Bug.Difficulty.MEDIUM,
         visibility=Bug.Visibility.PUBLIC,

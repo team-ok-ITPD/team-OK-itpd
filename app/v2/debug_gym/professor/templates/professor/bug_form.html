@@ -2,14 +2,21 @@
 {% extends "base.html" %}
 {% block title %}Create exercise · Debug Gym{% endblock %}
 {% block content %}
+{% load static %}
+<script src="{% static 'js/professor-create.js' %}" defer></script>
 <header class="page-header"><div><p class="eyebrow">Professor{% if group %} / {{ group }}{% endif %}</p><h1>Create exercise</h1></div></header>
 <p class="lede">Start from your own project or describe a new debugging challenge. Every exercise begins private.</p>
-<div class="teaching-columns">
-<section class="card stack">
+<div class="stack exercise-create" data-create-tabs>
+<div class="row" role="tablist" aria-label="Creation method">
+  <button type="button" id="upload-tab" role="tab" class="button {% if active_tab != 'generate' %}primary{% else %}secondary{% endif %}" aria-selected="{% if active_tab == 'generate' %}false{% else %}true{% endif %}" aria-controls="upload-panel" tabindex="{% if active_tab == 'generate' %}-1{% else %}0{% endif %}">Upload project</button>
+  <button type="button" id="generate-tab" role="tab" class="button {% if active_tab == 'generate' %}primary{% else %}secondary{% endif %}" aria-selected="{% if active_tab == 'generate' %}true{% else %}false{% endif %}" aria-controls="generate-panel" tabindex="{% if active_tab == 'generate' %}0{% else %}-1{% endif %}">Generate with AI</button>
+</div>
+<section class="card stack" id="upload-panel" role="tabpanel" aria-labelledby="upload-tab" {% if active_tab == "generate" %}hidden{% endif %}>
 <h2 class="card-title">Upload a project</h2>
 <p class="text-muted">Compress your project folder into a ZIP. The exercise starts private.
 {% if group %}It will also be assigned to {{ group }} without a deadline. You can set one from the group afterwards.{% endif %}</p>
 <form class="form" method="post" enctype="multipart/form-data">{% csrf_token %}
+<p class="field-hint">Required: title, language and ZIP project. Maximum ZIP size: 5 MB; expanded contents: 5 MB and 100 text files. Description and difficulty are optional. The entry file is detected automatically when unambiguous.</p>
 {% if group %}<input type="hidden" name="group" value="{{ group.pk }}">{% endif %}
 {{ form.non_field_errors }}
 {% for field in form %}<label class="field">{{ field.label }}{{ field }}
@@ -17,9 +24,9 @@
 <p class="field-hint">After saving, open the project in VS Code online to edit source files and tests.</p>
 <button class="button primary">Create{% if group %} and assign{% endif %}</button>
 </form></section>
-<section class="card stack">
+<section class="card stack" id="generate-panel" role="tabpanel" aria-labelledby="generate-tab" {% if active_tab != "generate" %}hidden{% endif %}>
 <h2 class="card-title">Generate with an agent</h2>
-<p class="text-muted">Describe the learning goal. The project is checked against its reference solution before it enters your catalog.</p>
+<p class="text-muted">Describe the learning goal. The generated project must run the requested number of tests and fail at least one on its buggy source. No reference solution is generated or stored.</p>
 <form class="form" method="post" action="{% url 'professor:generate' %}">{% csrf_token %}
 {% if group %}<input type="hidden" name="group" value="{{ group.pk }}">{% endif %}
 {{ generate_form.non_field_errors }}
