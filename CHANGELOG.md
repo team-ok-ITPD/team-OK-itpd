@@ -8,6 +8,19 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Teaching groups have a separate group number; the existing Name field
+  represents the course. Lists, dropdowns and student/professor pages
+  distinguish groups by course and number; CSV import supports both fields.
+
+- Administrator student management supports group filtering, batch membership
+  and activity actions, and atomic, idempotent CSV imports. Groups have
+  searchable teacher selection, and accounts have confirmed, history-protected
+  deletion.
+- Optional account-creation emails include the administrator-set initial
+  password and a password-setup link; manual resend sends only the link.
+  Passwords remain hashed in application storage. Deactivation revokes
+  existing web and IDE access.
+
 - Administrators can edit student and administrator names, emails, passwords
   and activity status; self-deactivation is blocked and self password changes
   preserve the current session.
@@ -34,6 +47,12 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The repository has a maintained configuration plan that inventories the
   configuration that builds, checks, delivers and explains Debug GYM, and the
   Week 8 customer decisions `DEC-044` through `DEC-052` are recorded.
+
+### Changed
+
+- Administrator account forms use one password input with Show/Hide.
+  Membership management is centralized in Students; administrator assignment
+  inspection pages and separate group-member pages are removed.
 
 ### Fixed
 

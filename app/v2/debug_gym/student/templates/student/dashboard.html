@@ -57,7 +57,7 @@
       <ul class="student-list">
         {% for group in groups %}
           <li>
-            <strong>{{ group.name }}</strong>
+            <strong>{{ group }}</strong>
             <span class="text-subtle">{{ group.professor.name }} · {{ group.student_count }} student{{ group.student_count|pluralize }}</span>
           </li>
         {% endfor %}

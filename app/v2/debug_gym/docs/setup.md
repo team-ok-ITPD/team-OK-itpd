@@ -98,6 +98,8 @@ The settings read these environment variables. The defaults suit a local run.
 | `DJANGO_SECRET_KEY` | `dev-only-insecure-key-change-me` | Signing key. Set a real one for anything but local use. |
 | `DJANGO_DEBUG` | `1` | Debug mode. `--demo` refuses to run when this is not `1`. |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated host names the server answers to. |
+| `DEBUG_GYM_IDE_IMAGE` | `debug-gym-ide` | Image used by both student and shared IDE launchers; Docker is required for IDE sessions. |
+| `DEBUG_GYM_WORKSPACES_DIR` | `workspaces` next to `manage.py` | Workspace root shared by the two launchers; existing learner files are not reset. |
 
 The database is `db.sqlite3` in the project folder. Git ignores it.
 
@@ -115,11 +117,19 @@ Sign in at `http://127.0.0.1:8000/`. Each role lands on its own dashboard.
 2. **Admin** (`admin@example.com`): open `/admin-panel/` to create teacher,
     student and administrator accounts. Each account list has **Edit** actions
     for name, email, password and active status; leave the password blank to
-    keep it. Administrators cannot deactivate themselves. Use **Groups** to
-    create a group, select its active teacher,
-    change its teacher, and add or remove students. Each group has one teacher.
+    keep it. Administrators cannot deactivate or delete themselves. Use
+    **Students** to filter by group, select students for batch membership or
+    activity changes, or import a CSV. **Groups** creates/edits groups and
+    their active teacher. The existing Name field is labelled **Course name**;
+    **Group number** is a separate required field. Existing records keep blank
+    numbers until an administrator fills them in.
+    Each group has one teacher.
     Changing the group's teacher does not transfer existing assignments or
-    exercises. Assignment pages are read-only in the administrator panel.
+    exercises. Account deletion requires confirmation and is blocked when
+    historical teaching/learning records would be removed. Assignments are
+    not part of the administrator panel.
+    See [administrator workflows](../../../../docs/admin-workflows.md) for the
+    CSV schema, optional access-email configuration and limits.
 3. **Professor** (`prof@example.com`): `/professor/` currently shows only a
     placeholder dashboard. Groups, assignments and grading pages are not
     implemented yet.

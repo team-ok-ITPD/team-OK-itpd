@@ -2,8 +2,8 @@
 {% extends "base.html" %}
 {% block title %}Assign exercise · Debug Gym{% endblock %}
 {% block content %}
-<header class="page-header"><div><p class="eyebrow">{{ group.name }}</p><h1>Assign exercise</h1></div></header>
-<p class="lede">This assignment belongs to {{ group.name }}. Its deadline is independent of other groups.</p>
+<header class="page-header"><div><p class="eyebrow">{{ group }}</p><h1>Assign exercise</h1></div></header>
+<p class="lede">This assignment belongs to {{ group }}. Its deadline is independent of other groups.</p>
 <p class="text-muted">Choosing another author's public exercise creates a private copy in your catalog, with a link to the original. Your group receives that independent copy.</p>
 <section class="card">
 <form class="form" method="post">{% csrf_token %}

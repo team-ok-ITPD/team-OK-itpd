@@ -1,0 +1,11 @@
+name,email,is_active,password
+Тестовый студент 01,import.student01@example.com,true,ImportTest-2026!
+Тестовый студент 02,import.student02@example.com,true,ImportTest-2026!
+Тестовый студент 03,import.student03@example.com,true,ImportTest-2026!
+Тестовый студент 04,import.student04@example.com,true,ImportTest-2026!
+Тестовый студент 05,import.student05@example.com,true,ImportTest-2026!
+Тестовый студент 06,import.student06@example.com,true,ImportTest-2026!
+Тестовый студент 07,import.student07@example.com,true,ImportTest-2026!
+Тестовый студент 08,import.student08@example.com,true,ImportTest-2026!
+Тестовый студент 09,import.student09@example.com,true,ImportTest-2026!
+Тестовый студент 10,import.student10@example.com,true,ImportTest-2026!

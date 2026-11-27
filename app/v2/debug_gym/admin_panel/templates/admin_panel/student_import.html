@@ -1,0 +1,28 @@
+<!-- [Admin Dev] Explicit, bounded student and membership CSV upload -->
+{% extends "base.html" %}
+{% block title %}Import students · Debug Gym{% endblock %}
+{% block content %}
+<div class="stack">
+<header class="page-header"><h1>Import students</h1><a class="button ghost" href="{% url 'admin_panel:students' %}">Back to students</a></header>
+{% include "admin_panel/components/navigation.html" %}
+<section class="card">
+  <h2 class="card-title">CSV format</h2>
+  <p>UTF-8, comma-separated, at most 1 MB / 5000 rows. Required headers: name,email. Optional: is_active,password,course,group_number,teacher_email. One row per student/group; repeat identical account data for multiple groups.</p>
+  <pre class="code">name,email,is_active,password,course,group_number,teacher_email
+Example Student,student@example.com,true,,Programming,01,teacher@example.com</pre>
+  <p>A new group needs a course name, a separate group number and an existing active teacher. The same course can have several numbered groups. Existing teachers are never reassigned by import. Specify group_number when a course has several groups.</p>
+  <p>Existing students are matched by email ignoring case. Blank password/status preserves the existing value. New students need a password of at least 8 characters unless access email is configured. Passwords are stored only as hashes. Blank course and group number creates/updates the student without enrollment. Omitted groups are never removed.</p>
+  <p>Repeating identical data creates no duplicates. All rows are validated in a transaction: any error rolls back the entire file. CSV contents and passwords are not logged or stored as uploaded files.</p>
+</section>
+<form method="post" enctype="multipart/form-data" class="card form student-import-form">
+  {% csrf_token %}{{ form.non_field_errors }}
+  {% for field in form %}
+  <label class="field{% if field.field.widget.input_type == 'checkbox' %} form-check{% endif %}{% if field.errors %} has-error{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}{{ field }}<span>{{ field.label }}</span>{% else %}{{ field.label }}{{ field }}{% endif %}
+    {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+  </label>
+  {% endfor %}
+  <div><button class="button primary" type="submit">Import CSV</button></div>
+</form>
+</div>
+{% endblock %}
