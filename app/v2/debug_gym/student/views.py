@@ -342,6 +342,19 @@ def my_bug_or_404(student, pk):
 
 
 @student_required
+def bug_new(request):
+    """Create a bug: pick a public bug to practise, or have an AI write one."""
+    return render(
+        request,
+        "student/bug_new.html",
+        {
+            "public_count": Bug.objects.filter(visibility=Bug.Visibility.PUBLIC).count(),
+            "my_bug_count": Bug.objects.filter(created_by=request.user).count(),
+        },
+    )
+
+
+@student_required
 def public_bugs(request):
     student = request.user
     bugs = practice_bugs_qs(student).annotate(
@@ -404,13 +417,24 @@ def practice_workspace(request, pk):
 @sensitive_post_parameters("api_key")
 def bug_create(request):
     """New practice bug: the student describes it and an AI writes it."""
-    form = AIBugForm(request.POST or None)
+    saved = ai.saved_settings(request.user)
+    if request.method == "POST" and "forget" in request.POST:
+        ai.forget(request.user)
+        messages.success(request, "Your saved endpoint, model and API key were removed.")
+        return redirect("student:bug_create")
+
+    form = AIBugForm(
+        request.POST or None,
+        has_saved_key=saved["has_key"],
+        initial={"endpoint": saved["endpoint"], "model": saved["model"], "remember": True},
+    )
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         try:
+            api_key = data["api_key"] or ai.saved_key(request.user)
             generated = ai.generate_bug(
-                provider=data["provider"],
-                api_key=data["api_key"],
+                endpoint=data["endpoint"],
+                api_key=api_key,
                 prompt=data["prompt"],
                 language=data["language"],
                 difficulty=data["difficulty"],
@@ -419,6 +443,11 @@ def bug_create(request):
         except ai.AIError as error:
             form.add_error(None, str(error))
         else:
+            # Remember only settings that worked.
+            if data["remember"]:
+                ai.remember(request.user, data["endpoint"].strip(), data["model"].strip(), api_key)
+            else:
+                ai.forget(request.user)
             files, entry = build_project(data["language"], generated["buggy_code"], generated.get("tests_code", ""))
             bug = Bug.objects.create(
                 title=generated["title"],
@@ -436,7 +465,7 @@ def bug_create(request):
                 f'AI created "{bug.title}". AI can make mistakes: check it with "Edit my bug" if something looks off.',
             )
             return redirect("student:practice_workspace", pk=bug.pk)
-    return render(request, "student/bug_ai_form.html", {"form": form})
+    return render(request, "student/bug_ai_form.html", {"form": form, "has_saved_key": saved["has_key"]})
 
 
 @student_required

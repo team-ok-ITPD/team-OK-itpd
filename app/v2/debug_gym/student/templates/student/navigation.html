@@ -1,0 +1,36 @@
+<!-- [Student Dev] Student sidebar navigation (included by templates/base.html for students) -->
+{% load static %}
+{% with name=request.resolver_match.url_name %}
+<nav class="student-nav" aria-label="Student navigation">
+  <div class="student-nav-title">
+    <span class="badge accent">Student</span>
+    <strong>Debug Gym</strong>
+    <span class="text-muted">Find it. Fix it. Learn it.</span>
+  </div>
+
+  <a class="student-nav-link{% if name == 'dashboard' %} is-active{% endif %}" href="{% url 'student:dashboard' %}"{% if name == 'dashboard' %} aria-current="page"{% endif %}>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+    Dashboard
+  </a>
+  <a class="student-nav-link{% if name == 'assignments_list' or name == 'assignment_detail' or name == 'assignment_workspace' %} is-active{% endif %}" href="{% url 'student:assignments_list' %}"{% if name == 'assignments_list' %} aria-current="page"{% endif %}>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
+    My assignments
+    {% if student_todo_count %}<span class="badge small warning student-nav-count" title="Assignments to do">{{ student_todo_count }}</span>{% endif %}
+  </a>
+  <a class="student-nav-link{% if name == 'public_bugs' or name == 'practice_workspace' or name == 'bug_edit' or name == 'bug_delete' %} is-active{% endif %}" href="{% url 'student:public_bugs' %}"{% if name == 'public_bugs' %} aria-current="page"{% endif %}>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h8l-1 8 9-12h-8z"/></svg>
+    Practice bugs
+  </a>
+  <a class="student-nav-link{% if name == 'bug_new' or name == 'bug_create' %} is-active{% endif %}" href="{% url 'student:bug_new' %}"{% if name == 'bug_new' %} aria-current="page"{% endif %}>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+    Create a bug
+  </a>
+  <a class="student-nav-link{% if name == 'results' %} is-active{% endif %}" href="{% url 'student:results' %}"{% if name == 'results' %} aria-current="page"{% endif %}>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    My results
+  </a>
+
+  <p class="student-nav-foot">Signed in as<br><strong>{{ request.user.name }}</strong></p>
+</nav>
+{% endwith %}
+<script src="{% static 'student/nav.js' %}" defer></script>

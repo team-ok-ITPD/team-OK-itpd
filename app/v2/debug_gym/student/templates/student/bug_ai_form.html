@@ -1,4 +1,4 @@
-<!-- [Student Dev] Ask an AI to write a practice bug with the student's own provider and API key -->
+<!-- [Student Dev] Ask an AI to write a practice bug through the student's own endpoint and API key -->
 {% extends "base.html" %}
 {% load static %}
 {% block title %}New practice bug · Debug Gym{% endblock %}
@@ -6,10 +6,10 @@
 {% block content %}
 <header class="page-header">
   <div>
-    <p class="eyebrow">Student / Practice / New bug</p>
-    <h1>Generate a practice bug with AI</h1>
+    <p class="eyebrow">Student / Create a bug / With AI</p>
+    <h1>Create a bug with AI</h1>
   </div>
-  <a class="button ghost" href="{% url 'student:public_bugs' %}">Cancel</a>
+  <a class="button ghost" href="{% url 'student:bug_new' %}">Back</a>
 </header>
 <p class="lede">
   Describe what the bug should be about and the AI writes the exercise for you.
@@ -20,11 +20,25 @@
   {% csrf_token %}
   {% for error in form.non_field_errors %}<p class="alert error">{{ error }}</p>{% endfor %}
 
-  <div class="form-pair">
-    {% include "student/includes/field.html" with field=form.provider %}
-    {% include "student/includes/field.html" with field=form.model %}
-  </div>
-  {% include "student/includes/field.html" with field=form.api_key %}
+  <section class="ai-section">
+    <h2 class="section-label">1 · Your AI connection</h2>
+    {% include "student/includes/field.html" with field=form.endpoint %}
+    <div class="form-pair">
+      {% include "student/includes/field.html" with field=form.model %}
+      {% include "student/includes/field.html" with field=form.api_key %}
+    </div>
+    <div class="row ai-remember">
+      <label class="radio-option">{{ form.remember }} {{ form.remember.label }}</label>
+      {% if has_saved_key %}
+        <span class="badge small success">Key saved</span>
+        <button class="button ghost small" type="submit" name="forget" value="1" formnovalidate>Forget saved key</button>
+      {% endif %}
+    </div>
+    <small class="field-hint">{{ form.remember.help_text }}</small>
+  </section>
+
+  <section class="ai-section">
+    <h2 class="section-label">2 · The bug</h2>
   {% include "student/includes/field.html" with field=form.prompt %}
   <div class="form-pair">
     {% include "student/includes/field.html" with field=form.language %}
@@ -40,6 +54,8 @@
     </div>
     <small class="field-hint">AI bugs are not checked by a professor. Share them only if they look right.</small>
   </fieldset>
+
+  </section>
 
   <datalist id="language-options">
     <option value="python"><option value="javascript"><option value="java"><option value="dart"><option value="c"><option value="cpp">

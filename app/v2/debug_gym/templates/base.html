@@ -14,12 +14,12 @@
   <body class="{% block body_class %}{% endblock %}">
     {% block body %}
       {% include "components/navbar.html" %}
-      {% if request.user.is_professor %}<div class="teaching-shell">{% include "professor/navigation.html" %}{% endif %}
-      <main class="container{% if request.user.is_professor %} teaching-main{% endif %}">
+      {% if request.user.is_professor %}<div class="teaching-shell">{% include "professor/navigation.html" %}{% elif request.user.is_student %}<div class="student-shell">{% include "student/navigation.html" %}{% endif %}
+      <main class="container{% if request.user.is_professor %} teaching-main{% elif request.user.is_student %} student-main{% endif %}">
         {% include "components/messages.html" %}
         {% block content %}{% endblock %}
       </main>
-      {% if request.user.is_professor %}</div>{% endif %}
+      {% if request.user.is_professor or request.user.is_student %}</div>{% endif %}
     {% endblock %}
     <dialog class="action-confirmation" id="action-confirmation" aria-labelledby="action-confirmation-title" aria-describedby="action-confirmation-description">
       <form method="dialog">

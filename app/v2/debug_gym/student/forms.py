@@ -3,7 +3,6 @@ from django import forms
 
 from core.models import Bug
 
-from .ai import PROVIDER_CHOICES
 from .workspaces import bug_tests_code, build_project
 
 MAX_CODE_LENGTH = 50_000
@@ -111,20 +110,30 @@ class StudentBugForm(forms.ModelForm):
 
 
 class AIBugForm(forms.Form):
-    """Ask an AI to write a practice bug. The API key is used once and never saved."""
+    """Ask an AI to write a practice bug through the student's own OpenAI-compatible endpoint."""
 
-    provider = forms.ChoiceField(label="AI provider", choices=PROVIDER_CHOICES)
-    api_key = forms.CharField(
-        label="API key",
-        strip=True,
-        widget=forms.PasswordInput(attrs={"autocomplete": "off", "spellcheck": "false"}),
-        help_text="Your own key for the provider above. It is used for this request only and never saved.",
+    endpoint = forms.CharField(
+        label="Endpoint",
+        max_length=500,
+        widget=forms.URLInput(attrs={"placeholder": "https://api.openai.com/v1/chat/completions", "spellcheck": "false"}),
+        help_text="An OpenAI-compatible chat completions address (OpenAI, OpenRouter, your school's gateway, ...).",
     )
     model = forms.CharField(
-        label="Model (optional)",
-        required=False,
+        label="Model",
         max_length=100,
-        help_text="Leave empty to use the provider's default model.",
+        widget=forms.TextInput(attrs={"placeholder": "e.g. gpt-4.1-mini", "spellcheck": "false"}),
+    )
+    api_key = forms.CharField(
+        label="API key",
+        required=False,
+        strip=True,
+        widget=forms.PasswordInput(attrs={"autocomplete": "off", "spellcheck": "false"}),
+    )
+    remember = forms.BooleanField(
+        label="Remember my endpoint, model and key on Debug Gym",
+        required=False,
+        initial=True,
+        help_text="The key is stored encrypted and is never shown again. Untick to forget it.",
     )
     prompt = forms.CharField(
         label="What should the bug be about?",
@@ -143,5 +152,19 @@ class AIBugForm(forms.Form):
         widget=forms.RadioSelect,
     )
 
+    def __init__(self, *args, has_saved_key=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_saved_key = has_saved_key
+        self.fields["api_key"].help_text = (
+            "A key is saved. Leave this empty to use it, or type a new one to replace it."
+            if has_saved_key else "Your own key for this endpoint."
+        )
+
     def clean_language(self):
         return self.cleaned_data["language"].strip().lower()
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("api_key") and not self.has_saved_key:
+            self.add_error("api_key", "Enter your API key.")
+        return cleaned

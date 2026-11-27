@@ -330,6 +330,9 @@ class AgentCredential(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="agent_credential")
     encrypted_key = models.TextField(blank=True)
     provider = models.CharField(max_length=20, choices=Provider.choices, default=Provider.PLATFORM)
+    # Students' AI bug generator: their own OpenAI-compatible endpoint and model.
+    endpoint = models.URLField(max_length=500, blank=True)
+    model = models.CharField(max_length=100, blank=True)
 
 
 class WorkspaceSession(models.Model):
