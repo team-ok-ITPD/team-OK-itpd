@@ -138,6 +138,33 @@ Sign in at `http://127.0.0.1:8000/`. Each role lands on its own dashboard.
     submission, which students then see. This is a development tool, not the
     product's professor workflow.
 
+## Prototype: use local VS Code
+
+The local VS Code pairing flow is a development prototype; the existing
+browser-based workspace remains available.
+
+1. Install the Debug Gym extension in desktop VS Code from the VSIX built by
+   `app/v2/ide/vscode-extension/package_vsix.py`, then use **Extensions: Install
+   from VSIX...** in VS Code:
+
+   ```sh
+   python app/v2/ide/vscode-extension/package_vsix.py debug-gym.vsix
+   ```
+
+2. Set `debugGym.serverUrl` in VS Code user settings to the Debug Gym website
+   address, such as `http://127.0.0.1:8000` for this local setup.
+3. Sign in to Debug Gym, open an available Python exercise, and choose **Get a
+   code for local VS Code**. The code is single-use and expires after 10
+   minutes.
+4. Click the **Debug Gym** flask icon in VS Code's left Activity Bar, then
+   choose **Pull Exercise with Code** and enter the code. The extension creates
+   a new exercise folder and creates or reuses one Python environment in its
+   VS Code storage, installing the pinned `pytest==8.4.2` there once. Python
+   source and tests run on the learner's computer; only use this flow for
+   exercise code you trust.
+5. Use **Test** and **Submit** in VS Code. Submission results are verified by
+   the Debug Gym server, not by the local test count.
+
 ## Stop and reset
 
 Stop the server with `Ctrl+C`. Your data stays in `db.sqlite3`.
