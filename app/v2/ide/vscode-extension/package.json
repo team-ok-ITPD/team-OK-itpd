@@ -59,14 +59,20 @@
     "viewsWelcome": [
       {
         "view": "debugGym.results",
-        "contents": "Start here: get a one-time code from your exercise page, then pull the exercise into VS Code.\n[Pull Exercise with Code](command:debugGym.pullExercise)\n[Test](command:debugGym.runTests)\n[Submit](command:debugGym.submit)"
+        "contents": "Start here: open an exercise in Debug Gym, then use the commands below.\n[Test](command:debugGym.runTests)\n[Submit](command:debugGym.submit)",
+        "when": "debugGym.serverWorkspace"
+      },
+      {
+        "view": "debugGym.results",
+        "contents": "Get a one-time code from your exercise page, then [Pull Exercise with Code](command:debugGym.pullExercise).\n[Test](command:debugGym.runTests)\n[Submit](command:debugGym.submit)",
+        "when": "debugGym.canPullExercise"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "debugGym.pullExercise",
-          "when": "view == debugGym.results",
+          "when": "view == debugGym.results && debugGym.canPullExercise",
           "group": "navigation@0"
         },
         {
@@ -91,6 +97,10 @@
         {
           "command": "debugGym.runTest",
           "when": "false"
+        },
+        {
+          "command": "debugGym.pullExercise",
+          "when": "debugGym.canPullExercise"
         }
       ]
     },

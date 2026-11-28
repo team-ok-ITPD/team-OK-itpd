@@ -301,7 +301,7 @@ class WorkspaceTests(StudentTestCase):
         self.assertEqual(pairing.user, self.student)
         self.assertEqual(pairing.bug, self.bug)
         self.assertEqual(pairing.assignment, a)
-        self.assertNotContains(response, self.bug.solution_code)
+        self.assertNotContains(response, "solution_code")
 
     def test_open_writes_the_folder_and_redirects_to_vscode(self):
         a = self.assignment("Task")
@@ -540,6 +540,7 @@ class StartIdeTests(TestCase):
         container.status = "running"
         container.labels = {ide.FOLDER_LABEL: str(folder), ide.SETTINGS_LABEL: ide.settings_label()}
         container.image.id = image.id
+        container.attrs = {"Image": image.id}
         container.ports = {ide.CONTAINER_PORT: [{"HostPort": "41000"}]}
         with patch("student.ide._wait_until_ready"):
             url = ide.start_ide(self.student, folder)

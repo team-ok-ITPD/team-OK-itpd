@@ -15,6 +15,7 @@ relay simply does not start there.
 import os
 import socket
 import threading
+from urllib.parse import urlsplit, urlunsplit
 
 from django.conf import settings
 
@@ -24,10 +25,28 @@ DEFAULT_BRIDGE = "172.17.0.1"
 
 
 def ide_server_url(port):
-    """The address the extension submits to: an explicit setting wins, else this server's port."""
-    if os.environ.get("DEBUG_GYM_IDE_SERVER_URL"):
-        return settings.DEBUG_GYM_IDE_SERVER_URL
-    return f"http://host.docker.internal:{port}"
+    """Return an address reachable from the code-server container.
+
+    A loopback URL refers to the code-server container itself, not the Django
+    host. Rewrite it to Docker's host gateway; ensure_ide_relay() below makes
+    that gateway:port forward to a localhost-bound Django dev server on Linux.
+    """
+    configured = os.environ.get("DEBUG_GYM_IDE_SERVER_URL")
+    url = configured or f"http://host.docker.internal:{port}"
+    parsed = urlsplit(url)
+    if parsed.hostname in ("localhost", "127.0.0.1", "::1"):
+        host = "host.docker.internal"
+        netloc = f"{host}:{parsed.port}" if parsed.port else host
+        url = urlunsplit((parsed.scheme, netloc, parsed.path, parsed.query, parsed.fragment))
+    return url
+
+
+def ensure_ide_relay(port):
+    """Relay the actual configured IDE API port, not necessarily Django's request port."""
+    parsed = urlsplit(ide_server_url(port))
+    if parsed.hostname != "host.docker.internal":
+        return False  # A public/reverse-proxy URL is already reachable directly.
+    return ensure_relay(parsed.port or (443 if parsed.scheme == "https" else 80))
 
 
 def site_url(request):

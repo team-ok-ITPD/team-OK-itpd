@@ -406,6 +406,10 @@ class TeachingWorkflowTests(TestCase):
     @patch("core.workspace_api.verify", return_value=(1, 1))
     def test_fake_student_test_counts_are_not_saved(self, verify):
         assignment = self.assignment()
+        # This test exercises server-side verification. Without a test file,
+        # submit() intentionally skips verification and stores null test counts.
+        self.bug.tests_code = "def test_result(): assert True\n"
+        self.bug.save(update_fields=("tests_code",))
         self.client.force_login(self.student)
         token = "verified-submission-token"
         WorkspaceSession.objects.create(

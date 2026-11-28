@@ -95,16 +95,21 @@ def start_ide(student, folder):
     except docker.errors.NotFound:
         container = None
     # Reuse only a running container with this folder, the current image and settings.
+    # Do not access container.image.id here: Docker SDK resolves that property by
+    # inspecting the image, which raises ImageNotFound if the old image was pruned
+    # after an IDE image rebuild. The container inspection data retains its image ID.
     if container is not None:
+        container.reload()
         if (
             container.status == "running"
             and container.labels.get(FOLDER_LABEL) == str(folder)
             and container.labels.get(SETTINGS_LABEL) == settings_label()
-            and container.image.id == image_id
+            and container.attrs.get("Image") == image_id
         ):
             port = _host_port(container)
             _wait_until_ready(port)
             return _url(port)
+        # A stale container may reference an image that no longer exists.
         container.remove(force=True)
 
     try:
