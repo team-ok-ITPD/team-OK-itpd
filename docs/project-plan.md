@@ -152,7 +152,14 @@ Provisional: freeze the final repository state, present the 7-minute deck and wr
 | [QR-02](quality-requirements/qr/QR-02.md) | [QR-02 QRT-01](quality-requirements/qr/QR-02.md#qrt-01) | Not verified | None    | [SPRINT-08](#sprint-08) | None; moved from `SPRINT-07` because no deployed environment was available to run it |
 | [QR-03](quality-requirements/qr/QR-03.md) | [QR-03 QRT-01](quality-requirements/qr/QR-03.md#qrt-01) | Passes      | 2026-10-31 | [SPRINT-05](#sprint-05) | [Product checks](https://github.com/team-ok-ITPD/team-OK-itpd/actions/runs/41228949546) |
 | [QR-06](quality-requirements/qr/QR-06.md) | [QR-06 QRT-01](quality-requirements/qr/QR-06.md#qrt-01) | Not verified | None | [SPRINT-07](#sprint-07) | University VM and staging OpenObserve organization unavailable in SPRINT-06 and SPRINT-07; moved from `SPRINT-07` |
-| [QR-07](quality-requirements/qr/QR-07.md) | [QR-07 QRT-01](quality-requirements/qr/QR-07.md#qrt-01) | Not verified | None | [SPRINT-08](#sprint-08) | None |
+| [QR-07](quality-requirements/qr/QR-07.md) | [QR-07 QRT-01](quality-requirements/qr/QR-07.md#qrt-01) | Not verified | None | [SPRINT-09](#sprint-09) | [Late qualitative shortfall record](usability-tests/ut-01/results.md) |
+
+Late update, 2026-11-27: QR-07 QRT-01 moves from SPRINT-08 to
+SPRINT-09 because the three local sessions on 26–27 November do not establish
+the required staging conditions or prior instrumentation verification.
+The team reports instructor approval of a recording-requirement exception;
+the remaining conditions still require verification.
+No check sprint or passing/failing verdict is claimed from these observations.
 
 ## Progress Monitoring
 

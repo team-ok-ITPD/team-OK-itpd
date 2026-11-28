@@ -1,5 +1,14 @@
 # UT-01 Session Template
 
+## Late Exploratory Notes
+
+[P-01](P-01.md) and [P-02](P-02.md) ran on 2026-11-26;
+[P-03](P-03.md) ran on 2026-11-27. These are local exploratory sessions;
+the team reports instructor approval of a recording-requirement exception.
+The notes were sanitized retrospectively on 2026-11-27.
+These codes remain reserved and must not be reused for replacement sessions.
+See [the qualitative shortfall record](../results.md).
+
 Roles are named by GitHub username in [the record](../README.md#roles): the facilitator runs every counted session, the observer records help and friction, and the custodian keeps the recordings and raw notes in the private repository.
 
 ## Session Script

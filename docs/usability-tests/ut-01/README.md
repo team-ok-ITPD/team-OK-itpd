@@ -2,7 +2,14 @@
 
 - **Status:** Planned
 - **Design sprint:** [SPRINT-07](../../project-plan.md#sprint-07)
-- **Run sprint:** [SPRINT-08](../../project-plan.md#sprint-08)
+- **Run sprint:** [SPRINT-09](../../project-plan.md#sprint-09)
+
+**Late update, 2026-11-27:** Three real local sessions took place on
+2026-11-26 (P-01, P-02) and 2026-11-27 (P-03). The team reports that the
+instructor personally approved a recording-requirement exception.
+The run moves from SPRINT-08 to SPRINT-09; staging execution and prior
+instrumentation verification remain pending. The original design below is retained,
+not rewritten to imply the exploratory sessions followed it.
 
 ## Goal
 
@@ -83,7 +90,8 @@ Every finding is triaged. A significant finding produces a SPRINT-08 task issue 
 
 **How the sessions are arranged:** the team contacts eligible classmates from 2026-11-16, aims to confirm at least three participants by 2026-11-17 and to run the sessions between 2026-11-18 and 2026-11-20, so the analysis and the sanitized results fit before the deadline. Each session is in person on the university network, against the staging deployment, with the seed reset before it. The team sets the exact dates; they are not fixed in this record and stay private with the participant identities.
 
-All counted sessions are planned for SPRINT-08, so the run sprint is SPRINT-08.
+The original SPRINT-08 execution window was missed. Counted execution is
+now pending in SPRINT-09; the late local observations do not complete it.
 
 The instrumentation verification and the dry run are scheduled in SPRINT-08 before the first counted session and are complete by the start of SPRINT-09. Because the first counted session is in SPRINT-08, the dry run is not itself the verification; a teammate also runs the separate verification described under [Instrumentation](#instrumentation). The dry run is not evidence and is not counted. No counted session, dry run or instrumentation verification is claimed yet.
 
@@ -116,4 +124,8 @@ Use [the public consent template](consent.md) before every counted session. The 
 
 ## Results
 
-See [results.md](results.md). It remains a stub until SPRINT-08 analysis.
+See [results.md](results.md) for the late qualitative record, the sanitized
+session notes, provisional findings, triage and declared shortfall.
+The three local sessions do not settle QR-07. No telemetry export is available;
+private upload/access and durable consent
+scope have not been verified by this update.

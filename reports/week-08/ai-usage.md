@@ -2,6 +2,30 @@
 
 ## Tools
 
+- On 2026-11-28, the team reconfirmed that P-01, P-02 and P-03 were real
+  human sessions. OpenCode corrected its mistaken conflation of P-03 with a
+  [separate technical rehearsal](../week-10/technical-rehearsal.md).
+  AI assistance prepared and checked the documentation; it did not replace
+  any participant in those sessions. The publication is prepared under
+  [task #213](https://github.com/team-ok-ITPD/team-OK-itpd/issues/213);
+  review and acceptance remain pending.
+
+- On 2026-11-27, OpenCode (GPT-6.1 Sol) prepared a late usability supplement
+  from three team-supplied session-result files and the team's clarification
+  of dates and consent. These inputs contained participant
+  background details; they were not pre-sanitized public notes. No raw recording
+  was supplied to the agent. The agent removed demographic combinations, quotations,
+  addresses and raw survey answers from the public summaries, recalculated
+  individual SUS scores and documented the shortfall without aggregates.
+  UT-01 remains Planned and QR-07 Not verified. No private repository access,
+  recording, telemetry, Customer acceptance or product fix was verified.
+  The team must review publication consent and remove private input copies
+  from tools under the course retention policy. AI helped structure the record;
+  it did not conduct the human sessions or supply missing measurements.
+  In a follow-up, the team reported personal instructor approval of a
+  recording-requirement exception. OpenCode removed recording-based exclusion
+  claims while retaining the independently documented protocol limitations.
+
 - OpenCode prepared the #193 commit and pull request at the user's request,
   updated task scope and sprint/project metadata, and requested independent
   review from the three non-author repository collaborators. Review requests
