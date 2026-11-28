@@ -20,7 +20,14 @@ Reference: [Assignment 9](https://github.com/inno-itpd/itpd/blob/33e889a8617d04a
 
 ## Evidence Confirmation — Team Required
 
-- [ ] Identify the actual reviewed commit/tag and environment for each run.
+Prepared review aids: [candidate decisions](decisions-for-review.md),
+[retrospective proposals](sprint-retrospective.md) and
+[release-owner checklist](release-preparation.md). They do not satisfy the
+confirmation gates by themselves.
+
+- [ ] Confirm timezone and runtime identity for the owner's reported main at
+  13:30; the [candidate commit](../../docs/user-acceptance-tests.md#review-baseline)
+  has been recovered from first-parent history. Identify the environment for each run.
   The explicitly local administrator demo and later VM-deployment statement
   do not prove every UAT ran on production.
 - [ ] Recover original UAT definitions/numbering and any actual advance script.

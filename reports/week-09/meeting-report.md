@@ -7,7 +7,7 @@
 - **Duration:** Approximately 1 hour 29 minutes 34 seconds.
 - **Format:** Recorded screen-based review; the required in-person format is not established from the supplied evidence.
 - **Presented:** Administrator accounts/email/import/groups; student assignments, practice and results; browser/local VS Code; professor catalog, creation, provider settings and assignment; UATs and handoff expectations.
-- **Build:** The reviewed commit/tag is not established. Current `main` is not treated as the recorded build.
+- **Build:** The owner confirms main as of 2026-11-28 at 13:30. The [candidate reviewed baseline](../../docs/user-acceptance-tests.md#review-baseline) is `43de5255488ddd6f98e254c05da50c7a1d8f4edf` assuming UTC+03:00; timezone and per-run deployment identity still need confirmation.
 - **Deployment:** The administrator presenter states a local launch at 00:03:13–00:03:18; a university-VM deployment is reported at 01:07:43–01:08:02. Which environment each scenario used needs verification.
 - **Recording:** Permission confirmed by the team; the recording must remain private and is not included in this PR.
 - **Transcript publication:** Not established. No full transcript is included.
@@ -66,8 +66,10 @@ The [UAT record](../../docs/user-acceptance-tests.md) is a retrospective draft.
 Its numbering must be reconciled with any original pre-review definitions.
 The evidence does not establish that three tests were documented beforehand.
 
-**Build tested:** Not established. Administrator demonstration includes local
-execution; a VM deployment is reported later. Confirm each run's environment.
+**Build tested:** Owner-reported main at 13:30, with the
+[candidate commit](../../docs/user-acceptance-tests.md#review-baseline) qualified
+by timezone. Administrator demonstration includes local execution; a VM
+deployment is reported later. Confirm each run's environment.
 
 | Test/journey | Runner | Result | Observation and evidence | Decision |
 | --- | --- | --- | --- | --- |

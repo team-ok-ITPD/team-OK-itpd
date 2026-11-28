@@ -11,8 +11,10 @@ draft before submission.
 The observations below are sourced to the
 [Sprint 9 report](../reports/week-09/meeting-report.md#user-acceptance-tests)
 and [sanitized evidence notes](../reports/week-09/meeting-notes.md#acceptance-tests-and-deployment).
-Reviewed build, runner attribution and member-verified DEC entries remain
-incomplete. Current `main` is not substituted for the unknown reviewed build.
+The team confirms that the review used `main` as of 28 November at 13:30.
+The [review baseline](#review-baseline) records the matching commit and its
+remaining timezone qualification. Member-verified DEC entries and original
+test definitions remain incomplete.
 
 | Test | Journey | Status | SPRINT-09 | SPRINT-10 |
 | --- | --- | --- | --- | --- |
@@ -22,6 +24,20 @@ incomplete. Current `main` is not substituted for the unknown reviewed build.
 
 Access details, provider credentials and deployment addresses belong in the
 private Moodle wrapper, not this record.
+
+## Review Baseline
+
+The owner's build statement is `main` on 2026-11-28 at 13:30.
+Assuming UTC+03:00, first-parent history identifies
+[`43de5255488ddd6f98e254c05da50c7a1d8f4edf`](https://github.com/team-ok-ITPD/team-OK-itpd/commit/43de5255488ddd6f98e254c05da50c7a1d8f4edf),
+merged at 12:51:23+03:00; the next main merge is at 18:04:01+03:00.
+The timezone was not explicitly confirmed. This is a candidate reviewed
+baseline from the owner's statement, not independently captured runtime/deployment
+identity. It must not be replaced by later administrator rework or release tags.
+
+The numbered scenarios below were reconstructed after the meeting. They are
+usable definitions for verification and the next review, but do not establish
+compliance with the requirement to write three tests before Sprint 9 review.
 
 ## UAT-01
 
@@ -45,7 +61,7 @@ professor dashboard. It does not acquire administrator permissions.
 
 | Sprint | Date | Runner | Build | Result | Evidence | DEC-nnn |
 | --- | --- | --- | --- | --- | --- | --- |
-| SPRINT-09 | 2026-11-28 | Team | Not established | Observed successful creation/sign-in; formal classification pending. Cross-role denial was not shown in this final check. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), 01:22:59–01:24:42 | Member verification pending. |
+| SPRINT-09 | 2026-11-28 | Team | [Candidate baseline](#review-baseline) | Observed successful creation/sign-in; proposed Pass for that observed scope. Original-test mapping and cross-role denial remain unverified. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), 01:22:59–01:24:42 | Member verification pending. |
 
 If the original administrator UAT also required student/group creation, retain
 those criteria and verify coverage rather than narrowing the test after the run.
@@ -76,7 +92,7 @@ guarantee, preserve and check that requirement separately.
 
 | Sprint | Date | Runner | Build | Result | Evidence | DEC-nnn |
 | --- | --- | --- | --- | --- | --- | --- |
-| SPRINT-09 | 2026-11-28 | Team | Not established | Customer calls the demonstrated UAT a Pass; formal record pending original-test mapping. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), demonstration 01:10:27–01:19:38; judgment 01:22:37–01:22:58 | Member verification pending. |
+| SPRINT-09 | 2026-11-28 | Team | [Candidate baseline](#review-baseline) | Pass explicitly stated for the demonstrated journey; formal record pending original-test mapping. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), demonstration 01:10:27–01:19:38; judgment 01:22:37–01:22:58 | Member verification pending. |
 
 The return-to-site button was reported to fail with an authentication/403 issue
 at 01:17:29–01:18:03. Do not remove that defect from the record or claim it was
@@ -108,7 +124,7 @@ on pre-existing demo results.
 
 | Sprint | Date | Runner | Build | Result | Evidence | DEC-nnn |
 | --- | --- | --- | --- | --- | --- | --- |
-| SPRINT-09 | 2026-11-28 | Team | Not established | Assignment step failed; fresh end-to-end run incomplete. Formal Fail/Not run mapping requires the original definition. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), failed attempt 01:02:32–01:05:28; scope/results discussion 01:24:44–01:26:25 | Member verification pending. |
+| SPRINT-09 | 2026-11-28 | Team | [Candidate baseline](#review-baseline) | Proposed Fail for attempted assignment journey; fresh end-to-end run incomplete. Any unexecuted generation step is Not run, not a proven provider failure. Original-test mapping pending. | [Review](../reports/week-09/meeting-report.md#user-acceptance-tests), failed attempt 01:02:32–01:05:28; scope/results discussion 01:24:44–01:26:25 | Member verification pending. |
 
 Student AI generation does not establish professor generation. Exporting an
 older seeded assignment does not substitute for this fresh run. Preserve the
