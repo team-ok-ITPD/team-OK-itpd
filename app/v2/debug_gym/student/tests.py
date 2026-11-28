@@ -433,6 +433,15 @@ class IdeSubmitTests(StudentTestCase):
         self.assertEqual(self.send(key).status_code, 403)
         self.assertFalse(self.mine(a).exists())
 
+    def test_manually_closed_assignment_does_not_claim_the_deadline_passed(self):
+        assignment = self.assignment("Closed", status=Assignment.Status.CLOSED)
+        assignment.deadline = None
+        assignment.save(update_fields=("deadline",))
+        response = self.send(IdeToken.issue(self.student, self.bug, assignment))
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("professor closed", response.json()["error"])
+        self.assertNotIn("deadline has passed", response.json()["error"])
+
     def test_rejects_empty_or_unchanged_code(self):
         key = IdeToken.issue(self.student, self.bug, self.assignment("Task"))
         self.assertIn("empty", self.send(key, code="  ").json()["error"])
@@ -495,6 +504,23 @@ class IdeSubmitTests(StudentTestCase):
             response = self.send(IdeToken.issue(self.student, self.bug, a))
         self.assertEqual(response.status_code, 409)
         self.assertFalse(self.mine(a).exists())
+
+    def test_grading_during_verification_blocks_resubmission(self):
+        self.with_tests()
+        assignment = self.assignment("Task")
+        previous = Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=assignment,
+            submitted_code="previous", tests_passed=1, tests_total=1,
+        )
+
+        def grade(bug, code):
+            Submission.objects.filter(pk=previous.pk).update(status=Submission.Status.GRADED)
+            return 1, 1
+
+        with patch("student.views.verify", side_effect=grade):
+            response = self.send(IdeToken.issue(self.student, self.bug, assignment))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.mine(assignment).count(), 1)
 
     def test_non_student_token_is_refused(self):
         key = IdeToken.issue(self.prof, self.bug, self.assignment("Task"))
