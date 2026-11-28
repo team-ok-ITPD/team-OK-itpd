@@ -1,5 +1,27 @@
 # Week 9 AI Usage
 
+## Reconstructed Acceptance And Review Drafts
+
+At the owner's request, OpenCode reconstructed the three UATs and prepared
+specific retrospective conclusions/experiments, candidate decision wording and
+a release-owner checklist. These documents explicitly distinguish proposals
+from actual team agreement, Customer decisions and published releases.
+First-parent Git history was compared with the owner's main-at-13:30 statement:
+the candidate baseline is `43de5255488ddd6f98e254c05da50c7a1d8f4edf` assuming
+UTC+03:00, which remains unconfirmed. No prior script, actual retrospective,
+DEC identifier or release was fabricated; `docs/decisions.md` remains untouched.
+
+## Closeout Preparation
+
+OpenCode (GPT-6.1 Sol) continued Assignment 9 in task #221 separately from
+administrator PR #220. It inspected the live milestone/task inventory, corrected
+the Sprint 9 deadline and created the provisional Sprint 10 milestone, prepared
+a handoff readiness document and closeout checklist, and reconciled planning
+and threshold evidence gaps. No story estimates, original script, Customer DEC,
+retrospective outcome, release or completed submission were invented.
+The final report/PDF/ZIP remain on hold. Existing unrelated local drafts and CSV
+samples are not part of this preparation change.
+
 ## Retrospective Review Documentation
 
 OpenCode (GPT-6.1 Sol) read Assignment 9 at revision

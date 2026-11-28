@@ -40,3 +40,26 @@ Customer review.
 | [TOS-01](#tos-01) | Learners reach a working exercise quickly and complete the full debugging loop. | Learners spend the session setting up tools or cannot complete the core task. |
 | [TOS-02](#tos-02) | Exercises reliably contain the requested defect and prove it with executable tests. | Generated exercises contain the wrong defect or tests that do not distinguish correct and buggy programs. |
 | [TOS-03](#tos-03) | The Customer and pilot learners find the VS Code workflow suitable for realistic debugging practice. | The workflow is not accepted or learners do not find the prepared environment useful. |
+
+## Sprint 9 Evidence Reconciliation
+
+The retrospective [Sprint 9 review record](../reports/week-09/meeting-report.md)
+contains positive student-workflow feedback and an explicit passing statement
+for a demonstrated student UAT. It does not supply the three timely Week 5
+debugger records required by TOS-01, the ten-exercise validation required by
+TOS-02, or the five comparable learner usefulness responses plus complete
+workflow acceptance required by TOS-03.
+
+TOS-01 and TOS-02 have expired deadlines and require an immediate member-verified
+Achieved/Missed verdict against dated evidence. The inspected recording alone
+cannot settle earlier runs, and the maintained record still calls the measures
+draft proposals. Their existing Open values are unresolved record gaps, not an
+authorized extension. Do not move their deadlines or infer achievement from
+later demonstrations.
+
+TOS-03's Week 9 deadline has not passed as of this reconciliation on 28 November;
+it can remain Open until its existing measure is evaluated at the close.
+This reconciliation is not evidence that the Customer reviewed every measure
+at the meeting or approved a new target. The
+[closeout checklist](../reports/week-09/closeout-checklist.md#quality-and-threshold-gates)
+tracks the missing evidence and decisions.

@@ -137,12 +137,37 @@ Planned: the release that carries the `UT-01` results and the `QR-07 QRT-01` ver
 
 ### SPRINT-09
 
-Provisional: freeze the final repository state, present the 7-minute deck and write the reflection, and finish the work the Week 8 review set for the next review: the group and assignment requirements, the submission acceptance fix, the CSV export sample, the extension usage guide and any `UT-01` fix that did not land in `REL-08`.
+Review the Sprint 9 increment through the three acceptance journeys, reconcile
+quality and threshold evidence, prepare the handoff, and follow up on the
+Week 8 group/assignment, submission, CSV, extension and usability actions.
+The [review report](../reports/week-09/meeting-report.md) records an assignment
+blocker and incomplete acceptance metadata; it does not establish sprint closure.
 
-- **Due:** 2026-11-28
+- **Due:** 2026-11-29, per the Assignment 9 revision supplied by the team.
 - **Sprint Backlog:** [the issues scheduled into SPRINT-09](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/6)
+- **Planned Velocity:** Not supplied; verify the actual scheduled story estimates rather than infer points from documentation tasks.
+
+Sprint close is pending reviewed/released build verification, the release-owner
+action, team retrospective and disposition of unfinished work. Planned story
+points cannot be recovered from the current task-only milestone inventory;
+they must not be inferred from task counts. Record Actual Velocity at the close.
+See [closeout preparation](../reports/week-09/closeout-checklist.md).
 
 #### REL-09
+
+### SPRINT-10
+
+Provisional goal: The Customer can take over a tagged deployed product with a
+verified teaching journey and clear user and deployment instructions.
+
+- **Due:** 2026-12-06, per the Assignment 9 revision supplied by the team.
+
+The [SPRINT-10 milestone](https://github.com/team-ok-ITPD/team-OK-itpd/milestone/8)
+is created provisionally. No backlog or velocity is claimed before team
+refinement. Candidate scope and deferred features are in
+[handoff preparation](../reports/week-09/handoff-preparation.md).
+
+#### REL-10
 
 ## Quality Requirement Testing Plan
 
