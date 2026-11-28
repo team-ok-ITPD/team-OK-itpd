@@ -169,6 +169,64 @@ class IntegrationTests(TestCase):
         self.assertIsNone(submission.tests_passed)
         self.assertIsNone(submission.tests_total)
 
+    def test_pairing_allows_own_private_practice_but_not_another_students(self):
+        self.bug.created_by = self.student
+        self.bug.save(update_fields=("created_by",))
+        code = WorkspacePairingCode.issue(self.student, self.bug, None, "http://localhost:8003/")
+        response = self.client.post(
+            "/api/ide/pair/", json.dumps({"code": code}), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        with patch("core.workspace_api.verify", return_value=(1, 1)):
+            submitted = self.send(response.json()["token"])
+        self.assertEqual(submitted.status_code, 200)
+        self.bug.created_by = self.teacher
+        self.bug.save(update_fields=("created_by",))
+        self.assertEqual(self.send(response.json()["token"]).status_code, 403)
+
+    @patch("core.workspace_api.verify", return_value=(1, 1))
+    def test_graded_assignment_rejects_existing_workspace_token(self, verify):
+        token, _ = self.token()
+        Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=self.assignment,
+            submitted_code="graded solution", tests_passed=1, tests_total=1,
+            status=Submission.Status.GRADED, grade=100,
+        )
+        response = self.send(token)
+        self.assertEqual(response.status_code, 403)
+        verify.assert_not_called()
+        self.assertEqual(Submission.objects.count(), 1)
+
+    @patch("core.workspace_api.verify", return_value=(1, 1))
+    def test_callback_rechecks_grading_after_verification(self, verify):
+        token, _ = self.token()
+        previous = Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=self.assignment,
+            submitted_code="previous", tests_passed=1, tests_total=1,
+        )
+
+        def grade(*args):
+            Submission.objects.filter(pk=previous.pk).update(status=Submission.Status.GRADED)
+            return 1, 1
+
+        verify.side_effect = grade
+        self.assertEqual(self.send(token).status_code, 403)
+        self.assertEqual(Submission.objects.count(), 1)
+
+    @patch("core.workspace_api.verify", return_value=(1, 1))
+    def test_counted_attempt_not_weaker_graded_attempt_controls_resubmission(self, verify):
+        token, _ = self.token()
+        Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=self.assignment,
+            submitted_code="weaker graded", tests_passed=0, tests_total=1,
+            status=Submission.Status.GRADED,
+        )
+        Submission.objects.create(
+            student=self.student, bug=self.bug, assignment=self.assignment,
+            submitted_code="best pending", tests_passed=1, tests_total=1,
+        )
+        self.assertEqual(self.send(token).status_code, 200)
+
     def test_encrypted_key_and_platform_fallback(self):
         save_key(self.teacher, "personal-key")
         record = AgentCredential.objects.get(user=self.teacher)
@@ -334,11 +392,19 @@ class IntegrationTests(TestCase):
             student=self.student, bug=self.bug, assignment=self.assignment,
             submitted_code="fixed", tests_passed=1, tests_total=2,
         )
+        other_student = User.objects.create_user(
+            "another-student@test.example", "Another student", role="student",
+        )
+        Submission.objects.create(
+            student=other_student, bug=self.bug, assignment=self.assignment,
+            submitted_code="another student's private solution", tests_passed=2, tests_total=2,
+        )
         self.client.force_login(self.student)
         url = reverse("student:progress", args=[self.bug.pk])
         response = self.client.get(url, {"assignment": self.assignment.pk})
         self.assertEqual(response.json()["passed"], 1)
-        self.assertNotIn("fixed", response.content.decode())
+        self.assertEqual(response.json()["submitted_code"], "fixed")
+        self.assertNotIn("another student's private solution", response.content.decode())
         self.group.students.clear()
         self.assertEqual(self.client.get(url, {"assignment": self.assignment.pk}).status_code, 404)
 

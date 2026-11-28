@@ -198,6 +198,8 @@ def submit_blocked_reason(assignment):
     deadline, but not once the professor has graded the work.
     """
     if not assignment.is_open:
+        if assignment.status != Assignment.Status.ACTIVE:
+            return "Your professor closed this assignment, so it no longer accepts submissions."
         return "The deadline has passed, so this assignment no longer accepts submissions."
     if assignment.my_status == "graded":
         return "Your submission is already graded, so it can no longer be changed."
@@ -337,9 +339,16 @@ def ide_submit(request):
             )
         if assignment is not None:
             locked = Assignment.objects.select_for_update().get(pk=assignment.pk)
-            if not is_open(locked) or not locked.groups.filter(students=student).exists():
+            attach_status([locked], student)
+            if (
+                submit_blocked_reason(locked)
+                or locked.is_withdrawn
+                or locked.bug_id != current.pk
+                or not locked.groups.filter(students=student).exists()
+            ):
                 return JsonResponse(
-                    {"error": "The assignment closed or your access changed while the tests ran."}, status=403
+                    {"error": "The assignment closed, was graded, or your access changed while the tests ran."},
+                    status=403,
                 )
         elif not practice_bugs_qs(student).filter(pk=current.pk).exists():
             return JsonResponse({"error": "You no longer have access to this bug."}, status=403)

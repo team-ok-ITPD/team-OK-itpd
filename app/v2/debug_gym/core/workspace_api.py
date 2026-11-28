@@ -7,6 +7,7 @@ import secrets
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -32,14 +33,19 @@ def session_allowed(session):
         return False
     if session.assignment_id:
         assignment = session.assignment
+        # Match the website's counted attempt (DEC-022), not merely the newest.
+        counted = Submission.objects.filter(
+            student=user, assignment=assignment,
+        ).order_by(F("tests_passed").desc(nulls_last=True), "-submitted_at", "-pk").first()
         return (
             assignment.bug_id == bug.pk
             and not assignment.is_withdrawn
             and assignment.groups.filter(students=user).exists()
             and assignment.status == Assignment.Status.ACTIVE
             and (assignment.deadline is None or assignment.deadline >= timezone.now())
+            and (counted is None or counted.status != Submission.Status.GRADED)
         )
-    return bug.visibility == Bug.Visibility.PUBLIC
+    return bug.visibility == Bug.Visibility.PUBLIC or bug.created_by_id == user.pk
 
 
 @csrf_exempt

@@ -69,6 +69,12 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Local VS Code pairing accepts a student's own private practice exercises
+  while continuing to reject other authors' private exercises.
+- Workspace callbacks enforce the graded-assignment submission lock, including
+  when grading happens during verification.
+- Manually closed assignments explain that the professor closed them instead
+  of claiming that a nonexistent deadline has passed.
 - Reconciled overlapping v2 test-result migrations and joined the independent
   exercise-test migration so a fresh database can be migrated.
 - Role-restricted class-based pages accept their configured required role.
