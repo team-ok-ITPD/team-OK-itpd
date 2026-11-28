@@ -66,19 +66,17 @@ class AdminPanelTests(TestCase):
                 self.assertRedirects(response, reverse(f"admin_panel:{destination}"))
                 account = User.objects.get(email=f"{role}-new@example.com")
                 self.assertEqual(account.role, role)
-                self.assertTrue(account.check_password("new-password"))
+                self.assertFalse(account.has_usable_password())
                 self.assertNotEqual(account.password, "new-password")
 
     def test_account_validation_and_single_password_field(self):
         for route in ("user-create", "student-create", "administrator-create"):
             response = self.client.get(reverse(f"admin_panel:{route}"))
-            self.assertContains(response, 'data-toggle-password="id_password"')
-            self.assertEqual(response.context["form"].fields["password"].widget.input_type, "text")
-            self.assertContains(response, 'aria-pressed="true">Hide</button>')
+            self.assertNotContains(response, 'name="password"')
+            self.assertNotIn("password", response.context["form"].fields)
             self.assertNotContains(response, 'name="password_confirmation"')
             for invalid in (
                 {"email": "invalid"}, {"email": self.teacher.email.upper()},
-                {"password": "short"}, {"password": ""},
             ):
                 with self.subTest(route=route, invalid=invalid):
                     response = self.client.post(
@@ -96,7 +94,7 @@ class AdminPanelTests(TestCase):
         self.assertContains(response, 'id="account-access-link-form"')
         self.assertContains(response, "Delete account")
         self.assertContains(response, 'class="button secondary admin-account-cancel"')
-        self.assertContains(response, "New password")
+        self.assertNotContains(response, 'name="password"')
         self.assertLess(
             response.content.index(b">Delete account<"),
             response.content.index(b">Cancel<"),
@@ -122,14 +120,14 @@ class AdminPanelTests(TestCase):
                 self.assertEqual(account.role, original_role)
                 self.assertTrue(account.check_password("debug-gym-pass"))
 
-    def test_edit_password_and_self_session(self):
+    def test_edit_ignores_injected_password_and_preserves_self_session(self):
         response = self.client.post(
             reverse("admin_panel:administrator-edit", args=[self.admin.pk]),
             self.payload(email=self.admin.email),
         )
         self.assertRedirects(response, reverse("admin_panel:administrators"))
         self.admin.refresh_from_db()
-        self.assertTrue(self.admin.check_password("new-password"))
+        self.assertTrue(self.admin.check_password("debug-gym-pass"))
         self.assertEqual(self.client.get(reverse("admin_panel:dashboard")).status_code, 200)
 
     def test_self_deactivation_and_cross_role_edit_refused(self):
@@ -200,7 +198,7 @@ class AdminPanelTests(TestCase):
         })
         self.assertRedirects(response, reverse("admin_panel:groups"))
         group = StudyGroup.objects.get(name="New group")
-        self.assertEqual(group.group_number, "01")
+        self.assertEqual(group.group_number, "")
         form_url = reverse("admin_panel:group-edit", args=[group.pk])
         response = self.client.get(form_url)
         self.assertContains(response, "data-searchable-select")
@@ -223,38 +221,41 @@ class AdminPanelTests(TestCase):
         response = self.client.post(form_url, {
             "name": group.name, "group_number": "01", "professor": self.teacher.pk,
         })
-        self.assertTrue(response.context["form"].errors)
+        self.assertRedirects(response, reverse("admin_panel:groups"))
 
-    def test_course_and_group_number_are_separate_required_fields(self):
+    def test_group_name_replaces_separate_number_and_legacy_identity_survives(self):
         url = reverse("admin_panel:group-create")
         response = self.client.get(url)
         self.assertContains(response, 'name="course"')
-        self.assertContains(response, "Group number")
+        self.assertNotContains(response, 'name="group_number"')
         response = self.client.post(url, {
-            "name": "Programming", "professor": self.teacher.pk,
+            "name": "Programming A", "course": "Programming",
+            "professor": self.teacher.pk, "is_active": "on",
         })
-        self.assertIn("group_number", response.context["form"].errors)
+        self.assertRedirects(response, reverse("admin_panel:groups"))
+        self.assertEqual(StudyGroup.objects.get(name="Programming A").group_number, "")
         for number in ("001", "BS-23"):
-            response = self.client.post(url, {
-                "name": "Programming", "group_number": number,
-                "professor": self.teacher.pk,
-            })
-            self.assertRedirects(response, reverse("admin_panel:groups"))
-            group = StudyGroup.objects.get(name="Programming", group_number=number)
-            self.assertEqual(str(group), f"Programming · {number}")
+            group = StudyGroup.objects.create(
+                name="Programming", group_number=number, professor=self.teacher,
+            )
+            self.assertEqual(str(group), "Programming")
             group.students.add(self.student)
         response = self.client.get(reverse("admin_panel:groups"), {"q": "BS-23"})
-        self.assertContains(response, "BS-23")
-        self.assertNotContains(response, ">001<")
+        self.assertContains(response, "Programming")
+        # The search input echoes the query; group labels must omit the number.
+        self.assertNotContains(response, "Programming · BS-23")
+        self.assertNotContains(response, "Programming · 001")
         response = self.client.get(reverse("admin_panel:students"))
-        self.assertContains(response, "Programming · 001")
-        self.assertContains(response, "Programming · BS-23")
+        self.assertContains(response, "Programming")
+        self.assertNotContains(response, "Programming · 001")
+        self.assertNotContains(response, "Programming · BS-23")
         for user, route in ((self.student, "student:dashboard"), (self.teacher, "professor:dashboard")):
             client = Client()
             client.force_login(user)
             response = client.get(reverse(route))
-            self.assertContains(response, "Programming · 001")
-            self.assertContains(response, "Programming · BS-23")
+            self.assertContains(response, "Programming")
+            self.assertNotContains(response, "Programming · 001")
+            self.assertNotContains(response, "Programming · BS-23")
 
     def test_duplicate_course_number_rejected_and_legacy_numbers_not_invented(self):
         from django.db import IntegrityError, transaction
@@ -267,7 +268,7 @@ class AdminPanelTests(TestCase):
         response = self.client.post(reverse("admin_panel:group-create"), {
             "name": "programming", "group_number": "01", "professor": self.teacher.pk,
         })
-        self.assertIn("group_number", response.context["form"].errors)
+        self.assertIn("name", response.context["form"].errors)
         with self.assertRaises(IntegrityError), transaction.atomic():
             StudyGroup.objects.create(
                 name="PROGRAMMING", group_number="01", professor=self.teacher,
@@ -282,7 +283,7 @@ class AdminPanelTests(TestCase):
         response = self.client.get(url, {"group": self.group.pk, "q": "STUDENT@"})
         self.assertEqual(response.context["student_total"], 1)
         self.assertNotContains(response, "students match.")
-        self.assertContains(response, 'aria-label="1 students"')
+        self.assertNotContains(response, 'aria-label="1 students"')
         self.assertContains(response, self.student.email)
         self.assertContains(response, self.teacher.name)
         response = self.client.get(url)
@@ -378,6 +379,62 @@ class AdminPanelTests(TestCase):
         self.assertEqual(self.batch("add", group="").status_code, 400)
         self.assertEqual(GroupStudent.objects.count(), 0)
 
+    def test_deactivation_keeps_student_group_and_assignment_access_and_sorts_last(self):
+        from core.models import Assignment
+        from django.utils import timezone
+        from datetime import timedelta
+
+        self.group.students.add(self.student)
+        bug = Bug.objects.create(
+            title="Historical material", description="Keep access", created_by=self.teacher,
+        )
+        assignment = Assignment.objects.create(
+            title="Historical assignment", professor=self.teacher,
+            bug=bug, deadline=timezone.now() + timedelta(days=2),
+        )
+        assignment.groups.add(self.group)
+        active = StudyGroup.objects.create(name="Z active", professor=self.teacher)
+        response = self.client.post(reverse("admin_panel:group-edit", args=[self.group.pk]), {
+            "name": self.group.name, "course": "Programming", "professor": self.teacher.pk,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.group.refresh_from_db()
+        self.assertFalse(self.group.is_active)
+        self.assertTrue(self.group.students.filter(pk=self.student.pk).exists())
+        self.assertTrue(Assignment.objects.filter(pk=assignment.pk).exists())
+        response = self.client.get(reverse("admin_panel:groups"))
+        self.assertEqual(list(response.context["groups"]), [active, self.group])
+        student = Client()
+        student.force_login(self.student)
+        response = student.get(reverse("student:dashboard"))
+        self.assertContains(response, self.group.name)
+        response = student.get(reverse("student:assignment_detail", args=[assignment.pk]))
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(reverse("admin_panel:group-edit", args=[self.group.pk]), {
+            "name": self.group.name, "professor": self.teacher.pk, "is_active": "on",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.group.refresh_from_db()
+        self.assertTrue(self.group.is_active)
+
+    def test_edit_inactive_student_multiple_memberships_without_activation(self):
+        other = StudyGroup.objects.create(name="Other", professor=self.teacher, is_active=False)
+        self.student.is_active = False
+        self.student.save()
+        url = reverse("admin_panel:student-edit", args=[self.student.pk])
+        data = self.payload(
+            email=self.student.email, name=self.student.name, password="",
+            groups=[self.group.pk, other.pk],
+        )
+        data.pop("is_active")
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.assertSetEqual(set(self.student.study_groups.all()), {self.group, other})
+        self.student.refresh_from_db()
+        self.assertFalse(self.student.is_active)
+        data["groups"] = [other.pk]
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.assertEqual(list(self.student.study_groups.all()), [other])
+
     def test_batch_activity_revokes_existing_web_session(self):
         student_client = Client()
         student_client.force_login(self.student)
@@ -385,7 +442,10 @@ class AdminPanelTests(TestCase):
         idle_client.force_login(self.student)
         self.assertEqual(self.batch("deactivate").status_code, 302)
         self.assertEqual(student_client.get(reverse("student:dashboard")).status_code, 302)
-        self.assertEqual(self.batch("add").status_code, 400)
+        self.assertEqual(self.batch("add").status_code, 302)
+        self.student.refresh_from_db()
+        self.assertFalse(self.student.is_active)
+        self.assertEqual(self.batch("remove").status_code, 302)
         self.assertEqual(self.batch("activate").status_code, 302)
         self.assertEqual(idle_client.get(reverse("student:dashboard")).status_code, 302)
         self.assertEqual(self.batch("add").status_code, 302)
@@ -438,7 +498,7 @@ class AdminPanelTests(TestCase):
         student = User.objects.get(email="first@example.com")
         old_hash = student.password
         self.assertEqual(student.study_groups.count(), 2)
-        self.assertTrue(student.check_password("new-password"))
+        self.assertFalse(student.has_usable_password())
         self.assertFalse(User.objects.get(email="second@example.com").is_active)
         self.assertRedirects(self.upload(csv), reverse("admin_panel:students"))
         student.refresh_from_db()
@@ -480,7 +540,6 @@ class AdminPanelTests(TestCase):
         cases = (
             "Other,teacher@example.com,new-password,,,\n",
             "Other,invalid,new-password,,,\n",
-            "Other,other@example.com,short,,,\n",
             "Other,other@example.com,new-password,G,missing@example.com,Course\n",
             "Other,other@example.com,new-password,Python A,admin@example.com,Programming\n",
             "Other,other@example.com,new-password,,,\nDifferent,other@example.com,new-password,,,\n",
@@ -604,15 +663,15 @@ class AdminPanelTests(TestCase):
                 self.assertIn("Welcome to Debug Gym!", message.body)
                 self.assertIn("Role:", message.body)
                 self.assertIn("Keep this email private", message.body)
-                self.assertIn(f"Initial password: {password}", message.body)
-                self.assertIn(f"Sign in: http://testserver{reverse('accounts:login')}", message.body)
+                self.assertNotIn(password, message.body)
+                self.assertIn(f"http://testserver{reverse('accounts:login')}", message.body)
                 self.assertIn("/accounts/set-password/", message.body)
                 user = User.objects.get(email=email)
                 self.assertEqual(user.role, role)
                 self.assertNotEqual(user.password, password)
-                self.assertTrue(user.check_password(password))
+                self.assertFalse(user.has_usable_password())
                 self.assertNotIn(user.password, message.body)
-                self.assertTrue(Client().login(email=email, password=password))
+                self.assertFalse(Client().login(email=email, password=password))
                 self.assertNotContains(response, password)
 
     @override_settings(
@@ -640,7 +699,7 @@ class AdminPanelTests(TestCase):
             reverse("admin_panel:student-create"), self.payload()
         ).status_code, 302)
         self.assertEqual(len(mail.outbox), 0)
-        self.assertTrue(User.objects.get(email="new@example.com").check_password("new-password"))
+        self.assertFalse(User.objects.get(email="new@example.com").has_usable_password())
 
     @override_settings(
         ACCOUNT_EMAIL_ENABLED=True, ACCOUNT_PUBLIC_URL="http://testserver",
@@ -657,7 +716,7 @@ class AdminPanelTests(TestCase):
             )
         self.assertContains(response, "Access email was not sent")
         self.assertNotContains(response, password)
-        self.assertTrue(User.objects.get(email="new@example.com").check_password(password))
+        self.assertFalse(User.objects.get(email="new@example.com").has_usable_password())
         self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(
@@ -674,7 +733,7 @@ class AdminPanelTests(TestCase):
             "admin_panel:account-access-link", args=[user.pk]
         ), follow=True)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertIn(password, mail.outbox[0].body)
+        self.assertNotIn(password, mail.outbox[0].body)
         self.assertNotIn(password, mail.outbox[1].body)
         self.assertNotIn("Initial password:", mail.outbox[1].body)
         self.assertEqual(mail.outbox[1].subject, "Debug Gym — your password setup link")
@@ -693,11 +752,11 @@ class AdminPanelTests(TestCase):
         )
         self.assertEqual(self.upload(csv).status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("Initial password: initial-csv-password", mail.outbox[0].body)
+        self.assertNotIn("initial-csv-password", mail.outbox[0].body)
         self.assertEqual(self.upload(csv).status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
         user = User.objects.get(email="imported@example.com")
-        self.assertTrue(user.check_password("initial-csv-password"))
+        self.assertFalse(user.has_usable_password())
         self.assertEqual(user.study_groups.count(), 2)
 
     @override_settings(
@@ -767,7 +826,8 @@ class AdminPanelTests(TestCase):
             "admin_panel:account-access-link", args=[self.student.pk]
         ), follow=True)
         self.assertContains(response, "Access email was not sent")
-        self.assertEqual(self.upload("name,email\nX,x@example.com\n").status_code, 400)
+        self.assertEqual(self.upload("name,email\nX,x@example.com\n").status_code, 302)
+        self.assertFalse(User.objects.get(email="x@example.com").has_usable_password())
 
     @override_settings(
         ACCOUNT_EMAIL_ENABLED=True, ACCOUNT_PUBLIC_URL="http://testserver",

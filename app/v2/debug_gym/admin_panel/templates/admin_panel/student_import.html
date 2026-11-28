@@ -7,11 +7,11 @@
 {% include "admin_panel/components/navigation.html" %}
 <section class="card">
   <h2 class="card-title">CSV format</h2>
-  <p>UTF-8, comma-separated, at most 1 MB / 5000 rows. Required headers: name,email. Optional: is_active,password,course,group_number,teacher_email. One row per student/group; repeat identical account data for multiple groups.</p>
-  <pre class="code">name,email,is_active,password,course,group_number,teacher_email
-Example Student,student@example.com,true,,Programming,01,teacher@example.com</pre>
-  <p>A new group needs a course name, a separate group number and an existing active teacher. The same course can have several numbered groups. Existing teachers are never reassigned by import. Specify group_number when a course has several groups.</p>
-  <p>Existing students are matched by email ignoring case. Blank password/status preserves the existing value. New students need a password of at least 8 characters unless access email is configured. Passwords are stored only as hashes. Blank course and group number creates/updates the student without enrollment. Omitted groups are never removed.</p>
+  <p>UTF-8, comma-separated, at most 1 MB / 5000 rows. Required headers: name,email. Optional: is_active,course,teacher_email. One row per student/group; repeat identical account data for multiple groups.</p>
+  <pre class="code">name,email,is_active,course,teacher_email
+Example Student,student@example.com,true,Programming A,teacher@example.com</pre>
+  <p>The course column identifies the group by name. A new group needs a name and an existing active teacher. Existing teachers are never reassigned by import.</p>
+  <p>Existing students are matched by email ignoring case. Blank status preserves the existing value. New active students receive an email invitation to choose their password when email delivery is enabled. Otherwise, configure email and send an access link later. A legacy password column is accepted but ignored; existing passwords never change during import. Blank course creates/updates the student without enrollment. Omitted groups are never removed.</p>
   <p>Repeating identical data creates no duplicates. All rows are validated in a transaction: any error rolls back the entire file. CSV contents and passwords are not logged or stored as uploaded files.</p>
 </section>
 <form method="post" enctype="multipart/form-data" class="card form student-import-form">

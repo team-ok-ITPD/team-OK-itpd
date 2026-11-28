@@ -28,8 +28,6 @@ def send_access_link(user, *, initial_password=None, account_created=False):
         "name": user.name,
         "email": user.email,
         "role": user.get_role_display(),
-        # Only the creation request can supply this; never recover it from storage.
-        "initial_password": initial_password,
         "login_url": f"{origin}{reverse('accounts:login')}",
         "access_url": f"{origin}{path}",
         "expiry_hours": settings.PASSWORD_RESET_TIMEOUT / 3600,

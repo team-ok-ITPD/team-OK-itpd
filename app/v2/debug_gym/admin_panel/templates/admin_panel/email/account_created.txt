@@ -5,16 +5,13 @@ Welcome to Debug Gym! Your administrator has created an account for you.
 Your account
 Email: {{ email }}
 Role: {{ role }}
-{% if initial_password %}
-Initial password: {{ initial_password }}
-Sign in: {{ login_url }}
 
-For your security, choose your own password before you start using the service.
-{% else %}
 To activate access, choose a password using the link below.
-{% endif %}
 Set your password here:
 {{ access_url }}
+
+Sign in after setting your password:
+{{ login_url }}
 
 This password setup link expires in {{ expiry_hours|floatformat:"-2" }} hour{{ expiry_hours|pluralize }} and becomes invalid after a successful password change. If it expires, ask your administrator to send a new link.
 

@@ -1,25 +1,18 @@
 # [Admin Dev] Forms for administrator-managed teacher accounts and memberships
 from django import forms
-from django.conf import settings
+from django.db.models import Q
 
 from core.models import StudyGroup, User
 
 
-class VisiblePasswordInput(forms.PasswordInput):
-    # Reveal only new input, without redisplaying submitted values or stored hashes.
-    input_type = "text"
+class MembershipChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, group):
+        status = " · Inactive" if not group.is_active else ""
+        return f"{group} · {group.course or 'No course'} · {group.professor.name}{status}"
 
 
 class TeacherForm(forms.ModelForm):
     account_role = User.Role.PROFESSOR
-    password = forms.CharField(
-        label="New password",
-        min_length=8,
-        required=False,
-        strip=False,
-        help_text="At least 8 characters. Leave blank to keep the current password.",
-        widget=VisiblePasswordInput(attrs={"autocomplete": "new-password"}),
-    )
 
     class Meta:
         model = User
@@ -31,13 +24,6 @@ class TeacherForm(forms.ModelForm):
         self.fields["email"].widget.attrs.update(
             {"autocomplete": "email", "placeholder": "name@university.edu"}
         )
-        if creating:
-            self.fields["password"].label = "Password"
-            self.fields["password"].required = not settings.ACCOUNT_EMAIL_ENABLED
-            self.fields["password"].help_text = (
-                "At least 8 characters. When email is enabled, the initial password "
-                "and a setup link are emailed. Without a password, only the link is sent."
-            )
 
     def clean_email(self):
         email = User.objects.normalize_email(self.cleaned_data["email"].strip())
@@ -48,9 +34,7 @@ class TeacherForm(forms.ModelForm):
     def save(self, commit=True):
         teacher = super().save(commit=False)
         teacher.role = self.account_role
-        if self.cleaned_data.get("password"):
-            teacher.set_password(self.cleaned_data["password"])
-        elif not teacher.pk:
+        if not teacher.pk:
             teacher.set_unusable_password()
         if commit:
             teacher.save()
@@ -59,6 +43,22 @@ class TeacherForm(forms.ModelForm):
 
 class StudentForm(TeacherForm):
     account_role = User.Role.STUDENT
+    groups = MembershipChoiceField(
+        queryset=StudyGroup.objects.select_related("professor").order_by("-is_active", "name", "pk"), required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Membership is independent of account activity. Inactive groups retain their materials.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["groups"].initial = self.instance.study_groups.values_list("pk", flat=True)
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            user.study_groups.set(self.cleaned_data["groups"])
+        return user
 
 
 class AdministratorForm(TeacherForm):
@@ -68,9 +68,9 @@ class AdministratorForm(TeacherForm):
 class GroupForm(forms.ModelForm):
     class Meta:
         model = StudyGroup
-        fields = ["name", "course", "group_number", "description", "professor"]
+        fields = ["name", "course", "description", "professor", "is_active"]
         labels = {
-            "name": "Group name", "course": "Course", "group_number": "Group number", "professor": "Teacher",
+            "name": "Group name", "course": "Course", "professor": "Teacher", "is_active": "Active group",
         }
         help_texts = {
             "description": "Optional notes about the group.",
@@ -79,10 +79,12 @@ class GroupForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].widget.attrs["placeholder"] = "e.g. Programming"
-        self.fields["group_number"].required = True
-        self.fields["group_number"].widget.attrs["placeholder"] = "e.g. 01 or BS-23"
+        self.fields["is_active"].help_text = (
+            "Deactivation keeps membership, assignments and student access. Inactive groups appear last."
+        )
         self.fields["professor"].queryset = User.objects.filter(
-            role=User.Role.PROFESSOR, is_active=True
+            Q(is_active=True) | Q(pk=self.instance.professor_id),
+            role=User.Role.PROFESSOR,
         )
         if self.instance.pk:
             self.fields["professor"].empty_label = None
@@ -90,11 +92,11 @@ class GroupForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
-        if data.get("name") and data.get("group_number"):
+        if data.get("name"):
             if StudyGroup.objects.filter(
-                name__iexact=data["name"], group_number__iexact=data["group_number"]
+                name__iexact=data["name"],
             ).exclude(pk=self.instance.pk).exists():
-                self.add_error("group_number", "This group number already exists for this course.")
+                self.add_error("name", "A group with this name already exists.")
         return data
 
 
@@ -125,9 +127,6 @@ class StudentBatchForm(forms.Form):
         data = super().clean()
         if data.get("action") in ("add", "remove") and not data.get("group"):
             self.add_error("group", "Choose a group.")
-        if data.get("action") == "add" and data.get("students") is not None:
-            if data["students"].filter(is_active=False).exists():
-                self.add_error("students", "Activate all selected students before enrollment.")
         return data
 
 
