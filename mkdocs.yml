@@ -24,6 +24,7 @@ nav:
       - Functional requirements: functional-requirements/README.md
       - Quality requirements: quality-requirements/README.md
   - Usability tests: usability-tests/README.md
+  - User acceptance tests: user-acceptance-tests.md
   - Architecture: architecture/README.md
   - Glossary: glossary.md
   - Planning:
