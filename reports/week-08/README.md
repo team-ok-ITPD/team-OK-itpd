@@ -15,6 +15,35 @@ The evaluation keeps the separate checks, the public environment shape and the n
 We added the configuration terms to [the glossary](../../docs/glossary.md) and the four configuration risks, [RISK-09](../../docs/risks.md#risk-09) through [RISK-12](../../docs/risks.md#risk-12), to [the risk register](../../docs/risks.md), and planned `SPRINT-08` and `SPRINT-09` in [the project plan](../../docs/project-plan.md#sprint-08).
 The focus metric, [solved exercises per active learner per week](../../docs/analytics.md), still has no value, because the deployed analytics backend has no traffic from learners outside the team; no test or smoke traffic is presented as a value.
 
+## Usability test
+
+**Late supplement, 2026-11-27:** After the 2026-11-21 deadline, the team
+provided notes from three real local sessions: P-01/P-02 on 26 November
+and P-03 on 27 November. Participation consent was obtained. The team reports
+that the instructor personally approved a recording-requirement exception.
+Staging execution and prior instrumentation verification remain outstanding;
+UT-01 stays `Planned` and
+[QR-07 QRT-01](../../docs/quality-requirements/qr/QR-07.md#qrt-01)
+stays `Not verified`. It moves to SPRINT-09 with the reason in
+[the testing plan](../../docs/project-plan.md#quality-requirement-testing-plan).
+
+The [qualitative record](../../docs/usability-tests/ut-01/results.md) links
+[P-01](../../docs/usability-tests/ut-01/sessions/P-01.md),
+[P-02](../../docs/usability-tests/ut-01/sessions/P-02.md) and
+[P-03](../../docs/usability-tests/ut-01/sessions/P-03.md).
+Practice discovery was understandable, but local editor startup, missing-test
+feedback, rejected submissions and return navigation caused friction.
+Individual SEQ and calculated SUS scores are in the notes; no completion,
+time, SEQ or SUS aggregates are claimed under the shortfall rule.
+Without an export, telemetry cannot corroborate the described actions.
+
+The [findings and triage](../../docs/usability-tests/ut-01/results.md#findings)
+record provisional recommendations; no issues or fixes have been scheduled
+by this supplement. No REL-08 fix or Customer review of these late observations
+is claimed. The
+[private usability-data repository](https://github.com/team-ok-ITPD/team-OK-itpd-usability-data)
+is the designated private store; this update does not verify its contents/access.
+
 ## Configuration management
 
 The configuration plan is [docs/configuration-plan.md](../../docs/configuration-plan.md), and it inventories eight `Active` items across the five groups, each with its purpose, owner, location, connections and the rule it must meet, plus one `Dropped` item kept in place.
@@ -33,7 +62,11 @@ No configuration change from the evaluation was enacted this week, and the goal 
 
 The Week 9 deck cites [the configuration plan](../../docs/configuration-plan.md) rather than repeating it.
 The evaluation's goal sections and its first change are the review's recommendation and schedule no work for Week 9.
-The private usability-data repository and the recordings folder stay open until the course is graded, and the final repository state is the `main` commit that the Week 9 submission takes its permalink from.
+The private usability-data repository remains the designated private store.
+The final repository state is the
+`main` commit that the Week 9 submission takes its permalink from.
+The handoff includes the [qualitative UT-01 record](../../docs/usability-tests/ut-01/results.md),
+its unscheduled candidate fixes and the outstanding verified staging execution.
 The Week 9 deck also reflects on the work the Customer set for the next review in [the meeting report](meeting-report.md#action-points): the group and assignment requirements, the submission acceptance fix, the CSV export sample, the extension usage guide, the project ZIP and Dockerfile rules, and the AI provider confirmation.
 
 ## Coverage
@@ -41,6 +74,10 @@ The Week 9 deck also reflects on the work the Customer set for the next review i
 | Deliverable | Artifact |
 | --- | --- |
 | Sprint plan | [docs/project-plan.md](../../docs/project-plan.md#sprint-08) |
+| Usability results and findings | [Late qualitative record](../../docs/usability-tests/ut-01/results.md) |
+| Sanitized session notes | [Session index](../../docs/usability-tests/ut-01/sessions/README.md#late-exploratory-notes) |
+| QR-07 and its test | [QR-07 QRT-01](../../docs/quality-requirements/qr/QR-07.md#qrt-01) |
+| Threshold review | [Threshold review](#threshold-review) |
 | Configuration management | [the configuration management section](#configuration-management) |
 | Glossary | [docs/glossary.md](../../docs/glossary.md) |
 | Risk register | [docs/risks.md](../../docs/risks.md) |
@@ -68,10 +105,30 @@ The link check excludes only the private usability-data repository, because open
 
 ## Deviations
 
+- The 2026-11-27 usability supplement is late. Three real local sessions
+  ran on 26–27 November. The team reports instructor approval of a
+  recording-requirement exception. Staging execution, prior instrumentation
+  verification, telemetry comparison
+  and significant-finding issue scheduling remain outstanding.
+- The sessions did not run against university staging. Timing is missing or
+  partial, exercises and verification paths differ, and sanitized notes were
+  prepared retrospectively. No aggregates or completed-study verdict are claimed.
+- QR-07 QRT-01 moves to SPRINT-09, still `Not verified`, because the available
+  local sessions do not establish the remaining protocol conditions. No late fix is attributed
+  to REL-08.
+
 - The Week 8 Sprint Review on 2026-11-20 presented the product workflows and did not present sanitized usability results or a `QR/QRT` result, and it did not establish that the `UT-01` design or a session plan was agreed. [The meeting report](meeting-report.md#previous-action-points) carries that action point into Week 9.
 - [The meeting script](meeting-script.md) was written as a `UT-01` design and execution review, but the meeting covered the product workflows, so the script's agenda and the report's `Presented` line differ.
 - Two Week 6 action points, on the submission-container lifecycle and the upload limit, were not re-listed by the Week 7 report; [the meeting report](meeting-report.md#previous-action-points) closes them here and carries them forward.
 - No configuration change from the evaluation was enacted this week.
+
+## Threshold review
+
+The late UT-01 observations do not settle
+[TOS-01 or TOS-03](../../docs/threshold-of-success.md): the former requires
+timely debugger evidence and the latter five usefulness responses and Customer
+acceptance. Those measures were not collected here. Their existing `Open`
+proposal status is preserved; no Customer decision is invented.
 
 ## Privacy
 
