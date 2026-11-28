@@ -80,7 +80,7 @@ def import_students(upload):
                 user.is_active = active not in ("false", "0")
                 user.save()
                 result["created"] += 1
-                notify[user.pk] = (user, password or None)
+                notify[user.pk] = (user, password or None, True)
             elif first:
                 changed = user.name != name
                 user.name = name
@@ -97,7 +97,7 @@ def import_students(upload):
                     if not user.is_active:
                         revoke_access([user])
                 if changed_password:
-                    notify[user.pk] = (user, None)
+                    notify[user.pk] = (user, None, False)
             legacy_group = row.get("group", "").strip()
             course = row.get("course", "").strip()
             group_name = legacy_group or course

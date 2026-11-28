@@ -600,6 +600,10 @@ class AdminPanelTests(TestCase):
                 self.assertEqual(len(mail.outbox), index)
                 message = mail.outbox[-1]
                 self.assertEqual(message.to, [email])
+                self.assertEqual(message.subject, "Welcome to Debug Gym — your account is ready")
+                self.assertIn("Welcome to Debug Gym!", message.body)
+                self.assertIn("Role:", message.body)
+                self.assertIn("Keep this email private", message.body)
                 self.assertIn(f"Initial password: {password}", message.body)
                 self.assertIn(f"Sign in: http://testserver{reverse('accounts:login')}", message.body)
                 self.assertIn("/accounts/set-password/", message.body)
@@ -673,6 +677,8 @@ class AdminPanelTests(TestCase):
         self.assertIn(password, mail.outbox[0].body)
         self.assertNotIn(password, mail.outbox[1].body)
         self.assertNotIn("Initial password:", mail.outbox[1].body)
+        self.assertEqual(mail.outbox[1].subject, "Debug Gym — your password setup link")
+        self.assertIn("Opening this email alone does not change your password", mail.outbox[1].body)
         self.assertContains(response, "No password was sent.")
 
     @override_settings(
@@ -705,6 +711,9 @@ class AdminPanelTests(TestCase):
         self.assertFalse(user.has_usable_password())
         self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].body
+        self.assertEqual(mail.outbox[0].subject, "Welcome to Debug Gym — your account is ready")
+        self.assertIn("choose a password using the link below", body)
+        self.assertNotIn("Initial password:", body)
         self.assertNotIn("debug-gym-pass", body)
         path = re.search(r"http://testserver(\S+)", body).group(1)
         client = Client()

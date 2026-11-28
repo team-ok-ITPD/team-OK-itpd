@@ -1,0 +1,25 @@
+{% comment %}[Admin Dev] New-account invitation, with optional creation-time credentials{% endcomment %}{% autoescape off %}Hello {{ name }},
+
+Welcome to Debug Gym! Your administrator has created an account for you.
+
+Your account
+Email: {{ email }}
+Role: {{ role }}
+{% if initial_password %}
+Initial password: {{ initial_password }}
+Sign in: {{ login_url }}
+
+For your security, choose your own password before you start using the service.
+{% else %}
+To activate access, choose a password using the link below.
+{% endif %}
+Set your password here:
+{{ access_url }}
+
+This password setup link expires in {{ expiry_hours|floatformat:"-2" }} hour{{ expiry_hours|pluralize }} and becomes invalid after a successful password change. If it expires, ask your administrator to send a new link.
+
+Keep this email private. Debug Gym will never ask you to send your password by email.
+If you did not expect this account, do not use the link and contact your administrator.
+
+Debug Gym team
+{% endautoescape %}

@@ -1,0 +1,19 @@
+{% comment %}[Admin Dev] Administrator-requested password setup or recovery link{% endcomment %}{% autoescape off %}Hello {{ name }},
+
+Your administrator has requested a new password setup link for your Debug Gym account.
+
+Email: {{ email }}
+
+Set or change your password here:
+{{ access_url }}
+
+This link expires in {{ expiry_hours|floatformat:"-2" }} hour{{ expiry_hours|pluralize }} and becomes invalid after a successful password change. Opening this email alone does not change your password.
+
+Your current password is not included in this email. If you remember it, you can still sign in:
+{{ login_url }}
+
+If you did not expect this message, do not use or share the link. Contact your administrator to check the request.
+If the link has expired, ask your administrator to send a new one.
+
+Debug Gym team
+{% endautoescape %}

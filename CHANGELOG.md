@@ -50,6 +50,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Account emails use separate welcome and password-setup templates with expiry,
+  sign-in and security guidance; repeat access emails never include a password.
 - Exercise creation uses separate upload/generation tabs and accepts optional
   Dockerfiles instead of Compose uploads (storage only). The catalog filters
   availability and ownership live; assignment is available only after opening
@@ -69,6 +71,8 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- CSV password updates for existing students send an access-link message,
+  not a new-account invitation; new accounts still receive welcome emails.
 - Local VS Code pairing accepts a student's own private practice exercises
   while continuing to reject other authors' private exercises.
 - Workspace callbacks enforce the graded-assignment submission lock, including

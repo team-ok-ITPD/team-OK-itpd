@@ -125,6 +125,12 @@ password-setup link. This applies to teachers, students and administrators,
 including new students created by CSV import. If no initial password was
 provided, only the setup link is sent.
 
+New accounts receive a welcome message with their role and password-setup
+instructions. Manual resend and password changes for existing accounts,
+including CSV updates, use an access-link message rather than a new-account
+invitation. Both templates include link-expiry and unexpected-message guidance;
+normal service emails contain no test-preview banners.
+
 The initial password is taken from the creation request, never recovered from
 the database. Only its hash is stored by the application. The recipient's mailbox
 will contain the initial password; anyone with access to that message can use

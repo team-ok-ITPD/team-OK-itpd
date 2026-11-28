@@ -71,7 +71,8 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
         messages.success(self.request, f"{self.account_label.capitalize()} account created.")
         if settings.ACCOUNT_EMAIL_ENABLED and self.object.is_active:
             report_access_delivery(
-                self.request, self.object, initial_password=form.cleaned_data.get("password")
+                self.request, self.object, initial_password=form.cleaned_data.get("password"),
+                account_created=True,
             )
         return response
 
@@ -324,18 +325,18 @@ class StudentImportView(RoleRequiredMixin, View):
                 ))
                 if settings.ACCOUNT_EMAIL_ENABLED:
                     sent = sum(
-                        send_access_link(user, initial_password=password)
-                        for user, password in notify if user.is_active
+                        send_access_link(user, initial_password=password, account_created=created)
+                        for user, password, created in notify if user.is_active
                     )
-                    expected = sum(user.is_active for user, _ in notify)
+                    expected = sum(user.is_active for user, _, _ in notify)
                     if sent != expected:
                         messages.warning(request, "Some access emails were not sent. Use Send access link after checking mail configuration.")
                 return redirect("admin_panel:students")
         return render(request, "admin_panel/student_import.html", {"form": form}, status=400)
 
 
-def report_access_delivery(request, user, *, initial_password=None):
-    if send_access_link(user, initial_password=initial_password):
+def report_access_delivery(request, user, *, initial_password=None, account_created=False):
+    if send_access_link(user, initial_password=initial_password, account_created=account_created):
         if initial_password:
             messages.success(request, "An account email with the initial password and an access link was sent.")
         else:
