@@ -1,5 +1,76 @@
 // [Shared] Main JavaScript for shared site behavior
 
+// Searchable membership editor; moving options retains native form submission.
+document.querySelectorAll("[data-membership-picker]").forEach((picker) => {
+  const options = picker.querySelector("[data-membership-options]");
+  const selected = picker.querySelector("[data-membership-selected]");
+  const search = picker.querySelector("[data-membership-search]");
+  const rows = [...options.querySelectorAll(".membership-option")];
+  const results = picker.querySelector("[data-membership-results]");
+  const available = picker.querySelector("[data-membership-results-list]");
+  const addPanel = picker.querySelector("[data-membership-add]");
+  rows.forEach((row) => {
+    const input = row.querySelector("input");
+    const label = row.querySelector("label");
+    const title = label.textContent.trim();
+    row.dataset.searchText = title.toLocaleLowerCase();
+    const text = document.createElement("span");
+    text.textContent = title;
+    const action = document.createElement("button");
+    action.type = "button";
+    action.dataset.membershipAction = "";
+    input.hidden = true;
+    row.replaceChildren(input, text, action);
+    action.addEventListener("click", () => {
+      const removing = input.checked;
+      input.checked = !input.checked;
+      render();
+      picker.querySelector("[data-membership-summary]").textContent =
+        `${title}: ${removing ? "removed" : "added"}. Save the student to apply changes.`;
+      if (!removing) {
+        addPanel.open = false;
+        search.value = "";
+        render();
+        action.focus();
+      } else {
+        addPanel.querySelector("summary").focus();
+      }
+    });
+  });
+  const render = () => {
+    const query = search.value.trim().toLocaleLowerCase();
+    let matches = 0;
+    let count = 0;
+    rows.forEach((row) => {
+      const checked = row.querySelector("input").checked;
+      const action = row.querySelector("[data-membership-action]");
+      action.textContent = checked ? "Remove" : "Add";
+      action.className = `button small ${checked ? "ghost" : "secondary"}`;
+      action.setAttribute("aria-label", `${checked ? "Remove from" : "Add to"} ${row.querySelector("span").textContent}`);
+      if (checked) {
+        selected.append(row);
+        row.hidden = false;
+        count += 1;
+      } else {
+        available.append(row);
+        const match = !query || row.dataset.searchText.includes(query);
+        if (match) matches += 1;
+        row.hidden = !match || matches > 20;
+      }
+    });
+    picker.querySelector("[data-membership-count]").textContent = String(count);
+    picker.querySelector("[data-membership-empty]").hidden = count > 0;
+    results.textContent = matches > 20
+      ? `Showing 20 of ${matches} matching groups. Refine your search to find more.`
+      : `${matches} groups available${query ? " matching your search" : ""}.`;
+  };
+  picker.querySelector("[data-membership-controls]").hidden = false;
+  options.hidden = true;
+  addPanel.addEventListener("toggle", () => { if (addPanel.open) search.focus(); });
+  search.addEventListener("input", render);
+  render();
+});
+
 // Show / hide password: <button data-toggle-password="<input id>">Show</button>
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-toggle-password]");
@@ -14,7 +85,7 @@ document.addEventListener("click", (event) => {
   input.focus();
 });
 
-// Selection persists within this tab/account across filters and pagination.
+// Only visible rows stay selected; hidden selections never return after filtering.
 // Clearing an applied student search immediately restores unsearched results.
 const studentSearchForm = document.querySelector(".admin-toolbar-filters");
 if (studentSearchForm) {
@@ -44,7 +115,7 @@ if (selectionForm) {
       const saved = JSON.parse(sessionStorage.getItem(key) || "[]");
       selected.clear();
       if (Array.isArray(saved)) saved.forEach((id) => {
-        if (typeof id === "string" && /^\d+$/.test(id)) selected.add(id);
+        if (typeof id === "string" && boxes.some((box) => box.value === id)) selected.add(id);
       });
     } catch {
       storageAvailable = false;
@@ -81,6 +152,10 @@ if (selectionForm) {
     }
   };
   restore();
+  studentSearchForm?.addEventListener("submit", () => {
+    selected.clear();
+    sync();
+  });
   if (selectionForm.dataset.resetSelection === "true") selected.clear();
   sync();
   boxes.forEach((box) => box.addEventListener("change", () => {

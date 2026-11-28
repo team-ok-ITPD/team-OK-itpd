@@ -96,6 +96,8 @@ class StudyGroup(models.Model):
 
     name = models.CharField(max_length=100)
     course = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+    # Legacy CSV compatibility only; new groups use their name as identity.
     group_number = models.CharField(max_length=50, blank=True, default="")
     description = models.TextField(null=True, blank=True)
     professor = models.ForeignKey(
@@ -125,7 +127,7 @@ class StudyGroup(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.name} · {self.group_number}" if self.group_number else self.name
+        return self.name
 
 
 class GroupStudent(models.Model):

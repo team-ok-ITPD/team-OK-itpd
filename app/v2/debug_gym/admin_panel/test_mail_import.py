@@ -30,18 +30,29 @@ class MailImportFunctionalTests(TestCase):
             **({"confirm": "on"} if confirm else {}),
         })
 
-    def test_csv_password_update_sends_recovery_not_a_new_account_invitation(self):
+    def test_csv_legacy_password_never_changes_existing_account(self):
         student = User.objects.create_user("existing@example.test", "Existing", "Old-pass-456!")
         response = self.upload("name,email,password\nExisting,existing@example.test,New-pass-456!\n")
         self.assertEqual(response.status_code, 302)
         student.refresh_from_db()
-        self.assertTrue(student.check_password("New-pass-456!"))
+        self.assertTrue(student.check_password("Old-pass-456!"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_csv_invitation_repeat_preserves_owner_password_and_ignores_legacy_cells(self):
+        csv = "name,email,password\nInvited,invited@example.test,x\n"
+        self.assertEqual(self.upload(csv).status_code, 302)
+        student = User.objects.get(email="invited@example.test")
+        self.assertFalse(student.has_usable_password())
         self.assertEqual(len(mail.outbox), 1)
-        message = mail.outbox[0]
-        self.assertEqual(message.subject, "Debug Gym — your password setup link")
-        self.assertNotIn("created an account", message.body)
-        self.assertNotIn("New-pass-456!", message.body)
-        self.assertNotIn("Old-pass-456!", message.body)
+        self.assertIn("/accounts/set-password/", mail.outbox[0].body)
+        student.set_password("Owner-chosen-456!")
+        student.save()
+        original_hash = student.password
+        self.assertEqual(self.upload(csv).status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.password, original_hash)
+        self.assertTrue(student.check_password("Owner-chosen-456!"))
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_csv_mixed_creation_and_password_update_choose_correct_templates(self):
         User.objects.create_user("existing@example.test", "Existing", "Old-pass-456!")
@@ -49,12 +60,11 @@ class MailImportFunctionalTests(TestCase):
             "name,email,password\nNew,new@example.test,\nExisting,existing@example.test,New-pass-456!\n"
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 1)
         messages = {message.to[0]: message for message in mail.outbox}
         self.assertIn("Welcome", messages["new@example.test"].subject)
-        self.assertEqual(
-            messages["existing@example.test"].subject, "Debug Gym — your password setup link",
-        )
+        self.assertNotIn("existing@example.test", messages)
+        self.assertTrue(User.objects.get(email="existing@example.test").check_password("Old-pass-456!"))
 
     def test_csv_quoted_unicode_bom_and_multiple_memberships_are_repeatable(self):
         text = io.StringIO()

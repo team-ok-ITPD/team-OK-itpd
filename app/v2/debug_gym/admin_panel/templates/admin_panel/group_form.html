@@ -10,7 +10,15 @@
   {% csrf_token %}
   {{ form.non_field_errors }}
   {% for field in form %}
+    {% if field.name == "is_active" %}
+    <div class="group-status">
+      <label class="form-check" for="{{ field.id_for_label }}">{{ field }}<span>Active group</span></label>
+      <p class="field-hint">{{ field.help_text }}</p>
+      {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+    {% else %}
     <label for="{{ field.id_for_label }}" class="field{% if field.errors %} has-error{% endif %}">{{ field.label }}{{ field }}{% if field.help_text %}<small class="field-hint">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</label>
+    {% endif %}
   {% endfor %}
   <div class="row"><button class="button primary" type="submit">Save group</button><a class="button ghost" href="{% url 'admin_panel:groups' %}">Cancel</a></div>
 </form>

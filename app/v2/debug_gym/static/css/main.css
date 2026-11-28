@@ -2042,3 +2042,93 @@ pre {
 .ai-remember input[type="checkbox"] {
   accent-color: var(--color-accent);
 }
+
+/* Page: admin_panel/group_form and admin_panel/user_form */
+.group-status {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+}
+
+.group-status .form-check,
+.membership-option label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.group-status input[type="checkbox"],
+.membership-option input[type="checkbox"] {
+  width: var(--space-4);
+  height: var(--space-4);
+  flex: 0 0 var(--space-4);
+  accent-color: var(--color-accent);
+}
+
+.group-status p {
+  margin: var(--space-2) 0 0;
+}
+
+.membership-picker {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+}
+
+.membership-list {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.membership-option {
+  padding: var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.membership-option > span {
+  min-width: 0;
+}
+
+.membership-option > button {
+  flex-shrink: 0;
+}
+
+.membership-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.membership-add {
+  margin-top: var(--space-4);
+}
+
+.membership-add > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.membership-add[open] > summary {
+  margin-bottom: var(--space-4);
+}
+
+.membership-add .field {
+  margin-bottom: var(--space-3);
+}
+
+.membership-option[hidden] {
+  display: none;
+}

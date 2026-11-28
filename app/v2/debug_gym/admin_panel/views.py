@@ -71,9 +71,10 @@ class TeacherCreateView(RoleRequiredMixin, CreateView):
         messages.success(self.request, f"{self.account_label.capitalize()} account created.")
         if settings.ACCOUNT_EMAIL_ENABLED and self.object.is_active:
             report_access_delivery(
-                self.request, self.object, initial_password=form.cleaned_data.get("password"),
-                account_created=True,
+                self.request, self.object, account_created=True,
             )
+        elif self.object.is_active:
+            messages.warning(self.request, "Account created without a password. Configure email and send an access link.")
         return response
 
     def get_context_data(self, **kwargs):
@@ -246,7 +247,7 @@ class GroupListView(RoleRequiredMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get("q", "").strip()
-        queryset = StudyGroup.objects.select_related("professor")
+        queryset = StudyGroup.objects.select_related("professor").order_by("-is_active", "name", "pk")
         if query:
             queryset = queryset.filter(
                 Q(name__icontains=query) | Q(professor__name__icontains=query)
@@ -272,12 +273,9 @@ class StudentBatchView(RoleRequiredMixin, View):
             action = form.cleaned_data["action"]
             group = form.cleaned_data["group"]
             with transaction.atomic():
-                # Lock/recheck activity in the same transaction as enrollment.
+                # Membership changes never activate an account or erase learning history.
                 selected = list(students.select_for_update())
                 if action == "add":
-                    if any(not student.is_active for student in selected):
-                        messages.error(request, "Activate all selected students before enrollment.")
-                        return redirect("admin_panel:students")
                     for student in selected:
                         GroupStudent.objects.get_or_create(group=group, student=student)
                 elif action == "remove":
@@ -331,6 +329,8 @@ class StudentImportView(RoleRequiredMixin, View):
                     expected = sum(user.is_active for user, _, _ in notify)
                     if sent != expected:
                         messages.warning(request, "Some access emails were not sent. Use Send access link after checking mail configuration.")
+                elif any(user.is_active for user, _, _ in notify):
+                    messages.warning(request, "New accounts have no password. Configure email and use Send access link so their owners can set one.")
                 return redirect("admin_panel:students")
         return render(request, "admin_panel/student_import.html", {"form": form}, status=400)
 

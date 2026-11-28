@@ -4,7 +4,7 @@
 {% block content %}
 <div class="stack">
 <header class="page-header">
-  <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts{% if is_student_list %} <span class="badge" aria-label="{{ student_total }} students">{{ student_total }}</span>{% endif %}</h1></div>
+  <div><p class="eyebrow">Administration</p><h1>{{ account_label }} accounts</h1></div>
   <div class="row">
     {% if is_student_list %}<a class="button secondary" href="{% url 'admin_panel:student-import' %}">Import CSV</a>{% endif %}
     <a class="button primary" href="{% url create_url_name %}">Create {{ account_label|lower }}</a>
@@ -46,13 +46,13 @@
   <table class="table">
     <thead><tr>
       {% if is_student_list %}<th><input type="checkbox" data-select-students aria-label="Select all students on this page"></th>{% endif %}
-      <th>Name</th><th>Email</th><th>Status</th>{% if is_student_list %}<th>Groups / teachers</th>{% endif %}<th>Actions</th>
+      <th>Name</th><th>Email</th><th>Status</th>{% if is_student_list %}<th>Groups / courses / teachers</th>{% endif %}<th>Actions</th>
     </tr></thead>
     <tbody>{% for account in accounts %}<tr>
       {% if is_student_list %}<td><input type="checkbox" name="students" value="{{ account.pk }}" form="student-batch" aria-label="Select {{ account.name }}"></td>{% endif %}
       <td>{{ account.name }}</td><td>{{ account.email }}</td>
       <td><span class="badge {% if account.is_active %}success{% else %}danger{% endif %}">{% if account.is_active %}Active{% else %}Inactive{% endif %}</span></td>
-      {% if is_student_list %}<td>{% for group in account.study_groups.all %}<p>{{ group }} · {{ group.professor.name }}</p>{% empty %}<span class="text-subtle">No groups</span>{% endfor %}</td>{% endif %}
+      {% if is_student_list %}<td>{% for group in account.study_groups.all %}<p>{{ group }} · {{ group.course|default:"No course" }} · {{ group.professor.name }}</p>{% empty %}<span class="text-subtle">No groups</span>{% endfor %}</td>{% endif %}
       <td><a class="button small secondary" href="{% url edit_url_name account.pk %}">Edit</a></td>
     </tr>{% endfor %}</tbody>
   </table>

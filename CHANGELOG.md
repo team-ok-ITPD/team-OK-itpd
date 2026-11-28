@@ -8,22 +8,28 @@ the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Teaching groups have separate group name, course text and group number.
-  Lists and student/professor pages identify the group; CSV import supports
-  group name and number.
+- Teaching groups have group names and optional course text. Separate number
+  inputs and number suffixes are removed; legacy numbers remain stored for
+  CSV compatibility. Reversible deactivation preserves student memberships,
+  materials and assignments and sorts inactive groups last for administrators.
+- Student editing shows current groups with Remove actions and a searchable
+  Add group picker. Inactive students can also be added to or removed from groups
+  without activating their accounts. Hidden selections are cleared on filtering.
 
 - Administrator student management supports group filtering, batch membership
   and activity actions, and atomic, idempotent CSV imports. Groups have
   searchable teacher selection, and accounts have confirmed, history-protected
   deletion.
-- Optional account-creation emails include the administrator-set initial
-  password and a password-setup link; manual resend sends only the link.
+- Optional account-creation emails contain only a password-setup link, never an
+  administrator-set password. Interactive and CSV creation start without a usable
+  password; legacy CSV password cells are ignored and existing passwords preserved.
+  Manual resend sends only the link.
   Passwords remain hashed in application storage. Deactivation revokes
   existing web and IDE access.
 
-- Administrators can edit student and administrator names, emails, passwords
-  and activity status; self-deactivation is blocked and self password changes
-  preserve the current session.
+- Administrators can edit student and administrator names, emails
+  and activity status; self-deactivation is blocked. Password fields are absent
+  from administrator creation/editing; owners choose passwords via setup links.
 
 - The v2 administrator panel can create student and administrator accounts,
   create teaching groups, and assign one active teacher per group, alongside

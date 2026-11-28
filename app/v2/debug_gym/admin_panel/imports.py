@@ -2,7 +2,6 @@
 import csv
 import io
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
@@ -48,7 +47,7 @@ def import_students(upload):
                 raise ValidationError(f"Row {line}: the number of cells does not match the headers.")
             name = row["name"].strip()
             email = row["email"].strip().lower()
-            password = row.get("password", "")
+            # Accept legacy headers, but never assign or reset passwords from CSV.
             active = row.get("is_active", "").strip().lower()
             if not name or len(name) > 100 or len(email) > 150:
                 raise ValidationError(f"Row {line}: supply a name (up to 100 characters) and email (up to 150).")
@@ -58,9 +57,7 @@ def import_students(upload):
                 raise ValidationError(f"Row {line}: invalid email.") from None
             if active not in ("", "true", "false", "1", "0"):
                 raise ValidationError(f"Row {line}: is_active must be true or false.")
-            if password and len(password) < 8:
-                raise ValidationError(f"Row {line}: passwords must have at least 8 characters.")
-            signature = (name, active, password)
+            signature = (name, active)
             if email in seen and seen[email] != signature:
                 raise ValidationError(f"Row {line}: repeated student rows must have identical account data.")
             first = email not in seen
@@ -71,16 +68,13 @@ def import_students(upload):
             user = matches.first()
             if user and user.role != User.Role.STUDENT:
                 raise ValidationError(f"Row {line}: cannot update a non-student account.")
-            changed_password = False
             if user is None:
-                if not password and not settings.ACCOUNT_EMAIL_ENABLED:
-                    raise ValidationError(f"Row {line}: new students need a password while email delivery is disabled.")
                 user = User(email=email, name=name, role=User.Role.STUDENT)
-                user.set_password(password or None)
+                user.set_unusable_password()
                 user.is_active = active not in ("false", "0")
                 user.save()
                 result["created"] += 1
-                notify[user.pk] = (user, password or None, True)
+                notify[user.pk] = (user, None, True)
             elif first:
                 changed = user.name != name
                 user.name = name
@@ -88,16 +82,11 @@ def import_students(upload):
                     next_active = active in ("true", "1")
                     changed = changed or user.is_active != next_active
                     user.is_active = next_active
-                if password and not user.check_password(password):
-                    user.set_password(password)
-                    changed = changed_password = True
                 if changed:
                     user.save()
                     result["updated"] += 1
                     if not user.is_active:
                         revoke_access([user])
-                if changed_password:
-                    notify[user.pk] = (user, None, False)
             legacy_group = row.get("group", "").strip()
             course = row.get("course", "").strip()
             group_name = legacy_group or course
@@ -125,8 +114,8 @@ def import_students(upload):
                     raise ValidationError(f"Row {line}: teacher_email must identify one active teacher.")
                 teacher = teachers.get()
             if group is None:
-                if teacher is None or not group_number:
-                    raise ValidationError(f"Row {line}: new groups require teacher_email and group_number.")
+                if teacher is None:
+                    raise ValidationError(f"Row {line}: new groups require teacher_email.")
                 group = StudyGroup.objects.create(
                     name=group_name, group_number=group_number,
                     professor=teacher, description=legacy_description,
